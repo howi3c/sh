@@ -117,7 +117,7 @@ fi
 render_plain="$(printf '%s\n' "${render_output}" | strip_ansi)"
 printf '%s\n' "${render_plain}" | grep -Fq '科技lion脚本工具箱' ||
 	fail "主菜单未渲染标题"
-for option in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 16 17 0; do
+for option in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 16 0; do
 	printf '%s\n' "${render_plain}" | grep -Eq "^${option}\.[[:space:]]+[^[:space:]]" ||
 		fail "主菜单未渲染编号 ${option} 的菜单项（渲染与分发缝被破坏）"
 done
@@ -154,7 +154,6 @@ dispatch_cases=(
 	'13|dispatch linux_Settings|dispatch |send_stats '
 	'14|dispatch linux_cluster|dispatch |send_stats '
 	'16|dispatch games_server_tools|dispatch |send_stats '
-	'17|dispatch linux_panel kpanel|dispatch |send_stats '
 )
 for dispatch_case in "${dispatch_cases[@]}"; do
 	choice="${dispatch_case%%|*}"
