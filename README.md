@@ -26,7 +26,7 @@
   <a href="#支持系统">支持系统</a> ·
   <a href="#效果图预览">效果图预览</a> ·
   <a href="#核心功能">核心功能</a> ·
-  <a href="#kpanel-web-管理面板">KPanel</a> ·
+  <a href="#后续事项">后续事项</a> ·
   <a href="#开源许可">开源许可</a>
 </p>
 
@@ -135,6 +135,88 @@ KPanel 是 `kejilion.sh` 的现代 Web 管理形态。脚本、SSH、Docker Comp
 - 重要网站、数据库、Docker 数据和系统配置应定期备份。
 - 生产服务器执行升级、卸载、磁盘或网络操作前，应确认终端显示的影响范围。
 - 提交问题时，请隐藏密码、Token、私钥和公网 IP 等敏感信息。
+
+## 后续事项
+
+本次净化只动 `kejilion.sh`（外加删掉的语言资产）。下面这些是**明知没清、但按规格故意留下**的项，
+逐条记在这里，等决定要不要单开工单。父议题规格的 Out of Scope 与用户故事 29/30 要求
+"其他脚本本次完全不动，剩下的记入后续清单"。
+
+### 1. 登录通知类脚本（每次 SSH 登录查询 IP 与定位）
+
+- **是什么**：`TG-SSH-check-notify.sh` 会在每次 SSH 登录时查你的公网 IP、归属地、登录名和登录地区，
+  通过 Telegram 机器人发出去；同目录的 `TG-check-notify.sh` 则每 5 分钟把 CPU/内存/硬盘/流量超阈值
+  告警连同 IP 归属地发到同一个机器人。
+- **在哪**：仓库根目录 `TG-SSH-check-notify.sh`、`TG-check-notify.sh`。二者都会被净化版脚本在运行时
+  从上游下载下来：主菜单 13「系统工具」→ 25「TG-bot系统监控预警」会把它们拉到 `~/` 并用 `nano` 让你填
+  Bot Token 和 Chat ID，然后挂进 `@reboot` 定时任务和 `~/.profile`。
+- **为什么这次不动**：规格 Out of Scope 原文"其他脚本的任何改动"；用户故事 29 要求改造范围可控。
+  这两个脚本不在 `kejilion.sh` 里，删它们不会让净化版少一分报信。
+- **建议怎么处理**：单开工单，两个口径分开定——`TG-check-notify.sh` 的告警本体是有用功能（只报本机资源），
+  要做的是把消息体里的 `country`/`isp_info`/`masked_ip` 三行摘掉；`TG-SSH-check-notify.sh` 的存在意义
+  就是"登录即报地理位置"，要么整个不启用，要么改成只报时间与登录名、不查任何外部定位服务
+  （现在它查 `ipinfo.io` 和 `opendata.baidu.com`）。注意它俩是上游下载的：只改仓库里的副本，
+  对"已经下载过"的机器才有效，要连净化版脚本里的下载地址一起改才彻底。
+
+### 2. 写死地址密码的备份模板
+
+- **是什么**：`beifen.sh` 里硬编码了 `sshpass -p 123456 scp ... root@0.0.0.0:/home/`——密码和地址
+  都是看起来像真值的"死值"，靠净化版脚本下载后用 `sed` 替换成用户输入的内容。
+- **在哪**：仓库根目录 `beifen.sh`。被 `linux_ldnmp()`（主菜单 10「LDNMP建站」→ 站点远程备份）在
+  `kejilion.sh` 第 13493 行从上游下载，随后 `sed` 把 `0.0.0.0` 和 `123456` 换成用户填的 IP 和密码，
+  并写进 `crontab` 定时备份。
+- **为什么这次不动**：同上，规格把它列为 Out of Scope；它不在 `kejilion.sh` 里。
+- **建议怎么处理**：单开工单。最低限度是把仓库里的死值改成一眼看出是占位的字样
+  （例如 `sshpass -p '在此填入密码'`、`root@在此填入IP`），避免被人整份复制走直接用；更好的做法是
+  改成从环境变量或单独配置文件读凭据，并在文件头写一句"别把真密码写进这里"。
+
+### 3. 示例密码文件等 inert 项
+
+- **是什么**：`archive.key` 是一个 PGP 公钥块（XanMod 内核仓库签名钥），文件名带 `.key`、内容像凭据，
+  实际是公开信息，不构成泄露。同类的还有 `cloudflare.conf` 里的 `cftoken = APIKEY00000` 这类占位值。
+- **在哪**：仓库根目录 `archive.key`；`kejilion.sh` 第 8326~8327 行会优先从 `dl.xanmod.org` 拉它，
+  失败时才退回上游仓库这份副本。
+- **为什么这次不动**：规格 Out of Scope 原文"示例密码文件等 inert 项；记入后续清单"。它们不参与报信，
+  也不被装到用户机器上，删除反而会让第 8327 行的回退下载失败。
+- **建议怎么处理**：单开工单做一次"凭据体检"——用 `grep -rnE 'passwo?rd|secret|token|api[_-]?key'`
+  把整个仓库扫一遍，逐条判断是真凭据、占位符还是公开钥：真凭据立刻改掉并轮换；占位符统一改成
+  明显是占位的字样；`archive.key` 这类公开钥建议在文件头加一行注释说明"这是公开签名钥，不是私钥"，
+  免得将来有人心惊。
+
+### 4. `CONTRIBUTING.md` 的「KPanel 轻量节点运行时」一节
+
+- **是什么**：`CONTRIBUTING.md` 开头第 3~10 行整节都在讲"KPanel 轻量节点运行时"的维护规则
+  （`KPANEL_NODE_LIFECYCLE` 模板、`KPANEL_NODE_RUNTIME_GENERATION` 版本号、
+  `/run/kejilion-node-lifecycle.lock` 锁文件）。它描述的那套运行时已在工单 #6 整块删掉，这一节是悬空文档。
+- **在哪**：根目录 `CONTRIBUTING.md`。
+- **为什么这次不动**：工单 #6 按"本次不动其他文件"的约定故意留下，
+  `docs/kpanel-removal-keep-list.md` 末尾已记了这一笔；本工单同样只被允许加"后续事项"这一节。
+- **建议怎么处理**：单开一个文档清理工单，把这一节删掉，或改写成"KPanel 轻量节点运行时已移除，
+  不要再按本节规则维护"；同时补上净化版真正的贡献约定（每条改动一个提交、写清删了什么、
+  改完跑 `bash tests/run_all_checks.sh`）。
+
+### 5. `kpanel_backup_center_dispatch()` 调用的 `kejilion-agent`
+
+- **是什么**：净化版脚本保留了 `kpanel_backup_center_dispatch()`（`k backup-center`，Docker/Web 备份菜单
+  也会调它）。它会去执行 `/usr/local/libexec/kejilion-agent backup-center ...`——那是**另一个二进制**，
+  与工单 #6 删掉的 `kejilion-node` 是两套东西。
+- **在哪**：`kejilion.sh` 第 29831~29842 行（函数定义）、第 11148 与 13524 行（两处调用）、
+  以及 CLI 分发里的 `backup-center` 分支。
+- **为什么这次不动**：工单 #6 的保留清单（`docs/kpanel-removal-keep-list.md`）按边界留下了它：
+  本脚本**从不下载**这个二进制（函数注释原文 "No downloaded helper or caller-supplied path"），
+  只在机器上已经有人装了匹配版本的 Agent 时才会真的调它；函数开头就校验 root、文件存在且不是符号链接、
+  属主为 0、权限不带 group/other 写位、协议版本匹配，任一条不过就报错返回。也就是说它不会偷偷装东西，
+  风险只在于"机器上已有这个二进制时仍会调它"。
+- **建议怎么处理**：单开工单，先定边界。要彻底断开这次调用，就把 `kpanel_backup_center_dispatch()`
+  连同两处调用与 CLI 分支一起删掉，代价是失去"备份中心"这一个入口；要保留功能，就得先把
+  `kejilion-agent` 的审计结论写进 `docs/`，明确它是谁提供的、什么许可、本次调用会做什么。
+  在那之前，不建议在装了 Agent 的机器上跑 `k backup-center`。
+
+### 附：本篇 README 自身还有几处过时描述
+
+不在上面五类里，但趁改 README 一并记下：「KPanel Web 管理面板」一节、核心功能里的「自动更新机制」、
+一键安装里的「English Version」、以及 `blog.kejilion.pro` 的推广链接，描述的都是已删除或已不存在的功能。
+建议在上面第 4 项的文档清理工单里一起处理。
 
 ## 支持我们
 
