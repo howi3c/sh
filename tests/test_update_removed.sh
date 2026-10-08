@@ -1,0 +1,123 @@
+#!/bin/bash
+# 工单 #7「更新功能整体删除」的验收尺子
+#
+# 背景（父工单 #1 用户故事 11 / Implementation Decisions）：
+#   "更新功能整体删除：检查更新、更新日志、立即更新、自动更新开关与定时任务
+#    全部移除。" 核心目的是净化版永远不会被原版整体覆盖、已连根拔掉的报信
+#    不会随覆盖复活。
+#
+# 守的缝（全部是外部行为/不变量，不碰内部实现细节）：
+#   1. 自更新函数 kejilion_update() 及其全部引用消失；
+#   2. 主菜单不再渲染"脚本更新"项、不再有 00) 分发行
+#      （菜单渲染与分发行为由 test_main_menu_noninteractive_smoke.sh 守，
+#        这里只做静态存在性判据）；
+#   3. 不存在"从原版仓库下载并替换脚本"的代码路径：
+#        · main/kejilion.sh、main/cn/kejilion.sh 下载地址零命中
+#        · 更新日志 kejilion_sh_log.txt 零命中
+#        · 更新前的备份/回滚 kejilion.sh.bak 零命中
+#   4. 自动更新定时任务的 crontab 写入/清理不存在；唯一允许保留的是
+#      "卸载脚本"时清理用户机器上既存任务的辅助代码（纯本地、不下载任何东西，
+#        对用户有益）；
+#   5. 误删防护：上游仓库里其余取内容目标一个不少（清单取自删除前的原版脚本，
+#      属独立基准，不随本次改动推导）。
+set -euo pipefail
+
+project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+script="${project_root}/kejilion.sh"
+cn_script="${project_root}/cn/kejilion.sh"
+
+fail() { printf 'error: %s\n' "$*" >&2; exit 1; }
+
+[ -f "${script}" ] || fail "找不到待测脚本: ${script}"
+[ -f "${cn_script}" ] || fail "找不到简体副本: ${cn_script}"
+
+# ---------------------------------------------------------------------------
+# 判据 5 的独立基准：删除前原版脚本从上游仓库取内容的全部目标。
+# 本次只应拿掉 3 个"自更新/自覆盖"目标（kejilion.sh、cn/kejilion.sh、
+# kejilion_sh_log.txt），其余一条都不许少。
+# ---------------------------------------------------------------------------
+upstream_base='raw.githubusercontent.com/kejilion/sh'
+expected_targets=(
+	"${upstream_base}/\${KPANEL_SYSTEM_TUNING_NETWORK_COMMIT}/network-optimize.sh"
+	"${upstream_base}/main/\${mysql_source}"
+	"${upstream_base}/main/\${php_fpm_source}"
+	"${upstream_base}/main/ai_cli_manager.sh"
+	"${upstream_base}/main/archive.key"
+	"${upstream_base}/main/auto_cert_renewal.sh"
+	"${upstream_base}/main/beifen.sh"
+	"${upstream_base}/main/CF-Under-Attack.sh"
+	"${upstream_base}/main/custom_mysql_config-1.cnf"
+	"${upstream_base}/main/deepseek_harness_manager.sh"
+	"${upstream_base}/main/fail2ban-nginx-cc.conf"
+	"${upstream_base}/main/hermes_manager.sh"
+	"${upstream_base}/main/mc.sh"
+	"${upstream_base}/main/optimized_php.ini"
+	"${upstream_base}/main/palworld.sh"
+	"${upstream_base}/main/TG-check-notify.sh"
+	"${upstream_base}/main/TG-SSH-check-notify.sh"
+	"${upstream_base}/main/upgrade_openssh9.8p1.sh"
+	"${upstream_base}/refs/heads/main/network-optimize.sh"
+)
+# 本次删除要拿掉的自更新目标
+removed_targets=(
+	"${upstream_base}/main/kejilion.sh"
+	"${upstream_base}/main/cn/kejilion.sh"
+	"${upstream_base}/main/kejilion_sh_log.txt"
+)
+
+check_one_script() {
+	local f="$1" label="$2"
+	[ -f "${f}" ] || fail "${label}: 文件不存在"
+
+	# ---- 判据 1：自更新函数本体与全部引用 ----
+	local update_hits
+	update_hits="$(grep -n 'kejilion_update' "${f}" || true)"
+	[ -z "${update_hits}" ] || fail "${label}: 仍存在 kejilion_update 引用:
+${update_hits}"
+
+	# ---- 判据 2：主菜单"脚本更新"渲染行 + 00 分发行 ----
+	local menu_hits
+	menu_hits="$(grep -n '脚本更新\|00)[[:space:]]*kejilion_update' "${f}" || true)"
+	[ -z "${menu_hits}" ] || fail "${label}: 仍存在通向更新功能的菜单入口:
+${menu_hits}"
+
+	# ---- 判据 3：下载并替换脚本的路径 / 更新日志 / 备份回滚 ----
+	local pattern hits
+	for pattern in 'kejilion_sh_log' 'kejilion\.sh\.bak' 'SH_Update_task'; do
+		hits="$(grep -nE "${pattern}" "${f}" || true)"
+		[ -z "${hits}" ] || fail "${label}: 仍存在更新功能残留(${pattern}):
+${hits}"
+	done
+	local target
+	for target in "${removed_targets[@]}"; do
+		hits="$(grep -nF "${target}" "${f}" || true)"
+		[ -z "${hits}" ] || fail "${label}: 仍存在从原版仓库下载脚本的地址(${target}):
+${hits}"
+	done
+
+	# ---- 判据 4：crontab 里只剩"卸载时清理用户机器上既存任务"的那一条 ----
+	local cron_hits cron_count
+	cron_hits="$(grep -n 'crontab' "${f}" | grep 'kejilion\.sh' || true)"
+	cron_count="$(printf '%s\n' "${cron_hits}" | grep -c . || true)"
+	[ "${cron_count}" -eq 1 ] ||
+		fail "${label}: 触到 crontab 且提及 kejilion.sh 的行应有 1 条（卸载清理），实为 ${cron_count}:
+${cron_hits}"
+	printf '%s\n' "${cron_hits}" | grep -Fq 'grep -v "kejilion.sh"' ||
+		fail "${label}: 剩下的那条 crontab 行不是"卸载时清理旧任务"的形态:
+${cron_hits}"
+	printf '%s\n' "${cron_hits}" | grep -Eq 'curl|wget|download|kejilion\.sh\.bak|SH_Update_task' &&
+		fail "${label}: 剩下的清理行里夹带了下载/备份逻辑:
+${cron_hits}"
+
+	# ---- 判据 5：误删防护，其余取内容目标一条不少 ----
+	local missing=""
+	for target in "${expected_targets[@]}"; do
+		grep -qF "${target}" "${f}" || missing="${missing} ${target}"
+	done
+	[ -z "${missing}" ] || fail "${label}: 误删了取内容目标:${missing}"
+}
+
+check_one_script "${script}" "kejilion.sh"
+check_one_script "${cn_script}" "cn/kejilion.sh"
+
+printf '%s\n' "update-removed=pass"

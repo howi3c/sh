@@ -95,7 +95,6 @@ linux_Settings() { record "dispatch linux_Settings${*:+ $*}"; }
 linux_cluster() { record "dispatch linux_cluster${*:+ $*}"; }
 kejilion_Affiliates() { record "dispatch kejilion_Affiliates${*:+ $*}"; }
 games_server_tools() { record "dispatch games_server_tools${*:+ $*}"; }
-kejilion_update() { record "dispatch kejilion_update${*:+ $*}"; }
 
 # 固定工作目录，避免分支里的裸文件名（如 WARP 的 menu.sh）意外命中真实文件。
 cd "${test_root}"
@@ -119,7 +118,7 @@ fi
 render_plain="$(printf '%s\n' "${render_output}" | strip_ansi)"
 printf '%s\n' "${render_plain}" | grep -Fq '科技lion脚本工具箱' ||
 	fail "主菜单未渲染标题"
-for option in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 00 0; do
+for option in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 0; do
 	printf '%s\n' "${render_plain}" | grep -Eq "^${option}\.[[:space:]]+[^[:space:]]" ||
 		fail "主菜单未渲染编号 ${option} 的菜单项（渲染与分发缝被破坏）"
 done
@@ -149,7 +148,6 @@ dispatch_cases=(
 	'15|dispatch kejilion_Affiliates|dispatch |send_stats '
 	'16|dispatch games_server_tools|dispatch |send_stats '
 	'17|dispatch linux_panel kpanel|dispatch |send_stats '
-	'00|dispatch kejilion_update|dispatch |send_stats '
 )
 for dispatch_case in "${dispatch_cases[@]}"; do
 	choice="${dispatch_case%%|*}"
@@ -191,7 +189,8 @@ render_count="$(printf '%s\n' "${exit_output}" | strip_ansi | grep -Fc '科技li
 [ "${render_count}" -eq 1 ] ||
 	fail "主菜单退出项 0 未直接退出（标题渲染 ${render_count} 次，应为 1）"
 
-for invalid_input in 'not-a-number' ''; do
+# '00' 曾是"脚本更新"入口（工单 #7 整体删除更新功能），现在必须落到无效输入分支。
+for invalid_input in 'not-a-number' '' '00'; do
 	: >"${dispatch_log}"
 	if ! invalid_output="$(drive_menu "${invalid_input}")"; then
 		printf '%s\n' "${invalid_output}" >&2
