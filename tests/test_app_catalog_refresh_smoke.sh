@@ -24,7 +24,7 @@ export HOME="$test_root/home"
 mkdir -p "$HOME"
 git_log="$test_root/git.log"
 : >"$git_log"
-gh_proxy=
+# 应用市场仓库下载已改为直连 https://github.com，不再需要代理前缀变量。
 gl_hong=
 gl_bai=
 
@@ -56,11 +56,11 @@ git() {
 
 refresh_apps_catalog
 test -d "$HOME/apps/.git"
-grep -Fx 'clone --depth=1 github.com/kejilion/apps.git '"$HOME"'/apps' "$git_log" >/dev/null
+grep -Fx 'clone --depth=1 https://github.com/kejilion/apps.git '"$HOME"'/apps' "$git_log" >/dev/null
 
 : >"$git_log"
 refresh_apps_catalog
-grep -Fx -- '-C '"$HOME"'/apps pull --ff-only github.com/kejilion/apps.git main' "$git_log" >/dev/null
+grep -Fx -- '-C '"$HOME"'/apps pull --ff-only https://github.com/kejilion/apps.git main' "$git_log" >/dev/null
 
 if GIT_PULL_FAIL=1 refresh_apps_catalog >"$test_root/pull-failure.out" 2>&1; then
 	echo "catalog refresh accepted a failed fast-forward pull" >&2
