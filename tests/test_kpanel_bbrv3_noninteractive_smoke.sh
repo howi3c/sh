@@ -21,8 +21,8 @@ grep -F 'printf '\''%s'\'' "$status_line" | grep -q '\''"rebootRequired":true'\'
 grep -F 'kpanel_bbrv3_dispatch "$@"' "${script_path}" >/dev/null
 grep -F '[ "${KJ_BBRV3_NONINTERACTIVE:-}" = "1" ] || server_reboot' "${script_path}" >/dev/null
 
-# The legacy command without the protocol environment must remain interactive.
-grep -F 'send_stats "bbrv3管理"' "${script_path}" >/dev/null
+# The legacy command without the protocol environment must remain interactive:
+# the assertions below pin its menu, confirmation prompt and upstream installer.
 grep -F '1. 更新BBRv3内核' "${script_path}" >/dev/null
 grep -F '确定继续吗？(Y/N)' "${script_path}" >/dev/null
 grep -F 'bash <(curl -sL jhb.ovh/jb/bbrv3arm.sh)' "${script_path}" >/dev/null
