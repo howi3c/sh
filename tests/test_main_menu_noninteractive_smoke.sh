@@ -117,6 +117,17 @@ fi
 render_plain="$(printf '%s\n' "${render_output}" | strip_ansi)"
 printf '%s\n' "${render_plain}" | grep -Fq '科技lion脚本工具箱' ||
 	fail "主菜单未渲染标题"
+# 工单 #9：主菜单标题须在原菜单名后带"无遥测版"后缀，让人一眼认出净化版。
+# 原名"科技lion脚本工具箱"必须原样保留（上面的断言已守），这里只要求它同时带无遥测版标识。
+printf '%s\n' "${render_plain}" | grep -F '科技lion脚本工具箱' | grep -Fq '无遥测版' ||
+	fail "主菜单标题缺少'无遥测版'后缀（工单 #9：原名 + 无遥测版标识）"
+# 附带小修：合并工单 #6/#7/#8 后主菜单出现过两条挨着的 '-----' 空分隔线。
+# 这里守住"渲染结果里不得出现连续两行纯分隔线"，防止双线复辟。
+if printf '%s\n' "${render_plain}" | awk '/^-{3,}$/{if(prev)exit 1; prev=1; next}{prev=0}'; then
+	:
+else
+	fail "主菜单出现两条连续的 '-----' 分隔线（本工单附带小修：应收敛为一条）"
+fi
 for option in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 16 0; do
 	printf '%s\n' "${render_plain}" | grep -Eq "^${option}\.[[:space:]]+[^[:space:]]" ||
 		fail "主菜单未渲染编号 ${option} 的菜单项（渲染与分发缝被破坏）"
