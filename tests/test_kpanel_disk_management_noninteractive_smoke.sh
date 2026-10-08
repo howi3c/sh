@@ -3,7 +3,6 @@ set -euo pipefail
 
 project_root="${PROJECT_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 script_path="${project_root}/kejilion.sh"
-cn_script_path="${project_root}/cn/kejilion.sh"
 test_root="$(mktemp -d)"
 mock_bin="${test_root}/bin"
 test_stderr="${test_root}/stderr"
@@ -58,15 +57,10 @@ disk_body="$(
 	sed -n '/^# KPanel disk management protocol start/,/^# KPanel disk management protocol end/p' "${script_path}" |
 		sed 's/\r$//'
 )"
-cn_disk_body="$(
-	sed -n '/^# KPanel disk management protocol start/,/^# KPanel disk management protocol end/p' "${cn_script_path}" |
-		sed 's/\r$//'
-)"
 [ -n "${system_body}" ] || fail "system-resource dependency block was not found"
 [ -n "${disk_body}" ] || fail "disk-management adapter block was not found"
 [ "$(grep -Fxc 'KPANEL_DISK_MANAGEMENT_PROTOCOL_VERSION="1"' <<< "${disk_body}")" -eq 1 ] ||
 	fail "disk-management protocol marker must be unique"
-[ "${disk_body}" = "${cn_disk_body}" ] || fail "root and cn disk-management blocks differ"
 if grep -F 'rm -rf' <<< "${disk_body}" >/dev/null; then
 	fail "disk-management backup cleanup must not use broad recursive removal"
 fi

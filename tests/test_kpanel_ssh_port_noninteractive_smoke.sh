@@ -2,7 +2,7 @@
 set -euo pipefail
 
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-script_paths=("${project_root}/kejilion.sh" "${project_root}/cn/kejilion.sh")
+script_paths=("${project_root}/kejilion.sh")
 reference_adapter=""
 
 for script_path in "${script_paths[@]}"; do

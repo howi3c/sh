@@ -105,7 +105,7 @@ test_contract() {
 	grep -Fq $'\t\t\t\t\t  ip6tables -P INPUT ACCEPT' "${script_path}"
 }
 
-for target in kejilion.sh cn/kejilion.sh; do
+for target in kejilion.sh; do
 	script_path="${project_root}/${target}"
 	test_script "${script_path}"
 	test_contract "${script_path}"

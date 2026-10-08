@@ -4,7 +4,6 @@ set -euo pipefail
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 scripts=(
 	"${project_root}/kejilion.sh"
-	"${project_root}/cn/kejilion.sh"
 )
 
 extract_function() {
@@ -88,13 +87,6 @@ for script_path in "${scripts[@]}"; do
 	rm -rf -- "${test_root}"
 done
 
-for function_name in ldnmp_site_domain_is_safe prepare_ldnmp_site_root normalize_ldnmp_site_permissions; do
-	cmp \
-		<(extract_function "${function_name}" "${scripts[0]}") \
-		<(extract_function "${function_name}" "${scripts[1]}")
-done
-
 grep -F 'chmod 0640 "/home/web/html/$yuming/wordpress/wp-config.php" || return 1' "${scripts[0]}" >/dev/null
-grep -F 'chmod 0640 "/home/web/html/$yuming/wordpress/wp-config.php" || return 1' "${scripts[1]}" >/dev/null
 
 printf '%s\n' "LDNMP site permission smoke tests passed"

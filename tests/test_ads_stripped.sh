@@ -2,13 +2,13 @@
 # 工单 #8「广告清扫」静态守门测试。
 #
 # 判定口径（来自 GLOSSARY.md / ADR-0001）：删利益导流与推广引流，留功能说明书与署名。
-# 只静态分析 kejilion.sh 与 cn/kejilion.sh 的文本：绝不执行目标脚本、绝不联网。
+# 只静态分析 kejilion.sh 的文本：绝不执行目标脚本、绝不联网。
 # 与 tests/test_network_inventory.sh 互补——后者盯“报信=0”，本测试盯“推销清空、
 # 但教学链接 / 面板官网信息 / 致谢一个不少”。
 set -uo pipefail
 
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-targets=("${project_root}/kejilion.sh" "${project_root}/cn/kejilion.sh")
+targets=("${project_root}/kejilion.sh")
 
 fail_count=0
 fail() { printf 'FAIL: %s\n' "$*" >&2; fail_count=$((fail_count + 1)); }
