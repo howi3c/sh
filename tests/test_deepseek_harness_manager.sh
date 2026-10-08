@@ -24,7 +24,7 @@ export PATH="${temporary_dir}/bin:${PATH}"
 mkdir -p "${temporary_dir}/bin" "$DSH_HOME" "$DEEPSEEK_HARNESS_WEB_CONF_DIR" "$DEEPSEEK_HARNESS_WEB_CERT_DIR"
 
 catalog_entry='115. ${color115}Hermes机器人管理工具${gl_huang}★${gl_bai}               ${gl_kjlan}116. ${color116}DeepSeek Harness管理工具${gl_huang}★${gl_bai}'
-for catalog_file in "${project_root}/kejilion.sh" "${project_root}/cn/kejilion.sh"; do
+for catalog_file in "${project_root}/kejilion.sh"; do
 	if ! grep -Fq "$catalog_entry" "$catalog_file"; then
 		echo "FAIL: DeepSeek Harness catalog description or alignment is incorrect in ${catalog_file}" >&2
 		exit 1

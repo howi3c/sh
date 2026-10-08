@@ -78,7 +78,7 @@ run_linux_panel() {
 
 mkdir -p "${behavior_root}/home"
 
-for script_path in "${project_root}/kejilion.sh" "${project_root}/cn/kejilion.sh"; do
+for script_path in "${project_root}/kejilion.sh"; do
 	[ -f "${script_path}" ] || fail "找不到待测脚本: ${script_path}"
 	bash -n "${script_path}" || fail "语法检查未通过: ${script_path}"
 

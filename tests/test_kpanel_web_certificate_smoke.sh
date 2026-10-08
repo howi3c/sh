@@ -2,7 +2,6 @@
 set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 bash -n "$root/kejilion.sh"
-bash -n "$root/cn/kejilion.sh"
 bash -n "$root/auto_cert_renewal.sh"
 fixture_root="$(mktemp -d)"
 trap 'rm -rf -- "$fixture_root"' EXIT

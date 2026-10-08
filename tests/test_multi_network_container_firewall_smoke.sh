@@ -88,6 +88,5 @@ test_script() (
 )
 
 test_script "${project_root}/kejilion.sh"
-test_script "${project_root}/cn/kejilion.sh"
 
 printf '%s\n' "multi_network_container_firewall=pass"

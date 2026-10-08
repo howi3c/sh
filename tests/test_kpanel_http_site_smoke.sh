@@ -4,8 +4,6 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 fixture="$(mktemp -d)"
 trap 'rm -rf -- "$fixture"' EXIT
 bash -n "$root/kejilion.sh"
-bash -n "$root/cn/kejilion.sh"
-sed 's/^canshu="CN"$/canshu="default"/' "$root/cn/kejilion.sh" | cmp - "$root/kejilion.sh"
 mkdir -p "$fixture/web/conf.d" "$fixture/web/html" "$fixture/locks"
 sed -n '/^KPANEL_WEB_HTTP_PROTOCOL_VERSION=/,/^KPANEL_WEB_REDIRECT_PROTOCOL_VERSION=/p' "$root/kejilion.sh" > "$fixture/functions"
 for name in nginx_http_on install_ssltls certs_status check_ip_and_get_access_port nginx_web_on; do

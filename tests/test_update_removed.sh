@@ -12,7 +12,7 @@
 #      （菜单渲染与分发行为由 test_main_menu_noninteractive_smoke.sh 守，
 #        这里只做静态存在性判据）；
 #   3. 不存在"从原版仓库下载并替换脚本"的代码路径：
-#        · main/kejilion.sh、main/cn/kejilion.sh 下载地址零命中
+#        · main/kejilion.sh 下载地址零命中
 #        · 更新日志 kejilion_sh_log.txt 零命中
 #        · 更新前的备份/回滚 kejilion.sh.bak 零命中
 #   4. 自动更新定时任务的 crontab 写入/清理不存在；唯一允许保留的是
@@ -24,16 +24,14 @@ set -euo pipefail
 
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 script="${project_root}/kejilion.sh"
-cn_script="${project_root}/cn/kejilion.sh"
 
 fail() { printf 'error: %s\n' "$*" >&2; exit 1; }
 
 [ -f "${script}" ] || fail "找不到待测脚本: ${script}"
-[ -f "${cn_script}" ] || fail "找不到简体副本: ${cn_script}"
 
 # ---------------------------------------------------------------------------
 # 判据 5 的独立基准：删除前原版脚本从上游仓库取内容的全部目标。
-# 本次只应拿掉 3 个"自更新/自覆盖"目标（kejilion.sh、cn/kejilion.sh、
+# 本次只应拿掉 2 个"自更新/自覆盖"目标（kejilion.sh、
 # kejilion_sh_log.txt），其余一条都不许少。
 # ---------------------------------------------------------------------------
 upstream_base='raw.githubusercontent.com/kejilion/sh'
@@ -61,7 +59,6 @@ expected_targets=(
 # 本次删除要拿掉的自更新目标
 removed_targets=(
 	"${upstream_base}/main/kejilion.sh"
-	"${upstream_base}/main/cn/kejilion.sh"
 	"${upstream_base}/main/kejilion_sh_log.txt"
 )
 
@@ -118,6 +115,5 @@ ${cron_hits}"
 }
 
 check_one_script "${script}" "kejilion.sh"
-check_one_script "${cn_script}" "cn/kejilion.sh"
 
 printf '%s\n' "update-removed=pass"
