@@ -48,7 +48,7 @@ netinv_mktemp() {
 #     类别 ∈ {报信, 取内容, 参考链接}
 #     报信·类型 report-post     = 直接把资料 POST 出去的上报端点
 #     报信·类型 report-feed     = 先被抓取、再随上报发出的数据源（端点本身在别处合法）
-#     报信·类型 telemetry-trigger = 附属报信的触发行（不带端点，但带 ENABLE_STATS）
+#     报信·类型 report-trigger  = 附属报信的触发行（不带端点，但带 ENABLE_STATS）
 #     取内容·类型 author-proxy   = 经作者代理 gh.kejilion.pro 拼接出来的下载
 #     取内容·类型 author-host    = 作者自有站点/镜像（非上报）
 #     取内容·类型 direct         = 直连取内容
@@ -148,7 +148,7 @@ inventory_records() {
 
 			# Python 版附属报信触发：openclaw_api_python 携带 ENABLE_STATS 且以 PY heredoc 传参
 			if (raw ~ /openclaw_api_python/ && raw ~ /ENABLE_STATS/ && index(raw, "<<" q "PY" q) > 0) {
-				printf "报信\t<python-附属报信>\ttelemetry-trigger\t%d\n", NR
+				printf "报信\t<python-附属报信>\treport-trigger\t%d\n", NR
 			}
 
 			# 先抹掉 sed 的 s/旧/新/ 段，避免里面的占位域名被当成端点
@@ -301,9 +301,9 @@ print_inventory() {
 
 		printf ' 3) 附属报信触发点（Python 版 / 子进程里把版本号等发出去）\n'
 		local n_trig=0
-		if grep -Eq $'telemetry-trigger\t' <<<"${records}"; then
-			grep -E $'telemetry-trigger\t' <<<"${records}" | sort -t$'\t' -k4,4n | awk -F'\t' '{printf "      · 第 %s 行（openclaw_api_python ... ENABLE_STATS ... <<PY）\n", $4}' || true
-			n_trig="$(grep -cE $'telemetry-trigger\t' <<<"${records}" || true)"
+		if grep -Eq $'report-trigger\t' <<<"${records}"; then
+			grep -E $'report-trigger\t' <<<"${records}" | sort -t$'\t' -k4,4n | awk -F'\t' '{printf "      · 第 %s 行（openclaw_api_python ... ENABLE_STATS ... <<PY）\n", $4}' || true
+			n_trig="$(grep -cE $'report-trigger\t' <<<"${records}" || true)"
 		fi
 		if [ "${n_trig}" -eq 0 ]; then printf '      （无）\n'; fi
 
@@ -445,7 +445,7 @@ EOF
 	cat >"${hostile}" <<EOF
 #!/bin/bash
 : > "${canary}"
-curl -s -X POST https://example.invalid/telemetry
+curl -s -X POST https://example.invalid/report
 EOF
 
 	# 接口 A：分类机器输出
@@ -454,7 +454,7 @@ EOF
 
 	grep -qP '^报信\tapi\.kejilion\.pro\treport-post\t' <<<"${dirty_records}"
 	grep -qP '^报信\tipinfo\.io\treport-feed\t' <<<"${dirty_records}"
-	grep -qP '^报信\t<python-附属报信>\ttelemetry-trigger\t' <<<"${dirty_records}"
+	grep -qP '^报信\t<python-附属报信>\treport-trigger\t' <<<"${dirty_records}"
 	grep -qP '^取内容\traw\.githubusercontent\.com\tauthor-proxy\t' <<<"${dirty_records}"
 	grep -qP '^取内容\tipinfo\.io\tdirect\t' <<<"${dirty_records}"
 
