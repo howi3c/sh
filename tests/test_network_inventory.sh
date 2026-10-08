@@ -256,8 +256,6 @@ assert_clean_impl() {
 	return 1
 }
 
-ask_assert_clean() { assert_clean_impl "$@"; }
-
 # ---------------------------------------------------------------------------
 # 人读清单：print_inventory <文件>
 #   仓库主人不看代码也能核对：分「报信」「取内容」两栏，每条给端点 + 行号 + 归类。
@@ -476,9 +474,9 @@ EOF
 	fi
 
 	# 接口 B：闸门退出码与失败报点
-	ask_assert_clean "${clean}" >/dev/null
+	assert_clean_impl "${clean}" >/dev/null
 	local gate_out gate_rc=0
-	gate_out="$(ask_assert_clean "${dirty}" 2>&1)" || gate_rc=$?
+	gate_out="$(assert_clean_impl "${dirty}" 2>&1)" || gate_rc=$?
 	if [ "${gate_rc}" -eq 0 ]; then
 		die "闸门在含报信样例上应判定失败"
 	fi
