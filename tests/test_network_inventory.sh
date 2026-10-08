@@ -16,6 +16,7 @@
 #   bash tests/test_network_inventory.sh <脚本路径>  # 只打印某个脚本的清单
 #   bash tests/test_network_inventory.sh --assert-clean [脚本路径]  # 守门：有报信则非零退出
 #   bash tests/test_network_inventory.sh --records [脚本路径]       # 输出机器可读分类记录
+#   bash tests/test_network_inventory.sh --summary [脚本路径]       # 只输出四类计数（key=value）
 #   bash tests/test_network_inventory.sh --write-baseline <目录>    # 生成/刷新基线产物
 set -euo pipefail
 
@@ -348,6 +349,22 @@ print_inventory() {
 }
 
 # ---------------------------------------------------------------------------
+# 机器可读计数：emit_summary <文件>
+#   只统计条数，不新增、不改动任何分类口径（归类仍由 inventory_records 独揽）。
+#   以后新增一类，只需要在 inventory_records 里归一次类、在这里加一行计数。
+#   基线产物（下面的 write_baseline）与总验收入口（tests/run_all_checks.sh）
+#   共用这一处，不再在两处各写一遍 awk。
+# ---------------------------------------------------------------------------
+emit_summary() {
+	local f="$1" records
+	records="$(inventory_records "$f")"
+	printf '报信_处数=%s\n'       "$(grep -cE $'^报信\t'     <<<"${records}" || true)"
+	printf '取内容_处数=%s\n'     "$(grep -cE $'^取内容\t'   <<<"${records}" || true)"
+	printf '参考链接_处数=%s\n'   "$(grep -cE $'^参考链接\t' <<<"${records}" || true)"
+	printf '经作者代理_处数=%s\n' "$( { grep -E $'^取内容\t[^\t]+\tauthor-proxy\t' <<<"${records}" | awk -F'\t' '$2 != "gh.kejilion.pro"'; } | wc -l | tr -d ' ')"
+}
+
+# ---------------------------------------------------------------------------
 # 基线产物：write_baseline <目录>
 #   把当前清单固化成仓库文件，作为后续每项改造后逐条比对的预期集合。
 #   · network_inventory.records.tsv —— 机器可读全量记录（改造后 diff 用）
@@ -363,10 +380,8 @@ write_baseline() {
 		# 换个 clone 重跑 --write-baseline 就会与库里的产物对不上（一条命令重跑不成立）。
 		printf '# 目标: %s\n' "${default_target#"${project_root}/"}"
 		printf '# 终态目标：报信_处数 = 0。取内容清单为后续每项改造后逐条比对的预期集合。\n'
-		printf '报信_处数=%s\n' "$(inventory_records "${default_target}" | grep -cE $'^报信\t' || true)"
-		printf '取内容_处数=%s\n' "$(inventory_records "${default_target}" | grep -cE $'^取内容\t' || true)"
-		printf '参考链接_处数=%s\n' "$(inventory_records "${default_target}" | grep -cE $'^参考链接\t' || true)"
-		printf '经作者代理_处数=%s\n' "$( { inventory_records "${default_target}" | grep -E $'^取内容\t[^\t]+\tauthor-proxy\t' | awk -F'\t' '$2 != "gh.kejilion.pro"'; } | wc -l)"
+		# 计数走 emit_summary：与 run_all_checks.sh 的基线数字同一处算出来
+		emit_summary "${default_target}"
 		printf '\n# 全量记录见同目录 network_inventory.records.tsv（已去重排序，改造后可直接 diff）\n'
 	} >"${dir}/network_inventory.summary.txt"
 	printf '已写入基线产物到 %s\n' "${dir}"
@@ -511,7 +526,7 @@ EOF
 # ---------------------------------------------------------------------------
 # 入口分发
 # ---------------------------------------------------------------------------
-usage() { sed -n '2,19p' "${BASH_SOURCE[0]}"; }
+usage() { sed -n '2,20p' "${BASH_SOURCE[0]}"; }
 
 main() {
 	local action="print" target="${default_target}"
@@ -519,6 +534,7 @@ main() {
 		case "$1" in
 			--assert-clean) action="assert-clean" ;;
 			--records) action="records" ;;
+			--summary) action="summary" ;;
 			--write-baseline) action="write-baseline" ;;
 			-h|--help) usage; return 0 ;;
 			-*) die "未知选项: $1" ;;
@@ -535,6 +551,10 @@ main() {
 		records)
 			[ -f "${target}" ] || die "找不到目标脚本: ${target}"
 			inventory_records "${target}"
+			;;
+		summary)
+			[ -f "${target}" ] || die "找不到目标脚本: ${target}"
+			emit_summary "${target}"
 			;;
 		write-baseline)
 			write_baseline "${target}"

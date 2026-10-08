@@ -134,17 +134,19 @@ run_all() {
 }
 
 # ---------------------------------------------------------------------------
-# 基线数字：调 tests/test_network_inventory.sh --records 取分类结果，
-#   分类规则完全由那个脚本说了算，这里只按第一列计数。
+# 基线数字：调 tests/test_network_inventory.sh --summary 取机器可读计数。
+#   分类规则与计数口径完全由那个脚本说了算（它专门有一处 emit_summary 吐这四个数），
+#   这里只把 key=value 读进变量，不再另写一遍 awk —— 将来新增类别只需改一处。
 # ---------------------------------------------------------------------------
 print_baseline() {
-	local records n_report n_content n_ref n_proxy
-	records="$(bash "${inventory_check}" --records "${target_script}" 2>/dev/null || true)"
-	n_report="$(grep -cE $'^报信\t' <<<"${records}" || true)"
-	n_content="$(grep -cE $'^取内容\t' <<<"${records}" || true)"
-	n_ref="$(grep -cE $'^参考链接\t' <<<"${records}" || true)"
-	n_proxy="$(grep -E $'^取内容\t[^\t]+\tauthor-proxy\t' <<<"${records}" \
-		| awk -F'\t' '$2 != "gh.kejilion.pro"' | wc -l | tr -d ' ' || true)"
+	local summary n_report n_content n_ref n_proxy
+	summary="$(bash "${inventory_check}" --summary "${target_script}" 2>/dev/null || true)"
+	n_report="$(sed -n 's/^报信_处数=//p'     <<<"${summary}")"
+	n_content="$(sed -n 's/^取内容_处数=//p'   <<<"${summary}")"
+	n_ref="$(sed -n 's/^参考链接_处数=//p'    <<<"${summary}")"
+	n_proxy="$(sed -n 's/^经作者代理_处数=//p' <<<"${summary}")"
+	n_report="${n_report:-0}"; n_content="${n_content:-0}"
+	n_ref="${n_ref:-0}"; n_proxy="${n_proxy:-0}"
 
 	printf '\n'
 	rule
