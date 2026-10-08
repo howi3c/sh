@@ -6,7 +6,8 @@ _面向仓库主人。本文只记录**亲手跑出来的**结果；凡是没有
 | 项 | 值 |
 |---|---|
 | 验收对象 | 集成分支 `purify/kejilion-telemetry-free` |
-| 报告生成时的提交 | `7e770e8`（工单 #2~#10 的合并终点） |
+| 九项检查实跑时的提交 | `7e770e8`（工单 #2~#10 的合并终点） |
+| 报告落笔时的提交 | 本工单的三个新增提交（详见第八节）；它们只新增/修改文档与 `tests/run_all_checks.sh`，**不碰 `kejilion.sh` 本体**，因此正文数字对两者都成立 |
 | 目标脚本 | `kejilion.sh`，30229 行 |
 | 单入口验收入口 | `tests/run_all_checks.sh`（本文提交后新增） |
 | 判定口径 | `GLOSSARY.md`「报信 / 取内容」+ `docs/adr/0001-keep-content-fetching-strip-reporting.md` |
@@ -169,10 +170,19 @@ PASS 9/9  守门 · 语言资产删除（工单 #10）   ← tests/test_language
 
 `bash tests/run_all_checks.sh` 实跑退出码 **0**。
 
-**反向验证过它会叫**：在临时副本里给 `test_language_assets_removed.sh` 注入一条必然失败的
-断言，入口立刻以退出码 1 结束，输出里 `FAIL 9/9 守门 · 语言资产删除` 点名是哪一项，
-并把子测试的失败细节（含行号）原样带出，末尾「总体结论: 未通过（8/9 项 PASS，1 项 FAIL）」
-列出没过的那一项。仓库本体未被改动。
+**反向验证过它会叫**（在真实仓库上做，改完原样还原）：把
+`tests/test_direct_downloads.sh` 里一个预期镜像地址改成错值，入口立刻以退出码 1 结束，输出：
+
+```text
+FAIL 7/9  守门 · 作者代理拔掉、下载直连（工单 #5）   ← tests/test_direct_downloads.sh
+      | error: Docker 镜像列表丢了不该丢的镜像: https://docker.1ms.run-TAMPERED
+...
+总体结论: 未通过（8/9 项 PASS，1 项 FAIL）
+```
+
+点名了是哪一项、哪一条对不上，随后 `git checkout --` 还原尺子，重跑恢复 9/9 全绿。
+另在临时副本上给 `test_language_assets_removed.sh` 注入一条必败断言，同样以退出码 1 结束并
+把行号带出。仓库本体未被改动。
 
 ---
 
@@ -191,15 +201,16 @@ PASS 9/9  守门 · 语言资产删除（工单 #10）   ← tests/test_language
 
 ## 八、交付物与后续事项
 
-本次工单只新增/修改四个文件，未碰 `kejilion.sh` 的任何业务逻辑：
+本次工单只新增/修改四个文件，未碰 `kejilion.sh` 的任何业务逻辑。相对 `7e770e8` 的差异：
 
-| 文件 | 是什么 |
-|---|---|
-| `tests/run_all_checks.sh` | 一条命令跑完九项的单入口 |
-| `docs/acceptance-report.md` | 本报告 |
-| `docs/vps-smoke.md` | 给仓库主人的 VPS 冒烟操作说明 |
-| `README.md` | 新增「后续事项」一节 |
+| 文件 | 是什么 | 提交 |
+|---|---|---|
+| `tests/run_all_checks.sh` | 一条命令跑完九项的单入口 | `05ebb63` |
+| `docs/acceptance-report.md` | 本报告 | `482d806` |
+| `docs/vps-smoke.md` | 给仓库主人的 VPS 冒烟操作说明 | `50da66a` |
+| `README.md` | 新增「后续事项」一节（+ 导航链接） | `50da66a` |
 
-还有什么没清的，见 `README.md` 的「**后续事项**」一节（登录通知类脚本、写死地址密码的
+还有什么没清的，见 `README.md` 的「**后续事项**」一节：登录通知类脚本、写死地址密码的
 备份模板、示例密码文件、`CONTRIBUTING.md` 的悬空一节、`kpanel_backup_center_dispatch()`
-调用的 `kejilion-agent`），共 5 项，每项都写了是什么、在哪、为什么这次不动、建议怎么处理。
+调用的 `kejilion-agent`，共 5 项（另有 1 项附注记录 README 自身的过时描述），
+每项都写了是什么、在哪、为什么这次不动、建议怎么处理。
