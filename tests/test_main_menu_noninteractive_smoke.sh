@@ -93,7 +93,6 @@ linux_panel() { record "dispatch linux_panel${*:+ $*}"; }
 linux_work() { record "dispatch linux_work${*:+ $*}"; }
 linux_Settings() { record "dispatch linux_Settings${*:+ $*}"; }
 linux_cluster() { record "dispatch linux_cluster${*:+ $*}"; }
-kejilion_Affiliates() { record "dispatch kejilion_Affiliates${*:+ $*}"; }
 games_server_tools() { record "dispatch games_server_tools${*:+ $*}"; }
 kejilion_update() { record "dispatch kejilion_update${*:+ $*}"; }
 
@@ -119,7 +118,7 @@ fi
 render_plain="$(printf '%s\n' "${render_output}" | strip_ansi)"
 printf '%s\n' "${render_plain}" | grep -Fq '科技lion脚本工具箱' ||
 	fail "主菜单未渲染标题"
-for option in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 00 0; do
+for option in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 16 00 0; do
 	printf '%s\n' "${render_plain}" | grep -Eq "^${option}\.[[:space:]]+[^[:space:]]" ||
 		fail "主菜单未渲染编号 ${option} 的菜单项（渲染与分发缝被破坏）"
 done
@@ -127,6 +126,15 @@ done
 	cat "${dispatch_log}" >&2
 	fail "仅看菜单（输入 0）就触发了分发或副作用记录"
 }
+
+# ---- 断言一·补：广告专栏入口已从菜单与脚本中移除（工单 #8「广告清扫」）----
+# 后续工单各自拆 17（KPanel）/00（更新），本守卫只盯工单 #8 的广告专栏。
+if printf '%s\n' "${render_plain}" | grep -Fq '广告专栏'; then
+	fail "主菜单仍渲染广告专栏（工单 #8 应删除菜单第 15 项 kejilion_Affiliates）"
+fi
+if grep -Fq 'kejilion_Affiliates' "${script_path}"; then
+	fail "kejilion.sh 仍定义或引用 kejilion_Affiliates（工单 #8 应整块删除广告专栏）"
+fi
 
 # ---- 断言二：每个编号入口按预期分派，且分发后菜单继续渲染 ----
 # 形式：编号|分发日志里应出现的行|放行的记录正则（完整分组内容，
@@ -146,7 +154,6 @@ dispatch_cases=(
 	'12|dispatch linux_work|dispatch |send_stats '
 	'13|dispatch linux_Settings|dispatch |send_stats '
 	'14|dispatch linux_cluster|dispatch |send_stats '
-	'15|dispatch kejilion_Affiliates|dispatch |send_stats '
 	'16|dispatch games_server_tools|dispatch |send_stats '
 	'00|dispatch kejilion_update|dispatch |send_stats '
 )
