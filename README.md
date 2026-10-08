@@ -45,16 +45,8 @@ protection, backup, restoration, migration, and common server applications in on
 
 使用 `root` 用户执行以下命令。
 
-### 中文版
-
 ```bash
 bash <(curl -sL kejilion.sh)
-```
-
-### English Version
-
-```bash
-bash <(curl -sL kejilion.sh) en
 ```
 
 首次运行后可按脚本提示设置 `k` 快捷命令，后续直接输入 `k` 即可打开主菜单。
@@ -105,22 +97,6 @@ bash <(curl -sL kejilion.sh) en
   *Network acceleration and TCP congestion control optimization.*
 - **应用市场集成**：一键安装和管理常用面板、服务与应用。<br>
   *App market integration for one-click deployment and management.*
-- **自动更新机制**：检测脚本版本并提供更新入口。<br>
-  *Update detection keeps the script features current.*
-
-## KPanel Web 管理面板
-
-偏好浏览器操作时，可以通过 `kejilion.sh` 应用入口一键部署 KPanel：
-
-```bash
-bash <(curl -sL kejilion.sh) app kpanel
-```
-
-KPanel 是 `kejilion.sh` 的现代 Web 管理形态。脚本、SSH、Docker Compose 和 KPanel
-创建的真实资源可以互相发现并继续管理。
-
-- [KPanel GitHub 项目](https://github.com/kejilion/KPanel)
-- [KPanel 一键部署与功能介绍](https://blog.kejilion.pro/kpanel-kejilion-web-server-panel/)
 
 ## 项目文档
 
@@ -211,12 +187,6 @@ KPanel 是 `kejilion.sh` 的现代 Web 管理形态。脚本、SSH、Docker Comp
   连同两处调用与 CLI 分支一起删掉，代价是失去"备份中心"这一个入口；要保留功能，就得先把
   `kejilion-agent` 的审计结论写进 `docs/`，明确它是谁提供的、什么许可、本次调用会做什么。
   在那之前，不建议在装了 Agent 的机器上跑 `k backup-center`。
-
-### 附：本篇 README 自身还有几处过时描述
-
-不在上面五类里，但趁改 README 一并记下：「KPanel Web 管理面板」一节、核心功能里的「自动更新机制」、
-一键安装里的「English Version」、以及 `blog.kejilion.pro` 的推广链接，描述的都是已删除或已不存在的功能。
-建议在上面第 4 项的文档清理工单里一起处理。
 
 ## 支持我们
 
