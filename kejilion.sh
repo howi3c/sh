@@ -16029,42 +16029,15 @@ PY_SECRETS
 
 		install jq curl >/dev/null 2>&1
 
-		openclaw_api_python "$config_file" "$ENABLE_STATS" "$sh_v" <<'PY'
+		openclaw_api_python "$config_file" <<'PY'
 import copy
 import json
 import os
-import platform
 import sys
 import time
 import urllib.request
-from datetime import datetime, timezone
 
 path = sys.argv[1]
-stats_enabled = (sys.argv[2].lower() == "true") if len(sys.argv) > 2 else True
-script_version = sys.argv[3] if len(sys.argv) > 3 else ""
-
-def send_stat(action):
-    if not stats_enabled:
-        return
-    payload = {
-        "action": action,
-        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
-        "country": "",
-        "os_info": platform.platform(),
-        "cpu_arch": platform.machine(),
-        "version": script_version,
-    }
-    try:
-        req = urllib.request.Request(
-            "https://api.kejilion.pro/api/log",
-            data=json.dumps(payload).encode("utf-8"),
-            headers={"Content-Type": "application/json"},
-            method="POST",
-        )
-        with urllib.request.urlopen(req, timeout=3):
-            pass
-    except Exception:
-        pass
 
 with open(path, 'r', encoding='utf-8') as f:
     obj = json.load(f)
@@ -16263,14 +16236,11 @@ for name, provider in list(providers.items()):
         if openclaw_key_is_ref(provider.get('apiKey')):
             fatal_errors.append(f'❌ {name}: 密钥引用请求失败，保留密钥引用和配置')
             continue
-        send_stat('OpenClaw API确认介入')
         if prompt_delete_provider(name):
             deleted = delete_provider_and_refs(name)
             if deleted:
-                send_stat('OpenClaw API删失败Provider-确认')
                 summary.append(f'✅ {name}: 用户已确认删除该 provider 及全部相关模型引用')
         else:
-            send_stat('OpenClaw API删失败Provider-拒绝')
             summary.append(f'ℹ️ {name}: 用户未确认删除，保留现有 provider 配置')
         continue
 
