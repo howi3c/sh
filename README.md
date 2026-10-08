@@ -148,14 +148,14 @@ KPanel 是 `kejilion.sh` 的现代 Web 管理形态。脚本、SSH、Docker Comp
   通过 Telegram 机器人发出去；同目录的 `TG-check-notify.sh` 则每 5 分钟把 CPU/内存/硬盘/流量超阈值
   告警连同 IP 归属地发到同一个机器人。
 - **在哪**：仓库根目录 `TG-SSH-check-notify.sh`、`TG-check-notify.sh`。二者都会被净化版脚本在运行时
-  从上游下载下来：主菜单 13「系统工具」→ 25「TG-bot系统监控预警」会把它们拉到 `~/` 并用 `nano` 让你填
+  从原版仓库下载下来：主菜单 13「系统工具」→ 25「TG-bot系统监控预警」会把它们拉到 `~/` 并用 `nano` 让你填
   Bot Token 和 Chat ID，然后挂进 `@reboot` 定时任务和 `~/.profile`。
 - **为什么这次不动**：规格 Out of Scope 原文"其他脚本的任何改动"；用户故事 29 要求改造范围可控。
   这两个脚本不在 `kejilion.sh` 里，删它们不会让净化版少一分报信。
 - **建议怎么处理**：单开工单，两个口径分开定——`TG-check-notify.sh` 的告警本体是有用功能（只报本机资源），
   要做的是把消息体里的 `country`/`isp_info`/`masked_ip` 三行摘掉；`TG-SSH-check-notify.sh` 的存在意义
   就是"登录即报地理位置"，要么整个不启用，要么改成只报时间与登录名、不查任何外部定位服务
-  （现在它查 `ipinfo.io` 和 `opendata.baidu.com`）。注意它俩是上游下载的：只改仓库里的副本，
+  （现在它查 `ipinfo.io` 和 `opendata.baidu.com`）。注意它俩是从原版仓库下载来的：只改仓库里的副本，
   对"已经下载过"的机器才有效，要连净化版脚本里的下载地址一起改才彻底。
 
 ### 2. 写死地址密码的备份模板
@@ -163,7 +163,7 @@ KPanel 是 `kejilion.sh` 的现代 Web 管理形态。脚本、SSH、Docker Comp
 - **是什么**：`beifen.sh` 里硬编码了 `sshpass -p 123456 scp ... root@0.0.0.0:/home/`——密码和地址
   都是看起来像真值的"死值"，靠净化版脚本下载后用 `sed` 替换成用户输入的内容。
 - **在哪**：仓库根目录 `beifen.sh`。被 `linux_ldnmp()`（主菜单 10「LDNMP建站」→ 站点远程备份）在
-  `kejilion.sh` 第 13493 行从上游下载，随后 `sed` 把 `0.0.0.0` 和 `123456` 换成用户填的 IP 和密码，
+  `kejilion.sh` 第 13493 行从原版仓库下载，随后 `sed` 把 `0.0.0.0` 和 `123456` 换成用户填的 IP 和密码，
   并写进 `crontab` 定时备份。
 - **为什么这次不动**：同上，规格把它列为 Out of Scope；它不在 `kejilion.sh` 里。
 - **建议怎么处理**：单开工单。最低限度是把仓库里的死值改成一眼看出是占位的字样
@@ -175,7 +175,7 @@ KPanel 是 `kejilion.sh` 的现代 Web 管理形态。脚本、SSH、Docker Comp
 - **是什么**：`archive.key` 是一个 PGP 公钥块（XanMod 内核仓库签名钥），文件名带 `.key`、内容像凭据，
   实际是公开信息，不构成泄露。同类的还有 `cloudflare.conf` 里的 `cftoken = APIKEY00000` 这类占位值。
 - **在哪**：仓库根目录 `archive.key`；`kejilion.sh` 第 8326~8327 行会优先从 `dl.xanmod.org` 拉它，
-  失败时才退回上游仓库这份副本。
+  失败时才退回原版仓库这份副本。
 - **为什么这次不动**：规格 Out of Scope 原文"示例密码文件等 inert 项；记入后续清单"。它们不参与报信，
   也不被装到用户机器上，删除反而会让第 8327 行的回退下载失败。
 - **建议怎么处理**：单开工单做一次"凭据体检"——用 `grep -rnE 'passwo?rd|secret|token|api[_-]?key'`

@@ -18,7 +18,7 @@
 #   4. 自动更新定时任务的 crontab 写入/清理不存在；唯一允许保留的是
 #      "卸载脚本"时清理用户机器上既存任务的辅助代码（纯本地、不下载任何东西，
 #        对用户有益）；
-#   5. 误删防护：上游仓库里其余取内容目标一个不少（清单取自删除前的原版脚本，
+#   5. 误删防护：原版仓库里其余取内容目标一个不少（清单取自删除前的原版脚本，
 #      属独立基准，不随本次改动推导）。
 set -euo pipefail
 
@@ -30,36 +30,36 @@ fail() { printf 'error: %s\n' "$*" >&2; exit 1; }
 [ -f "${script}" ] || fail "找不到待测脚本: ${script}"
 
 # ---------------------------------------------------------------------------
-# 判据 5 的独立基准：删除前原版脚本从上游仓库取内容的全部目标。
+# 判据 5 的独立基准：改造前的原版脚本从原版仓库取内容的全部目标。
 # 本次只应拿掉 2 个"自更新/自覆盖"目标（kejilion.sh、
 # kejilion_sh_log.txt），其余一条都不许少。
 # ---------------------------------------------------------------------------
-upstream_base='raw.githubusercontent.com/kejilion/sh'
+orig_base='raw.githubusercontent.com/kejilion/sh'
 expected_targets=(
-	"${upstream_base}/\${KPANEL_SYSTEM_TUNING_NETWORK_COMMIT}/network-optimize.sh"
-	"${upstream_base}/main/\${mysql_source}"
-	"${upstream_base}/main/\${php_fpm_source}"
-	"${upstream_base}/main/ai_cli_manager.sh"
-	"${upstream_base}/main/archive.key"
-	"${upstream_base}/main/auto_cert_renewal.sh"
-	"${upstream_base}/main/beifen.sh"
-	"${upstream_base}/main/CF-Under-Attack.sh"
-	"${upstream_base}/main/custom_mysql_config-1.cnf"
-	"${upstream_base}/main/deepseek_harness_manager.sh"
-	"${upstream_base}/main/fail2ban-nginx-cc.conf"
-	"${upstream_base}/main/hermes_manager.sh"
-	"${upstream_base}/main/mc.sh"
-	"${upstream_base}/main/optimized_php.ini"
-	"${upstream_base}/main/palworld.sh"
-	"${upstream_base}/main/TG-check-notify.sh"
-	"${upstream_base}/main/TG-SSH-check-notify.sh"
-	"${upstream_base}/main/upgrade_openssh9.8p1.sh"
-	"${upstream_base}/refs/heads/main/network-optimize.sh"
+	"${orig_base}/\${KPANEL_SYSTEM_TUNING_NETWORK_COMMIT}/network-optimize.sh"
+	"${orig_base}/main/\${mysql_source}"
+	"${orig_base}/main/\${php_fpm_source}"
+	"${orig_base}/main/ai_cli_manager.sh"
+	"${orig_base}/main/archive.key"
+	"${orig_base}/main/auto_cert_renewal.sh"
+	"${orig_base}/main/beifen.sh"
+	"${orig_base}/main/CF-Under-Attack.sh"
+	"${orig_base}/main/custom_mysql_config-1.cnf"
+	"${orig_base}/main/deepseek_harness_manager.sh"
+	"${orig_base}/main/fail2ban-nginx-cc.conf"
+	"${orig_base}/main/hermes_manager.sh"
+	"${orig_base}/main/mc.sh"
+	"${orig_base}/main/optimized_php.ini"
+	"${orig_base}/main/palworld.sh"
+	"${orig_base}/main/TG-check-notify.sh"
+	"${orig_base}/main/TG-SSH-check-notify.sh"
+	"${orig_base}/main/upgrade_openssh9.8p1.sh"
+	"${orig_base}/refs/heads/main/network-optimize.sh"
 )
 # 本次删除要拿掉的自更新目标
 removed_targets=(
-	"${upstream_base}/main/kejilion.sh"
-	"${upstream_base}/main/kejilion_sh_log.txt"
+	"${orig_base}/main/kejilion.sh"
+	"${orig_base}/main/kejilion_sh_log.txt"
 )
 
 check_one_script() {
