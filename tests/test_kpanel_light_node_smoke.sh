@@ -178,7 +178,21 @@ if printf '%s\n' "${activate_body}" | grep -Eq 'enable --now|is-active --quiet';
 fi
 
 grep -F 'base_url="https://${github_host}/kejilion/KPanel/releases/latest/download"' "${updater}" >/dev/null
-grep -F 'mirror_prefix="https://gh.kejilion.pro/"' "${updater}" >/dev/null
+# 工单 #5：作者代理回退源已拔掉。两次取清单都必须直连同一个 GitHub 地址，
+# 且更新器里不能再出现任何代理前缀变量或作者代理域名。
+direct_manifest_attempts="$(grep -cF ' "${base_url}/SHA256SUMS"' "${updater}" || true)"
+[ "${direct_manifest_attempts}" -eq 2 ] || {
+	echo "lightweight node updater no longer fetches the manifest twice over the direct GitHub URL" >&2
+	exit 1
+}
+if grep -Eq '\$\{[A-Za-z0-9_]*(proxy|PROXY|mirror_prefix)\}' "${updater}"; then
+	echo "lightweight node updater still prefixes downloads with a proxy host" >&2
+	exit 1
+fi
+if grep -Fq 'gh.kejilion.pro' "${updater}"; then
+	echo "lightweight node updater still falls back to the author proxy" >&2
+	exit 1
+fi
 grep -F '# KPANEL_NODE_RUNTIME_GENERATION=6' "${updater}" >/dev/null
 grep -F -- "--proto '=https' --proto-redir '=https' --tlsv1.2" "${updater}" >/dev/null
 grep -F 'SHA256SUMS' "${updater}" >/dev/null

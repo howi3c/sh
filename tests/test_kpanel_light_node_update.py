@@ -31,32 +31,37 @@ with (root/'downloads').open('a') as f: f.write(args[-1]+'\n')
 assert '--retry' in args and '--retry-max-time' in args and '--max-filesize' in args
 assert args[args.index('--proto-redir')+1]=='=https'
 if (root/'network-down').exists(): sys.exit(7)
-# The mirror proxies an origin URL and follows its redirects itself.
-mirror='https://gh.kejilion.pro/'
-via_mirror=args[-1].startswith(mirror)
-origin=args[-1][len(mirror):] if via_mirror else args[-1]
-if via_mirror and (root/'mirror-down').exists(): sys.exit(7)
-if not via_mirror and (root/'github-down').exists(): sys.exit(7)
+# 工单 #5：更新器全部直连 GitHub，不再有作者代理镜像可回退。github-down 模拟
+# “GitHub 整体不可达”，此时取清单与取二进制都只能失败。
+if (root/'github-down').exists(): sys.exit(7)
+# 只有短预算的那一次试探被拒，长重试仍然可达（用来验证失败后会换更长预算重试）。
+if (root/'short-attempt-down').exists():
+ idx=args.index('--retry-max-time')+1
+ if args[idx] in ('45','200'): sys.exit(7)
 if (root/'pause-download').exists():
  import time
  (root/'download-waiting').touch()
  while (root/'pause-download').exists(): time.sleep(0.05)
 out=pathlib.Path(args[args.index('-o')+1])
+# 交付链路上可能有人改写 URL（test_delivery_proxy_rewriting_* 就模拟这种事）。
+# 断言只看改写后的真实目标：二进制必须与清单点名的版本绑定。
+url=args[-1]
+origin=url[len('https://proxy.example.invalid/'):] if url.startswith('https://proxy.example.invalid/') else url
 if origin.endswith('/SHA256SUMS'):
  assert origin=='https://github.com/kejilion/KPanel/releases/latest/download/SHA256SUMS'
  shutil.copyfile(root/'SHA256SUMS',out)
- if via_mirror:
-  assert '--dump-header' not in args
- else:
+ if '--dump-header' in args:
   headers=(root/'response-headers').read_text() if (root/'response-headers').exists() else 'HTTP/2 302\r\nLocation: https://github.com/kejilion/KPanel/releases/download/v9.9.9/SHA256SUMS\r\n\r\nHTTP/2 302\r\nlocation: https://release-assets.githubusercontent.com/test\r\n\r\n'
   pathlib.Path(args[args.index('--dump-header')+1]).write_text(headers)
 else:
  if (root/'binary-network-down').exists(): sys.exit(7)
- if not via_mirror and (root/'release-cdn-down').exists(): sys.exit(7)
- # Without the origin's redirect the mirror can only serve latest; otherwise
- # the binary must come from the release the manifest named.
- latest=via_mirror and (root/'github-down').exists()
- assert origin==('https://github.com/kejilion/KPanel/releases/latest/download/kejilion-node-linux-amd64' if latest else 'https://github.com/kejilion/KPanel/releases/download/v9.9.9/kejilion-node-linux-amd64')
+ if (root/'release-cdn-down').exists(): sys.exit(7)
+ # The manifest binds the download to one release; latest is only used when the
+ # short attempt was refused and the redirect header was never captured.
+ if (root/'short-attempt-down').exists():
+  assert origin=='https://github.com/kejilion/KPanel/releases/latest/download/kejilion-node-linux-amd64'
+ else:
+  assert origin=='https://github.com/kejilion/KPanel/releases/download/v9.9.9/kejilion-node-linux-amd64'
  shutil.copyfile(root/('bad' if (root/'bad-download').exists() else 'release'),out)
 '''
 
@@ -737,7 +742,7 @@ done
 
     def test_delivery_proxy_rewriting_keeps_release_origin_and_download_errors_are_visible(self):
         updater = self.root / 'update.sh'
-        updater.write_text(updater.read_text().replace('https://github.com/', 'https://gh.kejilion.pro/https://github.com/'))
+        updater.write_text(updater.read_text().replace('https://github.com/', 'https://proxy.example.invalid/https://github.com/'))
         (self.root / 'binary-network-down').touch()
         result = self.run_update(False)
         self.assertIn('Checking KPanel', result.stdout)
@@ -750,48 +755,66 @@ done
         path = self.root / 'downloads'
         return path.read_text().splitlines() if path.exists() else []
 
-    def test_unreachable_github_installs_through_the_mirror(self):
+    def test_unreachable_github_fails_and_names_the_direct_source(self):
+        # 工单 #5：GitHub 不可达时不再回退到作者代理镜像，两次取清单都是同一个
+        # 直连地址，失败信息只指 github.com。
         (self.root / 'github-down').touch()
-        result = self.run_update(mode='install')
-        self.assertIn('using the gh.kejilion.pro mirror', result.stdout)
+        result = self.run_update(False, mode='install')
+        self.assertIn('Checking KPanel', result.stdout)
+        self.assertIn('retrying the release check with a longer budget', result.stdout)
+        self.assertIn('check access to github.com', result.stderr)
+        self.assertEqual(self.downloads(), [
+            'https://github.com/kejilion/KPanel/releases/latest/download/SHA256SUMS',
+            'https://github.com/kejilion/KPanel/releases/latest/download/SHA256SUMS',
+        ])
+        self.assertNotEqual(self.binary.read_bytes(), (self.root / 'release').read_bytes())
+
+    def test_refused_short_attempt_is_retried_on_the_same_direct_url(self):
+        # 短试探被拒后换更长预算重试同一个直连地址；重试路径拿不到重定向头，
+        # 二进制就从清单所在的 latest 拉（仍然校验 sha256）。
+        (self.root / 'short-attempt-down').touch()
+        self.run_update()
         self.assertEqual(self.binary.read_bytes(), (self.root / 'release').read_bytes())
         self.assertEqual(self.downloads(), [
             'https://github.com/kejilion/KPanel/releases/latest/download/SHA256SUMS',
-            'https://gh.kejilion.pro/https://github.com/kejilion/KPanel/releases/latest/download/SHA256SUMS',
-            'https://gh.kejilion.pro/https://github.com/kejilion/KPanel/releases/latest/download/kejilion-node-linux-amd64',
+            'https://github.com/kejilion/KPanel/releases/latest/download/SHA256SUMS',
+            'https://github.com/kejilion/KPanel/releases/latest/download/kejilion-node-linux-amd64',
         ])
 
-    def test_unreachable_release_cdn_keeps_the_manifest_release_through_the_mirror(self):
+    def test_unreachable_release_cdn_retries_the_manifest_release(self):
         (self.root / 'release-cdn-down').touch()
-        result = self.run_update()
-        self.assertIn('GitHub release download is unreachable', result.stdout)
-        self.assertEqual(self.binary.read_bytes(), (self.root / 'release').read_bytes())
+        result = self.run_update(False)
+        self.assertIn('Downloading KPanel', result.stdout)
+        self.assertIn('retrying with a longer budget', result.stdout)
+        self.assertIn('check access to GitHub release downloads', result.stderr)
+        # 两次都拉清单点名的那个版本，不会掉头去拉 latest
         self.assertEqual(self.downloads(), [
             'https://github.com/kejilion/KPanel/releases/latest/download/SHA256SUMS',
             'https://github.com/kejilion/KPanel/releases/download/v9.9.9/kejilion-node-linux-amd64',
-            'https://gh.kejilion.pro/https://github.com/kejilion/KPanel/releases/download/v9.9.9/kejilion-node-linux-amd64',
+            'https://github.com/kejilion/KPanel/releases/download/v9.9.9/kejilion-node-linux-amd64',
         ])
+        (self.root / 'release-cdn-down').unlink()
+        self.run_update()
+        self.assertEqual(self.binary.read_bytes(), (self.root / 'release').read_bytes())
 
-    def test_mirror_downloads_are_still_verified_and_failures_name_both_sources(self):
+    def test_downloads_are_still_verified_and_failures_name_the_direct_source(self):
         before = self.binary.read_bytes()
-        (self.root / 'github-down').touch()
         (self.root / 'bad-download').touch()
         self.assertIn('checksum verification failed', self.run_update(False).stderr)
         self.assertEqual(self.binary.read_bytes(), before)
         (self.root / 'bad-download').unlink()
-        (self.root / 'mirror-down').touch()
+        (self.root / 'github-down').touch()
         result = self.run_update(False)
-        self.assertIn('check access to github.com or gh.kejilion.pro', result.stderr)
+        self.assertIn('check access to github.com', result.stderr)
         self.assertEqual(self.binary.read_bytes(), before)
         status = json.loads((self.root / 'config/update-status.json').read_text())
         self.assertEqual((status['state'], status['errorCode']), ('failed', 'release_check'))
-        (self.root / 'mirror-down').unlink()
         (self.root / 'github-down').unlink()
         self.run_update()
 
     def test_github_redirect_is_still_required_when_github_answers(self):
         # A reachable origin that hides the release redirect is not silently
-        # replaced by the mirror's latest.
+        # replaced by a latest download.
         (self.root / 'response-headers').write_text('HTTP/2 200\r\n\r\n')
         self.assertIn('release manifest redirect is invalid', self.run_update(False).stderr)
         self.assertEqual(len(self.downloads()), 1)
