@@ -1,5 +1,5 @@
 # 网络请求清点基线 · 生成命令: bash tests/test_network_inventory.sh --write-baseline tests/fixtures
-# 目标: /tmp/opencode/wt-2-net-inventory/kejilion.sh
+# 目标: kejilion.sh
 # 终态目标：报信_处数 = 0。取内容清单为后续每项改造后逐条比对的预期集合。
 报信_处数=4
 取内容_处数=338

@@ -361,7 +361,9 @@ write_baseline() {
 	inventory_records "${default_target}" | sort -u >"${dir}/network_inventory.records.tsv"
 	{
 		printf '# 网络请求清点基线 · 生成命令: bash tests/test_network_inventory.sh --write-baseline tests/fixtures\n'
-		printf '# 目标: %s\n' "${default_target}"
+		# 目标写成相对仓库根的路径：基线产物不能把本机绝对路径焊死，否则换台机器、
+		# 换个 clone 重跑 --write-baseline 就会与库里的产物对不上（一条命令重跑不成立）。
+		printf '# 目标: %s\n' "${default_target#"${project_root}/"}"
 		printf '# 终态目标：报信_处数 = 0。取内容清单为后续每项改造后逐条比对的预期集合。\n'
 		printf '报信_处数=%s\n' "$(inventory_records "${default_target}" | grep -cE $'^报信\t' || true)"
 		printf '取内容_处数=%s\n' "$(inventory_records "${default_target}" | grep -cE $'^取内容\t' || true)"
