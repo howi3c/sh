@@ -132,8 +132,6 @@ run_command() {
 canshu_v6() {
 	if grep -q '^canshu="V6"' /usr/local/bin/k > /dev/null 2>&1; then
 		sed -i 's/^canshu="default"/canshu="V6"/' ~/kejilion.sh
-	elif grep -q '^canshu="V6"' ~/kejilion.sh.bak > /dev/null 2>&1; then
-		sed -i 's/^canshu="default"/canshu="V6"/' ~/kejilion.sh
 	fi
 }
 
@@ -31682,130 +31680,6 @@ games_server_tools() {
 
 
 
-kejilion_update() {
-
-cd ~
-while true; do
-	clear
-	echo "更新日志"
-	echo "------------------------"
-	echo "全部日志: https://raw.githubusercontent.com/kejilion/sh/main/kejilion_sh_log.txt"
-	echo "------------------------"
-
-	curl -s --max-time 15 https://raw.githubusercontent.com/kejilion/sh/main/kejilion_sh_log.txt | tail -n 30
-	# 只下载前5行获取版本号，避免下载整个脚本
-	local sh_v_new=$(curl -s --max-time 15 -r 0-200 https://raw.githubusercontent.com/kejilion/sh/main/kejilion.sh | grep -o 'sh_v="[0-9.]*"' | head -1 | cut -d '"' -f 2)
-
-	if [ -z "$sh_v_new" ]; then
-		echo -e "${gl_hong}无法获取最新版本信息，请检查网络连接${gl_bai}"
-	elif [ "$sh_v" = "$sh_v_new" ]; then
-		echo -e "${gl_lv}你已经是最新版本！${gl_huang}v$sh_v${gl_bai}"
-	else
-		echo "发现新版本！"
-		echo -e "当前版本 v$sh_v        最新版本 ${gl_huang}v$sh_v_new${gl_bai}"
-	fi
-
-
-	local cron_job="kejilion.sh"
-	local existing_cron=$(crontab -l 2>/dev/null | grep -F "$cron_job")
-
-	if [ -n "$existing_cron" ]; then
-		echo "------------------------"
-		echo -e "${gl_lv}自动更新已开启，每天凌晨2点脚本会自动更新！${gl_bai}"
-	fi
-
-	echo "------------------------"
-	echo "1. 现在更新            2. 开启自动更新            3. 关闭自动更新"
-	echo "------------------------"
-	echo "0. 返回主菜单"
-	echo "------------------------"
-	read -e -p "请输入你的选择: " choice
-	case "$choice" in
-		1)
-			clear
-			local country=$(curl -s --max-time 5 ipinfo.io/country)
-			local download_url
-			if [ "$country" = "CN" ]; then
-				download_url="https://raw.githubusercontent.com/kejilion/sh/main/cn/kejilion.sh"
-			else
-				download_url="https://raw.githubusercontent.com/kejilion/sh/main/kejilion.sh"
-			fi
-
-			# 备份当前脚本
-			cp -f ~/kejilion.sh ~/kejilion.sh.bak 2>/dev/null
-
-			# 下载到临时文件，校验后再替换
-			local tmp_file=$(mktemp ~/kejilion_tmp.XXXXXX)
-			if curl -sS --max-time 60 --fail -o "$tmp_file" "$download_url" && \
-			   [ -s "$tmp_file" ] && \
-			   head -1 "$tmp_file" | grep -q '^#!/bin/bash'; then
-				chmod +x "$tmp_file"
-				mv -f "$tmp_file" ~/kejilion.sh
-				canshu_v6
-				cp -f ~/kejilion.sh /usr/local/bin/k > /dev/null 2>&1
-				ln -sf /usr/local/bin/k /usr/bin/k > /dev/null 2>&1
-				echo -e "${gl_lv}脚本已更新到最新版本！${gl_huang}v$sh_v_new${gl_bai}"
-			else
-				rm -f "$tmp_file"
-				# 恢复备份
-				if [ -f ~/kejilion.sh.bak ]; then
-					mv -f ~/kejilion.sh.bak ~/kejilion.sh
-				fi
-				echo -e "${gl_hong}更新失败！下载出错或文件校验不通过，已恢复原版本${gl_bai}"
-			fi
-			break_end
-			~/kejilion.sh
-			exit
-			;;
-		2)
-			clear
-			local country=$(curl -s --max-time 5 ipinfo.io/country)
-			local ipv6_address=$(curl -s --max-time 1 ipv6.ip.sb)
-			# 定时任务同样直连目标站点（GitHub），不再拼作者代理前缀
-			local cron_sed_cmd
-			if [ "$country" = "CN" ]; then
-				cron_sed_cmd="sed -i 's/canshu=\"default\"/canshu=\"CN\"/g' ~/kejilion.sh"
-			elif [ -n "$ipv6_address" ]; then
-				cron_sed_cmd="sed -i 's/canshu=\"default\"/canshu=\"V6\"/g' ~/kejilion.sh"
-			else
-				cron_sed_cmd=""
-			fi
-
-			# 构建健壮的自动更新命令：下载到临时文件 → 校验 → 备份 → 替换 → 恢复本地设置 → 部署
-			SH_Update_task="cd ~ && tmp=\$(mktemp ~/kejilion_tmp.XXXXXX) && curl -sS --max-time 60 --fail -o \"\$tmp\" https://raw.githubusercontent.com/kejilion/sh/main/kejilion.sh && [ -s \"\$tmp\" ] && head -1 \"\$tmp\" | grep -q '^#!/bin/bash' && cp -f ~/kejilion.sh ~/kejilion.sh.bak 2>/dev/null && chmod +x \"\$tmp\" && mv -f \"\$tmp\" ~/kejilion.sh"
-			# 追加设置恢复
-			if [ -n "$cron_sed_cmd" ]; then
-				SH_Update_task="$SH_Update_task && $cron_sed_cmd"
-			fi
-			# 部署到 /usr/local/bin/k 和 /usr/bin/k
-			SH_Update_task="$SH_Update_task; cp -f ~/kejilion.sh /usr/local/bin/k 2>/dev/null; ln -sf /usr/local/bin/k /usr/bin/k 2>/dev/null"
-			# 下载失败时清理临时文件
-			SH_Update_task="$SH_Update_task || rm -f \"\$tmp\" 2>/dev/null"
-
-			check_crontab_installed
-			(crontab -l | grep -v "kejilion.sh") | crontab -
-			(crontab -l 2>/dev/null; echo "$(shuf -i 0-59 -n 1) 2 * * * bash -c '$SH_Update_task'") | crontab -
-			echo -e "${gl_lv}自动更新已开启，每天凌晨2点脚本会自动更新！${gl_bai}"
-			break_end
-			;;
-		3)
-			clear
-			(crontab -l | grep -v "kejilion.sh") | crontab -
-			echo -e "${gl_lv}自动更新已关闭${gl_bai}"
-			break_end
-			;;
-		*)
-			kejilion_sh
-			;;
-	esac
-done
-
-}
-
-
-
-
-
 kejilion_sh() {
 while true; do
 clear
@@ -31839,8 +31713,6 @@ echo -e "${gl_kjlan}------------------------${gl_bai}"
 echo -e "${gl_huang}17.  ${gl_bai}KPanel Web管理面板 ${kpanel_menu_status}"
 echo -e "${gl_hui}     kejilion.sh 的现代化网页管理界面${gl_bai}"
 echo -e "${gl_kjlan}------------------------${gl_bai}"
-echo -e "${gl_kjlan}00.  ${gl_bai}脚本更新"
-echo -e "${gl_kjlan}------------------------${gl_bai}"
 echo -e "${gl_kjlan}0.   ${gl_bai}退出脚本"
 echo -e "${gl_kjlan}------------------------${gl_bai}"
 read -e -p "请输入你的选择: " choice
@@ -31864,7 +31736,6 @@ case $choice in
   14) linux_cluster ;;
   16) games_server_tools ;;
   17) linux_panel kpanel ;;
-  00) kejilion_update ;;
   0) clear ; exit ;;
   *) echo "无效的输入!" ;;
 esac
