@@ -7,7 +7,7 @@ _面向仓库主人。本文只记录**亲手跑出来的**结果；凡是没有
 |---|---|
 | 验收对象 | 集成分支 `purify/kejilion-telemetry-free` |
 | 九项检查实跑时的提交 | `7e770e8`（工单 #2~#10 的合并终点） |
-| 报告落笔时的提交 | 本工单的三个新增提交（详见第八节）；它们只新增/修改文档与 `tests/run_all_checks.sh`，**不碰 `kejilion.sh` 本体**，因此正文数字对两者都成立 |
+| 报告落笔时的提交 | 本工单的三个新增提交（详见第八节）+ 交付前审查修复的一组提交（详见第九节）；全部只动文档与 `tests/` 下的尺子，**不碰 `kejilion.sh` 本体**，因此正文数字对这些提交都成立 |
 | 目标脚本 | `kejilion.sh`，30229 行 |
 | 单入口验收入口 | `tests/run_all_checks.sh`（本文提交后新增） |
 | 判定口径 | `GLOSSARY.md`「报信 / 取内容」+ `docs/adr/0001-keep-content-fetching-strip-reporting.md` |
@@ -44,8 +44,8 @@ bash tests/run_all_checks.sh --no-detail
 
 ## 二、当前基线数字
 
-由 `bash tests/test_network_inventory.sh --records kejilion.sh` 的同一套分类引擎数出
-（`run_all_checks.sh` 只按类别列计数，不改分类规则）：
+由 `bash tests/test_network_inventory.sh --summary kejilion.sh` 的同一套分类引擎数出
+（`run_all_checks.sh` 只把这四个数读进来打印，不自己写统计逻辑、不改分类规则）：
 
 | 口径 | 数值 | 说明 |
 |---|---:|---|
@@ -212,5 +212,67 @@ FAIL 7/9  守门 · 作者代理拔掉、下载直连（工单 #5）   ← tests
 
 还有什么没清的，见 `README.md` 的「**后续事项**」一节：登录通知类脚本、写死地址密码的
 备份模板、示例密码文件、`CONTRIBUTING.md` 的悬空一节、`kpanel_backup_center_dispatch()`
-调用的 `kejilion-agent`，共 5 项（另有 1 项附注记录 README 自身的过时描述），
-每项都写了是什么、在哪、为什么这次不动、建议怎么处理。
+调用的 `kejilion-agent`，共 5 项，每项都写了是什么、在哪、为什么这次不动、建议怎么处理。
+第 6 项是本报告第九节披露的那处越界删除，等仓库主人裁决是否接受。
+
+交付给仓库主人之前另做了一轮代码审查，修掉六项问题（两处术语口径、一处坏味道、
+一处重复、一处规格半成品，外加一处范围蔓延的披露），逐条见第九节；全部只动文档与
+`tests/` 下的尺子。
+
+---
+
+## 九、交付前审查修复，与一处超出工单范围的改动（如实披露）
+
+### 9.1 六项审查修复
+
+九项检查在修复前后都是 9/9 全绿、退出码 0；下表每项一个独立提交，
+提交信息里写明了修的是哪一项、为什么。
+
+| # | 问题 | 改了什么 | 提交 |
+|---|---|---|---|
+| 1 | 术语漂移：新写内容里 7 处用错了指代词——用术语表给"原版"规定的回避词来指 kejilion 原版仓库，而同一批文件又正确用"原版" | `README.md` 4 处、`docs/acceptance-report.md` 1 处、`tests/test_update_removed.sh` 2 处注释，同文件 `upstream_base` 变量顺带改名 `orig_base`（同一个漂移的代码形态，纯局部变量，行为不变） | `80f3335` |
+| 2 | 术语违反：清点检查的内部类型值叫 `telemetry-trigger`（术语表规定"报信"的回避词是"遥测/telemetry"） | `tests/test_network_inventory.sh`：改名 `report-trigger`，同步注释、awk 里的 printf、人读清单三处筛选、自测断言，并把"永不执行"哨兵样例里那串造出来的 POST 地址的占位路径一起改掉（无行为影响）；基线产物里本就没有该类型记录（报信已清零），无需重生成 | `5201813` |
+| 3 | 坏味道：`ask_assert_clean(){ assert_clean_impl "$@"; }` 是零增益纯转发，`ask_` 前缀含义不明，还让 `assert_clean_impl` 一名两生 | `tests/test_network_inventory.sh`：删掉 wrapper，两处调用点直接调 `assert_clean_impl` | `bf4de13` |
+| 4 | 轻度重复："按类别计数 + 经作者代理计数"在 `run_all_checks.sh` 与 `test_network_inventory.sh` 各写了一遍 awk | `tests/test_network_inventory.sh` 新增 `emit_summary()` 与 `--summary` 模式（只吐四个计数，不新增也不改分类口径）；`tests/run_all_checks.sh` 改调它。分类规则一字未动，基线打印格式与刷新产物逐字节不变 | `d16e0ee` |
+| 5 | 规格半成品：README 还描述已删功能（用户故事 22 要求文档只有一份且始终最新） | `README.md`：删「English Version」（`en` 语言参数已随语言副本删除而失效）、核心功能里的「自动更新机制」条目、「KPanel Web 管理面板」整节，以及因此失效的"过时描述附注" | `d9cef37` |
+| 6 | 范围蔓延未披露 | 见 9.2：`docs/acceptance-report.md` 加本节，`README.md`「后续事项」加第 6 条 | 本提交 |
+
+修复后自查：
+
+- 按术语表口径复核那个"原版"的回避词（字面见 `GLOSSARY.md`）在
+  `README.md`、`docs/`、`tests/test_update_removed.sh` 上的命中数 → **0**。
+  （`kejilion.sh` 里另有 6 处同一个词，但指的是反向代理的服务端、模型同步的远端
+  `/models`，属通用技术含义，不在术语表约束范围；该文件本次一行未动。）
+- `grep -rn 'telemetry' tests/` → **0**；若大小写不敏感地查，只剩 1 处：
+  `tests/test_deepseek_harness_manager.sh` 的 `DSH_TELEMETRY_DISABLED`。那是 deepseek
+  harness 工具自己的环境变量名、写在不属于本次改造范围的既有测试里，改掉会让那条断言失效，
+  因此保留并在此说明。
+- `bash tests/run_all_checks.sh` → 9/9 全绿、退出码 0；
+  `bash tests/test_network_inventory.sh --assert-clean` → PASS（报信 0）；
+  `bash tests/test_network_inventory.sh` 自测 → pass。
+- 本次全部改动的文件范围：`README.md`、`docs/acceptance-report.md`、
+  `tests/test_network_inventory.sh`、`tests/run_all_checks.sh`、`tests/test_update_removed.sh`，
+  以及本报告；`kejilion.sh` 未动。
+
+### 9.2 超出工单范围的改动：`CONTRIBUTING.md` 的「主脚本与中文脚本」同步节
+
+- **发生了什么**：工单 #10 删除七个语言副本目录的提交 `cb3d460`，把 `CONTRIBUTING.md` 里
+  「主脚本与中文脚本」整节一起删掉了——那一节要求"根 `kejilion.sh` 与 `cn/kejilion.sh`
+  必须同步、提交前跑 `bash tests/test_cn_script_sync.sh`、同步失败不得合并"（12 行）。
+  同一个提交还删掉了该节指向的 `tests/test_cn_script_sync.sh` 本身。
+- **为什么不在任何工单要求内**：规格 Implementation Decisions 原文是
+  "其余脚本与配置文件本次一律不动"，十一个工单的验收项里也没有一条要求改
+  `CONTRIBUTING.md`。这是范围蔓延，不是规格动作。
+- **为什么不撤消、也不再改它**：那一节描述的两份脚本在 `cn/` 目录删除后已经不存在，
+  它指向的测试文件也一并没了，留着它是假话，会把将来的维护者引向一份不存在的尺子；
+  而撤消它又等于把假话放回去。
+- **如果要恢复，怎么做**：删除前的完整内容在仓库历史里两个提交都拿得到——
+  `git show 7e770e8^:CONTRIBUTING.md`（即 `75d4868`）或 `git show cb3d460^:CONTRIBUTING.md`。
+  把「主脚本与中文脚本」一节按原文贴回 `CONTRIBUTING.md` 即可：仓库里没有任何东西依赖
+  它的缺失（`tests/` 下没有引用这条同步规则的检查，`kejilion.sh` 也不读它）。
+  是否恢复由仓库主人单点决定。
+- **README 侧**：「后续事项」已加第 6 条指向本节。
+- **顺带发现的同源悬空引用**：`docs/kpanel-removal-keep-list.md` 第 100 行也写着
+  "`kejilion.sh` 与 `cn/kejilion.sh` 同步改（`test_cn_script_sync.sh` 守）"。那是工单 #6
+  落笔时的边界记录，读作历史陈述尚能懂，且该文件不在本次点名范围内，故**未动**；
+  若要清理，改成一句"cn 目录已随工单 #10 删除，该同步规则与测试均已不存在"即可。
