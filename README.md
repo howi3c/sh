@@ -9,8 +9,8 @@
 <h1 align="center">KEJILION.SH · 科技lion一键脚本工具</h1>
 
 <p align="center">
-  面向 Linux 服务器的综合脚本工具箱，集成系统管理、网络测试、Docker、LDNMP 建站、
-  备份迁移与安全防护。
+  面向 Linux 服务器的综合脚本工具箱，集成系统管理、网络测试、Docker
+  与安全防护。
 </p>
 
 <p align="center">
@@ -31,12 +31,12 @@
 
 科技Lion 的 Shell 脚本工具是一款全能脚本工具箱，专为 Linux 监控、测试和管理而设计。
 无论您是初学者还是经验丰富的用户，该工具都能提供便捷的解决方案。脚本集成 Docker
-管理、LDNMP 建站、网站优化与防御、备份还原迁移，以及各类系统工具和应用的安装管理，
+管理，以及各类系统工具和应用的安装管理，
 让服务器维护更加简单。
 
 KejiLion's Shell script is an all-in-one toolbox designed for Linux monitoring, testing, and
-server management. It brings together Docker management, LDNMP website deployment, optimization,
-protection, backup, restoration, migration, and common server applications in one interactive tool.
+server management. It brings together Docker management and common server applications in
+one interactive tool.
 
 ## 一键安装
 
@@ -87,12 +87,6 @@ bash <(curl -sL "$KJ_RAW_URL")
   *Network tools: speed tests, route tracing, latency, and packet loss tests.*
 - **Docker 容器管理**：提供容器、镜像、网络、存储卷和日志管理。<br>
   *Docker management for containers, images, networks, volumes, and logs.*
-- **LDNMP 一键部署**：快速搭建 Nginx、MySQL、PHP、Redis 网站环境。<br>
-  *One-click LDNMP stack deployment for Nginx, MySQL, PHP, and Redis.*
-- **网站防御与优化**：提供 CC 防护、防爬虫、防火墙和性能优化。<br>
-  *Website protection and optimization with anti-CC, anti-crawler, firewall, and tuning tools.*
-- **备份与迁移**：支持站点和数据库备份、恢复与远程迁移。<br>
-  *Backup and migration for websites, databases, restoration, and remote transfer.*
 - **BBR 加速优化**：管理内核加速与网络拥塞控制算法。<br>
   *Network acceleration and TCP congestion control optimization.*
 
@@ -129,19 +123,7 @@ bash <(curl -sL "$KJ_RAW_URL")
   （现在它查 `ipinfo.io` 和 `opendata.baidu.com`）。注意它俩是从原版仓库下载来的：只改仓库里的副本，
   对"已经下载过"的机器才有效，要连净化版脚本里的下载地址一起改才彻底。
 
-### 2. 写死地址密码的备份模板
-
-- **是什么**：`beifen.sh` 里硬编码了 `sshpass -p 123456 scp ... root@0.0.0.0:/home/`——密码和地址
-  都是看起来像真值的"死值"，靠净化版脚本下载后用 `sed` 替换成用户输入的内容。
-- **在哪**：仓库根目录 `beifen.sh`。被 `linux_ldnmp()`（主菜单 10「LDNMP建站」→ 站点远程备份）在
-  `kejilion.sh` 第 13493 行从原版仓库下载，随后 `sed` 把 `0.0.0.0` 和 `123456` 换成用户填的 IP 和密码，
-  并写进 `crontab` 定时备份。
-- **为什么这次不动**：同上，规格把它列为 Out of Scope；它不在 `kejilion.sh` 里。
-- **建议怎么处理**：单开工单。最低限度是把仓库里的死值改成一眼看出是占位的字样
-  （例如 `sshpass -p '在此填入密码'`、`root@在此填入IP`），避免被人整份复制走直接用；更好的做法是
-  改成从环境变量或单独配置文件读凭据，并在文件头写一句"别把真密码写进这里"。
-
-### 3. 示例密码文件等 inert 项
+### 2. 示例密码文件等 inert 项
 
 - **是什么**：`archive.key` 是一个 PGP 公钥块（XanMod 内核仓库签名钥），文件名带 `.key`、内容像凭据，
   实际是公开信息，不构成泄露。同类的还有 `cloudflare.conf` 里的 `cftoken = APIKEY00000` 这类占位值。
@@ -154,7 +136,7 @@ bash <(curl -sL "$KJ_RAW_URL")
   明显是占位的字样；`archive.key` 这类公开钥建议在文件头加一行注释说明"这是公开签名钥，不是私钥"，
   免得将来有人心惊。
 
-### 4. `CONTRIBUTING.md` 的「KPanel 轻量节点运行时」一节
+### 3. `CONTRIBUTING.md` 的「KPanel 轻量节点运行时」一节
 
 - **是什么**：`CONTRIBUTING.md` 开头第 3~10 行整节都在讲"KPanel 轻量节点运行时"的维护规则
   （`KPANEL_NODE_LIFECYCLE` 模板、`KPANEL_NODE_RUNTIME_GENERATION` 版本号、
@@ -166,7 +148,7 @@ bash <(curl -sL "$KJ_RAW_URL")
   不要再按本节规则维护"；同时补上净化版真正的贡献约定（每条改动一个提交、写清删了什么、
   改完跑 `bash tests/run_all_checks.sh`）。
 
-### 5. `kpanel_backup_center_dispatch()` 调用的 `kejilion-agent`
+### 4. `kpanel_backup_center_dispatch()` 调用的 `kejilion-agent`
 
 - **是什么**：净化版脚本保留了 `kpanel_backup_center_dispatch()`（`k backup-center`，Docker/Web 备份菜单
   也会调它）。它会去执行 `/usr/local/libexec/kejilion-agent backup-center ...`——那是**另一个二进制**，
@@ -183,9 +165,9 @@ bash <(curl -sL "$KJ_RAW_URL")
   `kejilion-agent` 的审计结论写进 `docs/`，明确它是谁提供的、什么许可、本次调用会做什么。
   在那之前，不建议在装了 Agent 的机器上跑 `k backup-center`。
 
-### 6. 一处已经发生的越界删除：`CONTRIBUTING.md` 的「主脚本与中文脚本」同步节
+### 5. 一处已经发生的越界删除：`CONTRIBUTING.md` 的「主脚本与中文脚本」同步节
 
-上面五项都是"明知没清、故意留下"的；这一项不一样——它是一次**已经发生、但没人要求过的改动**。
+上面四项都是"明知没清、故意留下"的；这一项不一样——它是一次**已经发生、但没人要求过的改动**。
 
 - **是什么**：工单 #10 删七个语言副本目录时，把 `CONTRIBUTING.md` 里"主脚本与中文脚本
   必须同步、提交前跑 `bash tests/test_cn_script_sync.sh`"那一整节（12 行）连带删掉了，
@@ -199,7 +181,7 @@ bash <(curl -sL "$KJ_RAW_URL")
   `git show 7e770e8^:CONTRIBUTING.md` 里）详见验收报告第九节 9.2；
   若判断应当恢复，把那一节按原文贴回 `CONTRIBUTING.md` 即可，仓库里没有任何东西依赖它的缺失。
 
-### 7. 游戏开服脚本会把原版 `kejilion.sh` 装回来（重生路径）
+### 6. 游戏开服脚本会把原版 `kejilion.sh` 装回来（重生路径）
 
 - **是什么**：净化版主菜单 16「游戏开服脚本合集」会从**原版仓库**下载并运行另外两个脚本
   （`palworld.sh`、`mc.sh`）；这两个脚本自己的菜单里又各有一个入口（都绑在字母 `k` 上），会把
@@ -227,7 +209,7 @@ bash <(curl -sL "$KJ_RAW_URL")
      热更新后门一并断掉（`palworld.sh` 第 428 行、`mc.sh` 第 425 行的菜单 `00`「更新脚本」还在从
      `https://kejilion.pro/` 拉自己）。更彻底，代价是这两个脚本从此要自己维护。
 
-### 8. README 的 3 处图片热链与 1 处官网链接（怎么处理待定）
+### 7. README 的 3 处图片热链与 1 处官网链接（怎么处理待定）
 
 - **是什么**：README 有 4 处把请求发到作者域名 `https://kejilion.sh/`：logo、两张效果图截图
   （都是 `<img src="https://kejilion.sh/...">`）和「科技lion官方网站」链接。任何人在 GitHub 上

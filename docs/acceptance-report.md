@@ -116,14 +116,14 @@ done
 | `ipinfo.io` 查询处数 | 12 处非注释行 | 用户故事 7/8：国外大型服务、HTTPS 直连、不经作者之手；只服务地区判断与系统信息展示 |
 | 功能内视频教学链接 | 11 个去重 URL（10 个 bilibili + 1 个 youtu.be） | 用户故事 17：没有文字说明的功能仍有说明书 |
 | 「借用的脚本」致谢 | 3 段 4 处（`感谢bin456789…leitbogioro`、`leitbogioro项目地址`、两处`该功能由jhb大神提供`） | 用户故事 28：署名不是广告 |
-| `KJ_*_NONINTERACTIVE` 纯本地适配器 | 14 个 | 工单 #6 保留清单：只读本地环境变量，不下载、不依赖闭源二进制 |
+| `KJ_*_NONINTERACTIVE` 纯本地适配器 | 12 个 | 工单 #6 保留清单：只读本地环境变量，不下载、不依赖闭源二进制 |
 | 应用市场（主菜单 11）与面板官网信息 | 内置应用 122 个 + 第三方应用目录机制 + `install_panel()` 打印所装面板自己的官网信息 | 用户故事 19：安装引导完整 |
 
 明细备查：
 
-- **14 个适配器**：`KJ_SSH_PORT`、`KJ_DNS`、`KJ_SYSTEM_RESOURCE`、`KJ_DISK_MANAGEMENT`、
+- **12 个适配器**：`KJ_SSH_PORT`、`KJ_DNS`、`KJ_SYSTEM_RESOURCE`、`KJ_DISK_MANAGEMENT`、
   `KJ_NETWORK_OPERATIONS`、`KJ_ACCOUNT_MANAGEMENT`、`KJ_F2B`、`KJ_SYSTEM_TUNING`、
-  `KJ_VIRUS_SCAN`、`KJ_BBRV3`、`KJ_APP`、`KJ_WEB`、`KJ_LDNMP`、`KJ_TEST`。
+  `KJ_VIRUS_SCAN`、`KJ_BBRV3`、`KJ_APP`、`KJ_TEST`。
 - **11 个教学视频**：BV14K421x7BS（BBR3）、
   BV1mH4y1w7qA（红帽内核）、BV1TqvZe4EQm（ClamAV）、BV1Kb421J7yg（内核调优）、
   BV1wv421C71t（poste.io）、BV13F4m1c7h7（Cloudreve）、BV1mZ421T74c（雷池 WAF）、
@@ -134,6 +134,11 @@ done
 > 8 个」整页在 OpenClaw 机器人管理面板里（`主菜单 11 → 114 → 6 → 5`），该面板整体移除后
 > 这一页不复存在，故从上表保留项中撤下；返利参数的清扫仍由
 > `tests/test_ads_stripped.sh` 自动守着。
+>
+> 后续变化（工单 #20「LDNMP 建站整块删除」）：`KJ_WEB`、`KJ_LDNMP` 两套非交互闸门
+> 随建站板块退役（规格"协议门变量随板块退役"），适配器由 14 个变 12 个；
+> `KJ_APP` 仍在清单内——它服务保留的并发锁基础设施（`kpanel_app_with_lock` 等），
+> 与已删的应用市场是两回事。
 
 ---
 
@@ -194,9 +199,11 @@ FAIL 7/9  守门 · 作者代理拔掉、下载直连（工单 #5）   ← tests
 2. **`shellcheck` lint**：本机未安装，按约定只跳过、不算失败；装上的机器上 lint 仅报告不阻断。
 3. **取内容类外部服务的可用性与速度**：规格 Out of Scope 明确排除；大陆网络下直连变慢是已接受取舍。
 4. **已安装闭源面板的系统上的清理**：只改脚本，不动任何现存机器状态（规格 Out of Scope）。
-5. **未纳入本次自动验收的其余既有测试**：`tests/` 下还有大量针对其他脚本（LDNMP 站点等）
-   的测试，本次改造没碰那些脚本，`run_all_checks.sh` 只编排与净化相关的三条缝与六个守门测试。
-   （另有 OpenClaw 管理、ai_cli_manager、deepseek_harness 三批测试，已随工单 #19 退役。）
+5. **未纳入本次自动验收的其余既有测试**：`tests/` 下还有大量针对其他脚本的测试，
+   本次改造没碰那些脚本，`run_all_checks.sh` 只编排与净化相关的三条缝与六个守门测试。
+   （OpenClaw 管理、ai_cli_manager、deepseek_harness 三批测试已随工单 #19 退役；
+   LDNMP 站点清单/权限、建站环境、HTTP 站点、反代输入、web 非交互、建站证书 8 个测试
+   与 2 个证书续签夹具已随工单 #20 退役。）
 
 ---
 
@@ -211,9 +218,9 @@ FAIL 7/9  守门 · 作者代理拔掉、下载直连（工单 #5）   ← tests
 | `docs/vps-smoke.md` | 给仓库主人的 VPS 冒烟操作说明 | `50da66a` |
 | `README.md` | 新增「后续事项」一节（+ 导航链接） | `50da66a` |
 
-还有什么没清的，见 `README.md` 的「**后续事项**」一节：登录通知类脚本、写死地址密码的
-备份模板、示例密码文件、`CONTRIBUTING.md` 的悬空一节、`kpanel_backup_center_dispatch()`
-调用的 `kejilion-agent`，共 5 项，每项都写了是什么、在哪、为什么这次不动、建议怎么处理。
+还有什么没清的，见 `README.md` 的「**后续事项**」一节：登录通知类脚本、示例密码文件、
+`CONTRIBUTING.md` 的悬空一节、`kpanel_backup_center_dispatch()`
+调用的 `kejilion-agent`，共 4 项，每项都写了是什么、在哪、为什么这次不动、建议怎么处理。
 第 6 项是本报告第九节披露的那处越界删除，等仓库主人裁决是否接受。
 
 交付给仓库主人之前另做了一轮代码审查，修掉六项问题（两处术语口径、一处坏味道、
