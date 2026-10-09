@@ -118,7 +118,7 @@ kept_files=(
 	upgrade_openssh9.8p1.sh       # 系统工具 13-26 修复 OpenSSH 高危漏洞
 	archive.key                   # BBR 管理 XanMod 签名钥的回退源
 	fail2ban-ssh.conf             # 工单 #23 收编的 fail2ban SSH 防御配置
-	cloudflare.conf               # 凭据体检占位说明（README 后续事项 #3 记账）
+	cloudflare.conf               # 凭据体检占位说明（README 后续事项 #2 记账）
 )
 for f in "${kept_files[@]}"; do
 	[ -e "${project_root}/${f}" ] ||

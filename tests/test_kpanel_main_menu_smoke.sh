@@ -88,8 +88,10 @@ for script_path in "${project_root}/kejilion.sh"; do
 	done
 
 	# ---- 删除面二·补：应用市场整块退役后，k app 这条 CLI 入口也不许回来 ----
-	# （notes/02-entry-points.md 第 6 节：应用市场删除后需补"k app 亦不存在"。
-	#   linux_panel() 的函数体归工单 #17，这里只守"命令行不再分发到它"。）
+	# 为什么这里要守 k app：命令行是菜单之外的第二条入口。应用市场（工单 #17）
+	# 整块退役后，"k app"若还通向 linux_panel，等于闭源面板从命令行复活——
+	# 菜单里看不到了，用命令照样能调出来。linux_panel() 的函数体归工单 #17 删除，
+	# 这里只守"命令行不再分发到它"。
 	cli_dispatch_body="$(
 		awk '
 			/^[[:space:]]*case \$1 in[[:space:]]*$/ { capture=1 }
