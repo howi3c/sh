@@ -5031,16 +5031,16 @@ kpanel_system_tuning_menu_item() {
 	local item="$1" index="$2" label="$3"
 	echo "------------------------------------------------"
 	if ! kpanel_system_tuning_run_item "$item"; then
-		echo -e "[${gl_hong}FAIL${gl_bai}] ${index}/12. ${label}，一条龙调优已停止"
+		echo -e "[${gl_hong}FAIL${gl_bai}] ${index}/11. ${label}，一条龙调优已停止"
 		return 1
 	fi
 	case "$item" in system-update|system-cleanup|dns-auto) ;; *)
 		if ! kpanel_system_tuning_item_ready "$item"; then
-			echo -e "[${gl_hong}FAIL${gl_bai}] ${index}/12. ${label}，完成态回读失败，一条龙调优已停止"
+			echo -e "[${gl_hong}FAIL${gl_bai}] ${index}/11. ${label}，完成态回读失败，一条龙调优已停止"
 			return 1
 		fi
 	;; esac
-	echo -e "[${gl_lv}OK${gl_bai}] ${index}/12. ${label}"
+	echo -e "[${gl_lv}OK${gl_bai}] ${index}/11. ${label}"
 }
 
 kpanel_system_tuning_apply_item() {
@@ -29873,11 +29873,6 @@ else
 			disk_manager
 			;;
 
-		http-site)
-			shift
-			kpanel_run_http_site "$@"
-			;;
-
 		swap)
 			shift
 			add_swap "$@"
@@ -29959,19 +29954,6 @@ else
 		enable|autostart|开机启动)
 			shift
 			enable "$@"
-			;;
-
-		ssl)
-			shift
-			if [ "$1" = "ps" ]; then
-				ssl_ps
-			elif [ -z "$1" ]; then
-				add_ssl
-			elif [ -n "$1" ]; then
-				add_ssl "$1"
-			else
-				k_info
-			fi
 			;;
 
 		docker)
