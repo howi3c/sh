@@ -265,9 +265,11 @@ assert_upstream_urls_impl() {
 #   另守"原版名下 URL 清零 + 留存 URL 指向本仓库"（见 assert_upstream_urls_impl）。
 # ---------------------------------------------------------------------------
 assert_clean_impl() {
-	local f="$1" records reporting src_hits src_count
+	local f="$1" records reporting src_hits src_count url_out url_rc=0
 
-	assert_upstream_urls_impl "${f}" || return 1
+	# 红线优先：报信比取内容来源更严重，先判报信；URL 违规的结果暂存，
+	# 报信失败时一并点名（一次看全），报信干净时再由它单独决定成败。
+	url_out="$(assert_upstream_urls_impl "${f}" 2>&1)" || url_rc=1
 
 	records="$(inventory_records "$f")"
 	reporting="$(grep -E $'^报信\t' <<<"${records}" || true)"
@@ -296,9 +298,19 @@ assert_clean_impl() {
 				' >&2
 			fi
 		fi
+		# 顺手把取内容来源的问题一起点名，免得修完报信又才发现 URL 没收敛
+		if [ "${url_rc}" -ne 0 ]; then
+			printf '%s\n' "${url_out}" >&2
+		fi
 		return 1
 	fi
 
+	if [ "${url_rc}" -ne 0 ]; then
+		printf '%s\n' "${url_out}" >&2
+		return 1
+	fi
+
+	printf '%s\n' "${url_out}"
 	printf 'PASS: %s 未检出报信端点（报信类 = 0）\n' "${f}"
 	return 0
 }
@@ -438,12 +450,13 @@ write_baseline() {
 #   D) 纯静态属性                 哨兵文件证明目标从未被执行
 # ---------------------------------------------------------------------------
 selftest() {
-	local tmp_dir dirty clean hostile
+	local dirty clean hostile upstream
 	tmp_dir="$(netinv_mktemp)"
 
 	dirty="${tmp_dir}/dirty.sh"
 	clean="${tmp_dir}/clean.sh"
 	hostile="${tmp_dir}/hostile.sh"
+	upstream="${tmp_dir}/upstream.sh"
 	local canary="${tmp_dir}/EXECUTED"
 
 	# 样本一：含全部已知报信形态（bash 上报 + 喂报信数据源）
@@ -480,14 +493,32 @@ echo "视频教学: https://www.bilibili.com/video/BV1"
 local app_url="官网介绍: https://1panel.cn/"
 EOF
 
-	# 样本二：只取内容、无报信（净化后应有的样子）
+	# 样本二：只从本仓库取内容、无报信（工单 #15 之后应有的样子，见 ADR-0002）
 	cat >"${clean}" <<'EOF'
 show_ip() {
 	local ip=$(curl -s https://ipinfo.io/ip && echo)
 	printf '%s\n' "$ip"
 }
-wget -O nginx.conf https://raw.githubusercontent.com/kejilion/nginx/main/nginx10.conf
+wget -O nginx.conf https://raw.githubusercontent.com/howi3c/sh/main/nginx10.conf
 curl -sS -o install.sh https://get.docker.com/install.sh
+curl -sS -O https://raw.githubusercontent.com/howi3c/sh/main/archive.key
+curl -sS -O https://raw.githubusercontent.com/howi3c/sh/main/TG-check-notify.sh
+curl -sS -O https://raw.githubusercontent.com/howi3c/sh/main/TG-SSH-check-notify.sh
+curl -sS -O https://raw.githubusercontent.com/howi3c/sh/main/upgrade_openssh9.8p1.sh
+curl -sS -O https://raw.githubusercontent.com/howi3c/sh/main/fail2ban-ssh.conf
+EOF
+
+	# 样本四：无报信、留存取内容 URL 齐全，但夹了一条原版名下的取内容 URL
+	#   （工单 #15 之前的状态）。用来单独证明"原版 URL 清零"断言会叫——
+	#   它不是因为报信而失败，报信口径在这个样例上是干净的。
+	cat >"${upstream}" <<'EOF'
+wget -O nginx.conf https://raw.githubusercontent.com/howi3c/sh/main/nginx10.conf
+wget -O cc.conf https://raw.githubusercontent.com/kejilion/nginx/main/nginx10.conf
+curl -sS -O https://raw.githubusercontent.com/howi3c/sh/main/archive.key
+curl -sS -O https://raw.githubusercontent.com/howi3c/sh/main/TG-check-notify.sh
+curl -sS -O https://raw.githubusercontent.com/howi3c/sh/main/TG-SSH-check-notify.sh
+curl -sS -O https://raw.githubusercontent.com/howi3c/sh/main/upgrade_openssh9.8p1.sh
+curl -sS -O https://raw.githubusercontent.com/howi3c/sh/main/fail2ban-ssh.conf
 EOF
 
 	# 样本三：若被本工具执行，就会留下哨兵文件并真的发起联网请求
@@ -534,6 +565,24 @@ EOF
 	grep -q 'api.kejilion.pro' <<<"${gate_out}"
 	grep -qE '第 ?[0-9]+ ?行' <<<"${gate_out}"
 	grep -q 'report-post' <<<"${gate_out}"
+
+	# 接口 B 补：原版 URL 清零 + 留存 URL 指向本仓库（ADR-0002，工单 #15）
+	#   样本四无报信，失败只能来自原版 URL 断言——单独证明这条会叫。
+	local upstream_out upstream_rc=0
+	upstream_out="$(assert_clean_impl "${upstream}" 2>&1)" || upstream_rc=$?
+	if [ "${upstream_rc}" -eq 0 ]; then
+		die "原版 URL 清零断言在夹带原版取内容 URL 的样例上应判定失败"
+	fi
+	grep -q '仍存在指向原版名下的 URL' <<<"${upstream_out}"
+	grep -q 'kejilion/nginx' <<<"${upstream_out}"
+	grep -qE '第 ?[0-9]+ ?行' <<<"${upstream_out}"
+	# 留存清单缺失也必须叫（证明正面断言同样生效，不只是负面在守）
+	local drop_out drop_rc=0
+	drop_out="$(assert_upstream_urls_impl <(grep -v 'fail2ban-ssh.conf' "${clean}") 2>&1)" || drop_rc=$?
+	if [ "${drop_rc}" -eq 0 ]; then
+		die "留存取内容 URL 缺失时闸门应判定失败"
+	fi
+	grep -q 'fail2ban-ssh.conf' <<<"${drop_out}"
 
 	# 接口 C：人读清单覆盖全部已知项
 	local printed
