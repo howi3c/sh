@@ -133,6 +133,16 @@ ${cron_hits}"
 	[ -z "${missing}" ] || fail "${label}: 误删了取内容目标:${missing}"
 }
 
+# ---------------------------------------------------------------------------
+# 判据 6：游戏开服的 6 个仓库根脚本不得再回到仓库里
+#   工单 #22 删的不只是 kejilion.sh 里的下载行，还有仓库根的本体——
+#   palworld.sh:419 与 mc.sh:416 的 k 分支会把原版未净化的 kejilion.sh
+#   下载到 ~/ 并直接运行，文件留着就是"报信复活"的落脚点。
+# ---------------------------------------------------------------------------
+for f in palworld.sh pal_backup.sh pal_log.sh mc.sh mc_backup.sh mc_log.sh; do
+	[ -e "${project_root}/${f}" ] && fail "${f} 又回到了仓库（游戏开服脚本，工单 #22 已删除，含按 k 下载原版 kejilion.sh 的后门）"
+done
+
 check_one_script "${script}" "kejilion.sh"
 
 printf '%s\n' "update-removed=pass"
