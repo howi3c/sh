@@ -339,4 +339,4 @@ test ! -e "${test_app_root}/${docker_name}_port.conf"
 test ! -e "${test_app_root}/${docker_name}_access.conf"
 ! grep -qxF "${app_id}" "${test_app_root}/appno.txt"
 
-printf '%s\n' "kpanel_app_noninteractive=pass"
+printf '%s\n' "local_adapter_app_noninteractive=pass"

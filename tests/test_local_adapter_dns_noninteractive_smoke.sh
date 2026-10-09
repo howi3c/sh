@@ -55,4 +55,4 @@ if kpanel_protocol_active; then
 	exit 1
 fi
 
-printf '%s\n' "kpanel_dns_noninteractive_smoke=pass"
+printf '%s\n' "local_adapter_dns_noninteractive_smoke=pass"

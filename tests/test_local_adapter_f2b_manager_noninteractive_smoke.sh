@@ -145,4 +145,4 @@ fi
 grep -F 'KPANEL_F2B_MANAGER_STATUS=failed' "$temporary/failure.out" >/dev/null
 [ "$(sha256sum "$config" | awk '{print $1}')" = "$before_hash" ]
 
-printf '%s\n' "kpanel_f2b_manager_noninteractive_smoke=pass"
+printf '%s\n' "local_adapter_f2b_manager_noninteractive_smoke=pass"

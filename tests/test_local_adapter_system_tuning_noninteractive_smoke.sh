@@ -170,4 +170,4 @@ kpanel_system_tuning_run_command env > "$temporary/direct-env"
 ! grep -Eiq '^(http|https|all)_proxy=' "$temporary/direct-env"
 unset http_proxy
 
-printf '%s\n' 'kpanel_system_tuning_noninteractive_smoke=pass'
+printf '%s\n' 'local_adapter_system_tuning_noninteractive_smoke=pass'

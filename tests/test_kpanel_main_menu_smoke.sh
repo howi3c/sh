@@ -3,6 +3,12 @@ set -euo pipefail
 
 # 工单 #6「闭源面板整块移除」的守门尺子。
 #
+# 【命名例外 · 工单 #12】tests/ 下其余本地系统适配器测试已把 kpanel 前缀改掉——kpanel
+# 在脚本里有两层含义，见 docs/kpanel-removal-keep-list.md 第二节。唯独本测试保留 kpanel
+# 之名：它是这个被删名字的**反向守门人**，逐条断言二进制那一层的痕迹（kejilion-node、
+# kpanel_node_、KPanel/releases、KJ_LIGHT_NODE_PROTOCOL、每小时 crontab 行）必须为 0。
+# 名字恰带 kpanel，后来者一眼就知它在盯"kpanel 那一层不许回来"，故不改。
+#
 # 守的缝（都是外部行为与不变量，不碰内部实现细节）：
 #   1. 主菜单里「KPanel Web管理面板」入口整体消失：已安装状态变量、两行渲染
 #      文本、17) linux_panel kpanel 分发行，一个都不许回来；

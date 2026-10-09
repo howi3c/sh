@@ -77,4 +77,4 @@ if kpanel_virus_scan_run custom >/dev/null 2>&1; then
 	fail "empty custom path set was accepted"
 fi
 
-printf 'KPanel virus scan non-interactive smoke test passed.\n'
+printf 'Local-adapter virus scan non-interactive smoke test passed.\n'
