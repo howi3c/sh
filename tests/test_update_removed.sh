@@ -36,18 +36,19 @@ fail() { printf 'error: %s\n' "$*" >&2; exit 1; }
 # ---------------------------------------------------------------------------
 orig_base='raw.githubusercontent.com/kejilion/sh'
 expected_targets=(
+	# 说明：AI 面板三个取内容目标（ai_cli_manager.sh / deepseek_harness_manager.sh /
+	# hermes_manager.sh）随工单 #19「AI 与 OpenClaw 整块删除」从本清单移除——
+	# 对应的 run_ai_cli_manager 函数体已删，三个兄弟文件已从仓库删除。
+	# （hermes/deepseek 两条 URL 在 linux_panel 里的残余由工单 #17 随该函数删除。）
 	"${orig_base}/\${KPANEL_SYSTEM_TUNING_NETWORK_COMMIT}/network-optimize.sh"
 	"${orig_base}/main/\${mysql_source}"
 	"${orig_base}/main/\${php_fpm_source}"
-	"${orig_base}/main/ai_cli_manager.sh"
 	"${orig_base}/main/archive.key"
 	"${orig_base}/main/auto_cert_renewal.sh"
 	"${orig_base}/main/beifen.sh"
 	"${orig_base}/main/CF-Under-Attack.sh"
 	"${orig_base}/main/custom_mysql_config-1.cnf"
-	"${orig_base}/main/deepseek_harness_manager.sh"
 	"${orig_base}/main/fail2ban-nginx-cc.conf"
-	"${orig_base}/main/hermes_manager.sh"
 	"${orig_base}/main/mc.sh"
 	"${orig_base}/main/optimized_php.ini"
 	"${orig_base}/main/palworld.sh"
