@@ -125,7 +125,7 @@ kept_files=(
 	upgrade_openssh9.8p1.sh       # 系统工具 13-26 修复 OpenSSH 高危漏洞
 	archive.key                   # BBR 管理 XanMod 签名钥的回退源
 	fail2ban-ssh.conf             # 工单 #23 收编的 fail2ban SSH 防御配置
-	cloudflare.conf               # 凭据体检占位说明（README 后续事项 #2 记账）
+	cloudflare.conf               # 凭据体检占位说明（待办原记账于 README「后续事项」#2，该节已删）
 )
 for f in "${kept_files[@]}"; do
 	[ -e "${project_root}/${f}" ] ||
@@ -145,7 +145,7 @@ done
 # find_container_by_host_port 的调用方 linux_ldnmp 与备份适配器里的建站分支已删），
 # 且 /home/docker/appno.txt 删后全脚本再无代码读写它。按"删除产生的新孤儿逐一
 # 重新检索确认后同批清除"的孤儿收敛循环，这三个函数已从 kejilion.sh 删除，
-# 当时记账在 README「后续事项」第 8 条（含 kpanel_app_with_lock 的 markers/catalog
+# 当时记账在 README「后续事项」第 8 条（该节现已删除；含 kpanel_app_with_lock 的 markers/catalog
 # 两个 resource 分支从此没有调用方的说明——那是保留基础设施的防御性校验，不删）。
 # 因此本断言不再成立，整节退役；将来若这三个名字任何一个回来，它们会落在
 # absent_literals 之外的空白地带，重新评估时请以上面的 grep 证据为准。
