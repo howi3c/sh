@@ -76,15 +76,23 @@ fail() { printf 'error: %s\n' "$*" >&2; exit 1; }
 #   mc_backup.sh / mc_log.sh 也随工单 #22 一并删除。
 #
 # 判据始终只有一条：kejilion.sh 里该 URL 已不存在，不按文件是否存在推导。
+#
+# 【工单 #23 改写说明】取内容来源收敛到本仓库（ADR-0002）后，判据 5 的 4 个
+# 幸存目标仍在 kejilion.sh 里，但 URL 的 owner/repo 从原版 kejilion/sh 改为
+# 本仓库 howi3c/sh。本尺子的本意是"误删防护"（保留的取内容目标一条不少），
+# 故把 expected_targets 的基准同步为本仓库 raw 基址，继续守这 4 个目标不丢。
+# 原版名下的 URL 清零由新增守门 tests/test_spec15_slim_down_removed.sh 负责，
+# 那里保留了对 kejilion 组织路径的反向清零断言。
 # ---------------------------------------------------------------------------
-orig_base='raw.githubusercontent.com/kejilion/sh'
+repo_base='raw.githubusercontent.com/howi3c/sh'
 expected_targets=(
-	"${orig_base}/main/archive.key"
-	"${orig_base}/main/TG-check-notify.sh"
-	"${orig_base}/main/TG-SSH-check-notify.sh"
-	"${orig_base}/main/upgrade_openssh9.8p1.sh"
+	"${repo_base}/main/archive.key"
+	"${repo_base}/main/TG-check-notify.sh"
+	"${repo_base}/main/TG-SSH-check-notify.sh"
+	"${repo_base}/main/upgrade_openssh9.8p1.sh"
 )
-# 本次删除要拿掉的自更新目标
+# 本次删除要拿掉的自更新目标（基准仍是原版仓库地址，判据是"这些 URL 已不存在"）
+orig_base='raw.githubusercontent.com/kejilion/sh'
 removed_targets=(
 	"${orig_base}/main/kejilion.sh"
 	"${orig_base}/main/kejilion_sh_log.txt"
