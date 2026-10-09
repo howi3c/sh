@@ -185,10 +185,12 @@ bash "${project_root}/tests/test_readme_install_source.sh" >/dev/null 2>&1 ||
 	fail "README 安装来源守门未过（与删除守卫交叉确认失败）：tests/test_readme_install_source.sh"
 bash "${project_root}/tests/test_readme_no_upstream_refs.sh" >/dev/null 2>&1 ||
 	fail "README 不残留原版引用守门未过（与删除守卫交叉确认失败）：tests/test_readme_no_upstream_refs.sh"
-# 一条很轻的护栏重合点：只确认 README 的安装命令与本守卫的 repo_raw 指向同一个
-# fork，不复制 install_source 的分节解析逻辑。
+# 一条很轻的护栏重合点：只确认 README 的安装命令指向本仓库 raw 基址
+# https://raw.githubusercontent.com/howi3c/sh/main（这个基址的守卫在
+# tests/test_network_inventory.sh 的 assert_upstream_urls_impl 里，本文件不重复它的
+# 解析逻辑）。基址就写在断言文案里，读者不用跳文件也知道指的是哪个 fork。
 grep -Fq 'raw.githubusercontent.com/howi3c/sh' "${project_root}/README.md" ||
-	fail "README 未指向本仓库 raw 基址（应与 repo_raw 指向同一个 fork）"
+	fail "README 未指向本仓库 raw 基址（应为 https://raw.githubusercontent.com/howi3c/sh/main，与 tests/test_network_inventory.sh 断言的取内容基址同一个 fork）"
 
 # ===========================================================================
 if [ "${fail_count}" -ne 0 ]; then
