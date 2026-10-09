@@ -49,7 +49,6 @@ netinv_mktemp() {
 #     类别 ∈ {报信, 取内容, 参考链接}
 #     报信·类型 report-post     = 直接把资料 POST 出去的上报端点
 #     报信·类型 report-feed     = 先被抓取、再随上报发出的数据源（端点本身在别处合法）
-#     报信·类型 report-trigger  = 附属报信的触发行（不带端点，但带 ENABLE_STATS）
 #     取内容·类型 author-proxy   = 经作者代理 gh.kejilion.pro 拼接出来的下载
 #     取内容·类型 author-host    = 作者自有站点/镜像（非上报）
 #     取内容·类型 direct         = 直连取内容
@@ -68,7 +67,6 @@ inventory_records() {
 	awk '
 		# ---- 静态知识：真实域名后缀白名单，以及“只是文件后缀”的排除集 ----
 		BEGIN {
-			q = sprintf("%c", 39)
 			n = split("com net org io sh pro cn dev ai xyz top eu me tv cloud run app wiki place cat", tl, " ")
 			for (i = 1; i <= n; i++) tld[tl[i]] = 1
 			n = split("json yml yaml conf cnf ini txt log lock bak py pyc toml service sock so a d md bin", ex, " ")
@@ -122,7 +120,7 @@ inventory_records() {
 			if (t ~ /^[[:space:]]*(apt|apt-get|yum|dnf|zypper|apk|pip|pip3|npm|yarn|pnpm|gem)/) return 1
 			if (t ~ /(^|[^A-Za-z0-9._-])(curl|wget|nc|ncat|telnet|ssh|scp|rsync|git)([^A-Za-z0-9._-]|$)/) return 1
 			if (t ~ /(^|[^A-Za-z0-9._-])docker([^A-Za-z0-9._-]|$)/) return 1
-			if (t ~ /(^|[^A-Za-z0-9._-])(kpanel_run_remote_bash|openclaw_memory_probe_url|install)([^A-Za-z0-9._-]|$)/) return 1
+			if (t ~ /(^|[^A-Za-z0-9._-])(kpanel_run_remote_bash|install)([^A-Za-z0-9._-]|$)/) return 1
 			if (t ~ /--source(-registry)?([^A-Za-z0-9._-]|$)/) return 1
 			# 整行就是一个容器镜像引用（命名空间/仓库[:标签]）
 			if (t ~ /^[[:space:]]*[a-z0-9]([a-z0-9._-]*[a-z0-9])?(\/[a-z0-9._-]+)+(:[a-z0-9._-]+)?[[:space:]]*$/) return 1
@@ -138,7 +136,7 @@ inventory_records() {
 			if (raw ~ /^[[:space:]]*#/) next
 
 			line = raw
-			# 作者代理的几种前缀变量（gh_proxy / cron_proxy / mirror_prefix / OPENCLAW_MEMORY_GH_PROXY）
+			# 作者代理的几种前缀变量（gh_proxy / cron_proxy / mirror_prefix）
 			# 统一还原成 https:// 前缀，才能抽出它后面的真实目标主机
 			gsub(/\$\{[A-Za-z0-9_]*(proxy|PROXY|mirror_prefix)\}/, "https://", line)
 			via_proxy = (raw ~ /\$\{[A-Za-z0-9_]*(proxy|PROXY|mirror_prefix)\}/) ? 1 : 0
@@ -146,11 +144,6 @@ inventory_records() {
 			# send_stats() 函数体跟踪：它整体就是“报信上下文”
 			if (line ~ /^send_stats\(\)[[:space:]]*\{/) { in_stats = 1; next }
 			if (in_stats && line ~ /^[}]/)            { in_stats = 0; next }
-
-			# Python 版附属报信触发：openclaw_api_python 携带 ENABLE_STATS 且以 PY heredoc 传参
-			if (raw ~ /openclaw_api_python/ && raw ~ /ENABLE_STATS/ && index(raw, "<<" q "PY" q) > 0) {
-				printf "报信\t<python-附属报信>\treport-trigger\t%d\n", NR
-			}
 
 			# 先抹掉 sed 的 s/旧/新/ 段，避免里面的占位域名被当成端点
 			work = line
@@ -299,12 +292,8 @@ print_inventory() {
 		fi
 
 		printf ' 3) 附属报信触发点（Python 版 / 子进程里把版本号等发出去）\n'
-		local n_trig=0
-		if grep -Eq $'report-trigger\t' <<<"${records}"; then
-			grep -E $'report-trigger\t' <<<"${records}" | sort -t$'\t' -k4,4n | awk -F'\t' '{printf "      · 第 %s 行（openclaw_api_python ... ENABLE_STATS ... <<PY）\n", $4}' || true
-			n_trig="$(grep -cE $'report-trigger\t' <<<"${records}" || true)"
-		fi
-		if [ "${n_trig}" -eq 0 ]; then printf '      （无）\n'; fi
+		printf '      （无）——原先盯 OpenClaw 的 Python 附属报信触发（openclaw_api_python +\n'
+		printf '      ENABLE_STATS + <<PY heredoc）随工单 #19 的整块删除一并退役。\n'
 
 		local stats_calls
 		stats_calls="$( { grep -nE 'send_stats[[:space:]]+"' "${f}" || true; } | wc -l)"
@@ -404,7 +393,7 @@ selftest() {
 	hostile="${tmp_dir}/hostile.sh"
 	local canary="${tmp_dir}/EXECUTED"
 
-	# 样本一：含全部已知报信形态（bash 上报 + Python 附属报信 + 喂报信数据源）
+	# 样本一：含全部已知报信形态（bash 上报 + 喂报信数据源）
 	cat >"${dirty}" <<'EOF'
 send_stats() {
 	if [ "$ENABLE_STATS" == "false" ]; then
@@ -420,12 +409,6 @@ send_stats() {
 	) &
 }
 send_stats "测试菜单"
-deepseek_helper() {
-	openclaw_api_python "$config_file" "$ENABLE_STATS" "$sh_v" <<'PY'
-import urllib.request
-req = urllib.request.Request("https://api.kejilion.pro/api/log", method="POST")
-PY
-}
 wget -O x.conf ${gh_proxy}raw.githubusercontent.com/kejilion/nginx/main/nginx10.conf
 mo=newthing; gh_proxy="https://gh.kejilion.pro/"
 curl -s https://ipinfo.io/ip && echo
@@ -467,7 +450,6 @@ EOF
 
 	grep -qP '^报信\tapi\.kejilion\.pro\treport-post\t' <<<"${dirty_records}"
 	grep -qP '^报信\tipinfo\.io\treport-feed\t' <<<"${dirty_records}"
-	grep -qP '^报信\t<python-附属报信>\treport-trigger\t' <<<"${dirty_records}"
 	grep -qP '^取内容\traw\.githubusercontent\.com\tauthor-proxy\t' <<<"${dirty_records}"
 	grep -qP '^取内容\tipinfo\.io\tdirect\t' <<<"${dirty_records}"
 

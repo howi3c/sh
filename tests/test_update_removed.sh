@@ -34,22 +34,26 @@ fail() { printf 'error: %s\n' "$*" >&2; exit 1; }
 # 删除要拿掉的目标分三类，其余一条都不许少：
 #   1. "自更新/自覆盖"目标（kejilion.sh、kejilion_sh_log.txt）；
 #   2. network-optimize 外部脚本的两个地址（工单 #21）；
-#   3. 应用市场 hermes / deepseek 两个管理器脚本的下载地址（工单 #17）。
+#   3. AI 面板三个管理器脚本的下载地址（ai_cli_manager / hermes / deepseek）。
 #
-# 【工单 #17 改写说明】应用市场板块整块退场后，原 linux_panel 里那两行
+# 【工单 #21 改写说明】network-optimize 外部脚本不再取内容，那两个地址从清单删掉。
+#
+# 【工单 #17 改写说明】应用市场整块退场，原 linux_panel 里那两行
 #   bash <(curl …/hermes_manager.sh)
 #   bash <(curl …/deepseek_harness_manager.sh)
-# 随函数体一起消失，故这两条下载目标从 kejilion.sh 中清零，清单同步删掉
-# 这两行（已 grep 确认：当前 kejilion.sh 中两个 URL 均 0 命中）。
-# 注意：仓库根的 hermes_manager.sh / deepseek_harness_manager.sh 两个
-# 文件本体归工单 #19 删除，本工单一根手指都没碰——清单条目按
-# "kejilion.sh 里该 URL 已不存在"为唯一删条证据，不按文件是否存在推导。
+# 随函数体一起消失，这两条下载目标从 kejilion.sh 中清零，清单同步删掉。
+#
+# 【工单 #19 改写说明】AI 与 OpenClaw 整块删除：run_ai_cli_manager 函数体里的
+#   raw…/main/ai_cli_manager.sh
+# 一并消失，清单删掉这一条；仓库根的 hermes_manager.sh /
+# deepseek_harness_manager.sh / ai_cli_manager.sh 三个文件本体也已在本工单删除。
+#
+# 判据始终只有一条：kejilion.sh 里该 URL 已不存在，不按文件是否存在推导。
 # ---------------------------------------------------------------------------
 orig_base='raw.githubusercontent.com/kejilion/sh'
 expected_targets=(
 	"${orig_base}/main/\${mysql_source}"
 	"${orig_base}/main/\${php_fpm_source}"
-	"${orig_base}/main/ai_cli_manager.sh"
 	"${orig_base}/main/archive.key"
 	"${orig_base}/main/auto_cert_renewal.sh"
 	"${orig_base}/main/beifen.sh"

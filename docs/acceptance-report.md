@@ -115,16 +115,12 @@ done
 |---|---:|---|
 | `ipinfo.io` 查询处数 | 12 处非注释行 | 用户故事 7/8：国外大型服务、HTTPS 直连、不经作者之手；只服务地区判断与系统信息展示 |
 | 功能内视频教学链接 | 11 个去重 URL（10 个 bilibili + 1 个 youtu.be） | 用户故事 17：没有文字说明的功能仍有说明书 |
-| 官方参考入口（API 厂商推荐列表） | 8 个 | 用户故事 13：返利入口删掉，不带返利的官网参考链接保留 |
 | 「借用的脚本」致谢 | 3 段 4 处（`感谢bin456789…leitbogioro`、`leitbogioro项目地址`、两处`该功能由jhb大神提供`） | 用户故事 28：署名不是广告 |
 | `KJ_*_NONINTERACTIVE` 纯本地适配器 | 14 个 | 工单 #6 保留清单：只读本地环境变量，不下载、不依赖闭源二进制 |
 | 应用市场（主菜单 11）与面板官网信息 | 内置应用 122 个 + 第三方应用目录机制 + `install_panel()` 打印所装面板自己的官网信息 | 用户故事 19：安装引导完整 |
 
 明细备查：
 
-- **8 个官方参考入口**：`api-docs.deepseek.com`、`openrouter.ai`、`platform.moonshot.cn`（Kimi）、
-  `www.scnet.cn`（超算互联网）、`www.minimaxi.com`（MiniMax）、`build.nvidia.com`、`ollama.com`、
-  `ai.baishan.com`（白山云）。同页图例只留「● 官方入口」，AFF 标记与返利参数已清空。
 - **14 个适配器**：`KJ_SSH_PORT`、`KJ_DNS`、`KJ_SYSTEM_RESOURCE`、`KJ_DISK_MANAGEMENT`、
   `KJ_NETWORK_OPERATIONS`、`KJ_ACCOUNT_MANAGEMENT`、`KJ_F2B`、`KJ_SYSTEM_TUNING`、
   `KJ_VIRUS_SCAN`、`KJ_BBRV3`、`KJ_APP`、`KJ_WEB`、`KJ_LDNMP`、`KJ_TEST`。
@@ -133,6 +129,11 @@ done
   BV1wv421C71t（poste.io）、BV13F4m1c7h7（Cloudreve）、BV1mZ421T74c（雷池 WAF）、
   BV1Pm42157cK（Python 版本管理）、BV1mC411j7Qd（限流关机）、BV1ib421E7it（`k_info()`）、
   youtu.be/vLL-eb3Z_TY（TG-bot 预警）。
+
+> 后续变化（工单 #19「AI 与 OpenClaw 整块删除」）：原「官方参考入口（API 厂商推荐列表）
+> 8 个」整页在 OpenClaw 机器人管理面板里（`主菜单 11 → 114 → 6 → 5`），该面板整体移除后
+> 这一页不复存在，故从上表保留项中撤下；返利参数的清扫仍由
+> `tests/test_ads_stripped.sh` 自动守着。
 
 ---
 
@@ -193,9 +194,9 @@ FAIL 7/9  守门 · 作者代理拔掉、下载直连（工单 #5）   ← tests
 2. **`shellcheck` lint**：本机未安装，按约定只跳过、不算失败；装上的机器上 lint 仅报告不阻断。
 3. **取内容类外部服务的可用性与速度**：规格 Out of Scope 明确排除；大陆网络下直连变慢是已接受取舍。
 4. **已安装闭源面板的系统上的清理**：只改脚本，不动任何现存机器状态（规格 Out of Scope）。
-5. **未纳入本次自动验收的其余既有测试**：`tests/` 下还有大量针对其他脚本（OpenClaw 管理、
-   ai_cli_manager、deepseek_harness、LDNMP 站点等）的测试，本次改造没碰那些脚本，
-   `run_all_checks.sh` 只编排与净化相关的三条缝与六个守门测试。
+5. **未纳入本次自动验收的其余既有测试**：`tests/` 下还有大量针对其他脚本（LDNMP 站点等）
+   的测试，本次改造没碰那些脚本，`run_all_checks.sh` 只编排与净化相关的三条缝与六个守门测试。
+   （另有 OpenClaw 管理、ai_cli_manager、deepseek_harness 三批测试，已随工单 #19 退役。）
 
 ---
 
@@ -243,10 +244,8 @@ FAIL 7/9  守门 · 作者代理拔掉、下载直连（工单 #5）   ← tests
   `README.md`、`docs/`、`tests/test_update_removed.sh` 上的命中数 → **0**。
   （`kejilion.sh` 里另有 6 处同一个词，但指的是反向代理的服务端、模型同步的远端
   `/models`，属通用技术含义，不在术语表约束范围；该文件本次一行未动。）
-- `grep -rn 'telemetry' tests/` → **0**；若大小写不敏感地查，只剩 1 处：
-  `tests/test_deepseek_harness_manager.sh` 的 `DSH_TELEMETRY_DISABLED`。那是 deepseek
-  harness 工具自己的环境变量名、写在不属于本次改造范围的既有测试里，改掉会让那条断言失效，
-  因此保留并在此说明。
+- `grep -rn 'telemetry' tests/` → **0**。（工单 #19 退役 `tests/test_deepseek_harness_manager.sh`
+  后，原先那 1 处 `DSH_TELEMETRY_DISABLED` 随之消失；大小写不敏感地查同样为 0。）
 - `bash tests/run_all_checks.sh` → 9/9 全绿、退出码 0；
   `bash tests/test_network_inventory.sh --assert-clean` → PASS（报信 0）；
   `bash tests/test_network_inventory.sh` 自测 → pass。
