@@ -257,30 +257,32 @@ bash <(curl -sL "$KJ_RAW_URL")
   `<img>` 的 `src` 改成相对路径，README 打开时对作者域名零请求；第 103 行的官网链接若只是想给读者
   一个作者站点参考，可保留文字说明但去掉跳转，或直接删。
 
-### 8. 三个零调用方的顶层函数（保留：规格点名，待连"应用编号登记"一起退役时再处理）
+### 8. 三个零调用方的顶层函数（已随第二轮审查修复按孤儿收敛循环删除，只剩一处遗留说明）
 
-- **是什么**：`kejilion.sh` 里有三个顶层函数现在**一个调用方都没有**（工单 #24 于 2026-10-09
+- **原是什么**：`kejilion.sh` 里曾有 3 个顶层函数一个调用方都没有（工单 #24 于 2026-10-09
   复核）：`remove_app_id()`（应用编号移除）、`kpanel_app_update_marker()`（写
   `/home/docker/appno.txt` 标记文件）、`find_container_by_host_port()`（按宿主端口找容器）。
   其中 `kpanel_app_update_marker` 只被 `remove_app_id` 调用，而 `remove_app_id` 自身无调用方，
   两个是**传递性孤儿**；`find_container_by_host_port` 则是定义即孤儿。
-- **在哪**：`kejilion.sh` 第 57 行 `kpanel_app_update_marker()`、第 74 行 `remove_app_id()`、
-  第 2524 行 `find_container_by_host_port()`。
-- **为什么这次不动**：规格 Implementation Decisions 点名"并发锁基础设施、应用编号登记…
-  一律保留"，这条点名压倒了"删除后调用方归零的函数逐一确认后清除"的通用规则。锁四件套
-  （`kpanel_app_lock_held` / `kpanel_app_with_lock` 及其 `system` 资源）在保留区有十余处
-  调用方（安装、卸载、iptables、防火墙…），`markers` 分支只服务上面那两个孤儿函数，
-  `catalog` 分支的调用方（应用市场目录刷新）已随工单 #17 退役——但整套基础设施是一个整体，
-  按规格意图保留。
-- **建议怎么处理**：将来若决定连"应用编号登记"（`/home/docker/appno.txt` 那套标记机制）
-  一起退役，需**同时**收尾三件事：删掉这三个函数；把 `kpanel_app_with_lock` 的资源白名单
-  里的 `markers` 与 `catalog` 两个分支一并去掉（第 31 行 `case "$resource" in system|catalog|markers)`）；
-  检查还有没有别处读 `/home/docker/appno.txt`。删除守卫
-  `tests/test_spec15_slim_down_removed.sh` 已就"这三个函数仍在 + 本条记账在位"设了断言
-  （断言 2c），动手时要同步改尺子，不要静默删除。
-- **`find_container_by_host_port` 单独说明**：它不属"应用编号登记"那一套（只是 Docker 查询
-  辅助），但同为零调用方、同样按上面的理由保留。它体积小、无副作用；若单开工单只清它，
-  不牵动锁与标记机制。
+- **怎么处理的**：第二轮审查（固定点 `4c5e44e`）复核后**推翻了上一轮"保留"的裁定**：
+  规格 Implementation Decisions 的判定规则原文是"仅被已删板块调用的一律删；跨板块共享的
+  一律保留"，且明写"删除任何函数前全局检索其调用方"——以 grep 结果为准。实测
+  `remove_app_id` 在 `4c5e44e` 上有 11 个调用点，宿主函数（`docker_app`、
+  `docker_app_plus`、`kpanel_app_remove_compatibility_state`、`install_panel`、
+  `yt_menu_pro`、`linux_panel`、`stream_panel`、`frpc_panel`、`frps_panel`、
+  `openclaw_backup_restore_menu`）全部随应用市场/AI 面板/FRP/OpenClaw 工单删除；
+  `kpanel_app_update_marker` 的唯一调用方就是 `remove_app_id` 自己；
+  `find_container_by_host_port` 的两个调用方（`linux_ldnmp` 与备份适配器里的建站分支）
+  也已删除。且 `/home/docker/appno.txt` 删后全脚本再无代码写它、读它（主菜单
+  `grep -qxF "kpanel"` 的状态显示已随工单 #16 消失）——语义已死。按"删除产生的新孤儿
+  逐一重新检索确认后同批清除"的孤儿收敛循环，三个函数已从 `kejilion.sh` 删除
+  （工单 #25，14172 → 14134 行），删除守卫原断言 2c（"函数仍在"）随之退役。
+- **遗留说明（仍欠仓库主人一眼）**：删掉这三个函数后，保留的并发锁基础设施
+  `kpanel_app_with_lock()` 的资源白名单 `markers` 与 `catalog` 两个分支**从此没有调用方**
+  （现存调用方走的全是 `system` 资源）。这是保留基础设施的防御性校验，按规格不删；
+  只是今后若再看到这两个分支，知道它们是历史遗留即可。`kpanel_app_with_lock` /
+  `kpanel_app_lock_held` 本身在保留区有十余处调用方（安装、卸载、iptables、防火墙…），
+  **保留不动**。
 
 ### 9. 内核优化菜单的「还原默认设置」能力随工单 #21 消失（保留能力实质减少）
 
