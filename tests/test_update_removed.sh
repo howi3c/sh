@@ -31,8 +31,19 @@ fail() { printf 'error: %s\n' "$*" >&2; exit 1; }
 
 # ---------------------------------------------------------------------------
 # 判据 5 的独立基准：改造前的原版脚本从原版仓库取内容的全部目标。
-# 本次只应拿掉"自更新/自覆盖"目标（kejilion.sh、kejilion_sh_log.txt）与
-# network-optimize 外部脚本的两个地址（工单 #21），其余一条都不许少。
+# 删除要拿掉的目标分三类，其余一条都不许少：
+#   1. "自更新/自覆盖"目标（kejilion.sh、kejilion_sh_log.txt）；
+#   2. network-optimize 外部脚本的两个地址（工单 #21）；
+#   3. 应用市场 hermes / deepseek 两个管理器脚本的下载地址（工单 #17）。
+#
+# 【工单 #17 改写说明】应用市场板块整块退场后，原 linux_panel 里那两行
+#   bash <(curl …/hermes_manager.sh)
+#   bash <(curl …/deepseek_harness_manager.sh)
+# 随函数体一起消失，故这两条下载目标从 kejilion.sh 中清零，清单同步删掉
+# 这两行（已 grep 确认：当前 kejilion.sh 中两个 URL 均 0 命中）。
+# 注意：仓库根的 hermes_manager.sh / deepseek_harness_manager.sh 两个
+# 文件本体归工单 #19 删除，本工单一根手指都没碰——清单条目按
+# "kejilion.sh 里该 URL 已不存在"为唯一删条证据，不按文件是否存在推导。
 # ---------------------------------------------------------------------------
 orig_base='raw.githubusercontent.com/kejilion/sh'
 expected_targets=(
@@ -44,9 +55,7 @@ expected_targets=(
 	"${orig_base}/main/beifen.sh"
 	"${orig_base}/main/CF-Under-Attack.sh"
 	"${orig_base}/main/custom_mysql_config-1.cnf"
-	"${orig_base}/main/deepseek_harness_manager.sh"
 	"${orig_base}/main/fail2ban-nginx-cc.conf"
-	"${orig_base}/main/hermes_manager.sh"
 	"${orig_base}/main/mc.sh"
 	"${orig_base}/main/optimized_php.ini"
 	"${orig_base}/main/palworld.sh"
