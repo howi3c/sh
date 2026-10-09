@@ -46,8 +46,11 @@ protection, backup, restoration, migration, and common server applications in on
 使用 `root` 用户执行以下命令。
 
 ```bash
-bash <(curl -sL kejilion.sh)
+KJ_RAW_URL="https://raw.githubusercontent.com/howi3c/sh/main/kejilion.sh"
+bash <(curl -sL "$KJ_RAW_URL")
 ```
+
+这条命令装的是**个人净化版**（脚本从本仓库的 GitHub 直链拉取）；别改成从原作者域名 `kejilion.sh` 拉，那样装回来的是没净化的原版。
 
 首次运行后可按脚本提示设置 `k` 快捷命令，后续直接输入 `k` 即可打开主菜单。
 
@@ -203,6 +206,49 @@ bash <(curl -sL kejilion.sh)
   完整背景、为什么删、以及单点回滚方法（删除前的内容在
   `git show 7e770e8^:CONTRIBUTING.md` 里）详见验收报告第九节 9.2；
   若判断应当恢复，把那一节按原文贴回 `CONTRIBUTING.md` 即可，仓库里没有任何东西依赖它的缺失。
+
+### 7. 游戏开服脚本会把原版 `kejilion.sh` 装回来（重生路径）
+
+- **是什么**：净化版主菜单 16「游戏开服脚本合集」会从**原版仓库**下载并运行另外两个脚本
+  （`palworld.sh`、`mc.sh`）；这两个脚本自己的菜单里又各有一个入口（都绑在字母 `k` 上），会把
+  **原版未净化的 `kejilion.sh`** 下载到 `~/` 并直接运行。完整路径：
+  净化版菜单 → 16「游戏开服脚本合集」→ 幻兽帕鲁 / 我的世界 → `palworld.sh` / `mc.sh`
+  → 按 `k` → 下载并运行原版 `kejilion.sh` → **报信复活**。工单 #13 已把 README 的
+  一键安装命令改成本仓库 raw 地址，但这条路是从菜单里走的，改 README 拦不住它。
+- **在哪**（行号为 2026-10-09 逐个核对）：
+
+  | 文件 | 行号 | 那一行在做什么 |
+  |---|---|---|
+  | `kejilion.sh` | 29674 | 菜单 16 → 1「幻兽帕鲁」：从原版仓库拉 `palworld.sh` 并运行 |
+  | `kejilion.sh` | 29678 | 菜单 16 → 2「我的世界」：从原版仓库拉 `mc.sh` 并运行 |
+  | `palworld.sh` | 419 | 帕鲁菜单按 `k`：从 `https://kejilion.pro/kejilion.sh` 下载原版脚本并立即运行 |
+  | `mc.sh` | 416 | MC 菜单按 `k`：同上，从 `https://kejilion.pro/kejilion.sh` 下载原版脚本并立即运行 |
+
+- **为什么这次不动**：这四个位置全在规格 Out of Scope 的"其他脚本本次完全不动"里
+  （用户故事 29）。菜单 16 是正常功能，规格要求保留；删它不在任何工单范围。
+  `palworld.sh`/`mc.sh` 是独立脚本，本次一律不许改。
+- **建议怎么处理**：单开工单，两个方向可单选也可都做——
+  1. 给 `palworld.sh` 第 419 行、`mc.sh` 第 416 行打补丁，把 `https://kejilion.pro/kejilion.sh`
+     换成本仓库 raw 地址。改动最小，但这两个脚本现在是从原版仓库现拉的，得先把它们收进本仓库，
+     补丁才留得住；
+  2. 改 `kejilion.sh` 第 29674/29678 行的下载地址，让菜单 16 从本仓库拉这两个脚本。这样连它们的
+     热更新后门一并断掉（`palworld.sh` 第 428 行、`mc.sh` 第 425 行的菜单 `00`「更新脚本」还在从
+     `https://kejilion.pro/` 拉自己）。更彻底，代价是这两个脚本从此要自己维护。
+
+### 8. README 的 3 处图片热链与 1 处官网链接（怎么处理待定）
+
+- **是什么**：README 有 4 处把请求发到作者域名 `https://kejilion.sh/`：logo、两张效果图截图
+  （都是 `<img src="https://kejilion.sh/...">`）和「科技lion官方网站」链接。任何人在 GitHub 上
+  打开这份 README，浏览器加载这三张图时会把查看者的 IP 送到作者的服务器——性质和规格反对的
+  报信同源，只是量级小得多（只暴露"谁看过这份 README"）。这 4 处本次**只记账、不改**。
+- **在哪**（行号为 2026-10-09 核对）：`README.md` 第 6 行（`/kejilionsh_logo.webp`）、
+  第 81 行（`/img/screenshots/kejilionsh.webp`）、第 82 行（`/img/screenshots/kejilionsh_en.webp`）、
+  第 109 行（「科技lion官方网站」链接）。
+- **为什么这次不动**：怎么处理要仓库主人定——把图片搬进仓库 / 删掉 `<img>` 标签 / 接受现状，
+  三种做法代价不同（见下），本工单只被允许记账。
+- **建议怎么处理**：单开工单先定方向。推荐"图片搬进仓库 + 删官网链接"：三张图存进 `docs/images/`，
+  `<img>` 的 `src` 改成相对路径，README 打开时对作者域名零请求；第 109 行的官网链接若只是想给读者
+  一个作者站点参考，可保留文字说明但去掉跳转，或直接删。
 
 ## 支持我们
 
