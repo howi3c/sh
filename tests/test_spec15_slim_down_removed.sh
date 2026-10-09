@@ -63,6 +63,8 @@ absent_literals=(
 	# —— FRP 内网穿透（frps/frpc 反向代理）——
 	'frps'                          # 服务端配置生成族 generate_frps_config（删除前 33 行）
 	'frpc'                          # 增强功能模块 frpc_panel/configure_frpc（删除前 57 行）
+	# —— 集群菜单「安装原作者脚本」项（工单 #22 删函数体）——
+	'cluster_python3'               # 工单 #16 验收第 2 条点名的自查词；函数体 6 行，删除前唯一调用点是集群菜单 11 号项渲染行（4c5e44e 上 29516 定义 + 29618 调用共 2 行）
 )
 # 大小写不敏感串——OpenClaw 板块三种写法都出现过，用 -i 一次覆盖
 absent_ci_literals=(
