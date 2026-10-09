@@ -114,7 +114,7 @@ done
 | 保留项 | 实测 | 判据 |
 |---|---:|---|
 | `ipinfo.io` 查询处数 | 12 处非注释行 | 用户故事 7/8：国外大型服务、HTTPS 直连、不经作者之手；只服务地区判断与系统信息展示 |
-| 功能内视频教学链接 | 12 个去重 URL（11 个 bilibili + 1 个 youtu.be） | 用户故事 17：没有文字说明的功能仍有说明书 |
+| 功能内视频教学链接 | 11 个去重 URL（10 个 bilibili + 1 个 youtu.be） | 用户故事 17：没有文字说明的功能仍有说明书 |
 | 官方参考入口（API 厂商推荐列表） | 8 个 | 用户故事 13：返利入口删掉，不带返利的官网参考链接保留 |
 | 「借用的脚本」致谢 | 3 段 4 处（`感谢bin456789…leitbogioro`、`leitbogioro项目地址`、两处`该功能由jhb大神提供`） | 用户故事 28：署名不是广告 |
 | `KJ_*_NONINTERACTIVE` 纯本地适配器 | 14 个 | 工单 #6 保留清单：只读本地环境变量，不下载、不依赖闭源二进制 |
@@ -128,7 +128,7 @@ done
 - **14 个适配器**：`KJ_SSH_PORT`、`KJ_DNS`、`KJ_SYSTEM_RESOURCE`、`KJ_DISK_MANAGEMENT`、
   `KJ_NETWORK_OPERATIONS`、`KJ_ACCOUNT_MANAGEMENT`、`KJ_F2B`、`KJ_SYSTEM_TUNING`、
   `KJ_VIRUS_SCAN`、`KJ_BBRV3`、`KJ_APP`、`KJ_WEB`、`KJ_LDNMP`、`KJ_TEST`。
-- **12 个教学视频**：BV1yMw6e2EwL（FRP 客户端/服务端两处）、BV14K421x7BS（BBR3）、
+- **11 个教学视频**：BV14K421x7BS（BBR3）、
   BV1mH4y1w7qA（红帽内核）、BV1TqvZe4EQm（ClamAV）、BV1Kb421J7yg（内核调优）、
   BV1wv421C71t（poste.io）、BV13F4m1c7h7（Cloudreve）、BV1mZ421T74c（雷池 WAF）、
   BV1Pm42157cK（Python 版本管理）、BV1mC411j7Qd（限流关机）、BV1ib421E7it（`k_info()`）、
