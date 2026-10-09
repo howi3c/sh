@@ -32,8 +32,11 @@ target_script="${KEJILION_SCRIPT_PATH:-${project_root}/kejilion.sh}"
 detail=1
 show_detail() { [ "${detail}" -eq 1 ]; }
 
+# 用法说明整份打印文件头注释：跳过第一行 shebang，打到第一行真正的代码
+# （下面的 set -uo pipefail）之前为止。不写死行号范围——注释增改时既不会把
+# 用法截断，也不会把代码行一起带进 --help 输出。
 usage() {
-	sed -n '2,26p' "${BASH_SOURCE[0]}"
+	awk 'NR == 1 { next } /^[^#[:space:]]/ { exit } { print }' "${BASH_SOURCE[0]}"
 }
 
 # ---------------------------------------------------------------------------
