@@ -111,45 +111,36 @@ bash <(curl -sL "$KJ_RAW_URL")
 
 ## 后续事项
 
-规格的初始约定是"只动 `kejilion.sh`"（外加删掉随主脚本退役的语言资产）。从工单 #16
-起"其他文件"按事由逐个清理：游戏开服、AI 面板、LDNMP 建站各自带走一批兄弟文件，
-又删掉了孤儿文件与整份 `CONTRIBUTING.md`——这些删除的明细见本节末尾的
-「本轮删除记录」。下面这些条目里，**一部分是明知没清、但按规格故意留下**的项，
-逐条记在这里，等决定要不要单开工单；**另一部分是已经处置完毕的披露与记录**（标题带
-"已随工单 #N 处理"或开头写"原是什么/怎么处理的"），保留原文是为了后人不用翻 git
-历史就知道当时发生了什么。父议题规格的 Out of Scope 与用户故事 29/30 要求
-"其他脚本本次完全不动，剩下的记入后续清单"。
+这一节是**还没解决的待办清单**。凡是已经处置完毕的条目，从这里移出——它们的完整记录
+（处置过程、理由、git 提交号）都在 `docs/acceptance-report.md` 里，本节不堆放历史。父议题
+规格的 Out of Scope 与用户故事 29/30 要求"其他脚本本次完全不动，剩下的记入后续清单"，
+所以每一轮清理都把新发现的欠账记到这里；每解决一条就移出一条，编号顺次前移。
 
-> 从工单 #16 起的后续清理里，"其他文件"已经可以动了：凡是事由已消失的条目，就地标注
-> "已随工单 #N 处理"并保留原文作为记录；凡还欠着的，原样留在本节等后面的工单。
-> 本节编号的完整变迁：**原编号 1~9**（规格初始的后续清单）→ 工单 #20 删掉 LDNMP
-> 下载点后，原第 2 条 beifen.sh 事由已消失、随文件一并移出，其后条目顺次上移成
-> **1~8** → 工单 #24 补了 `restore_defaults()` 退场（能力减少）与三个零调用方函数
-> 两条，恢复成 **1~9**（其余条目原文不动、不重排）。本轮（工单 #22）的删除清单
-> 见本节末尾。
+### 1. `TG-SSH-check-notify.sh` 的登录通知：未打码登录 IP + 归属地外联
 
-### 1. 登录通知类脚本（每次 SSH 登录查询 IP 与定位）
-
-- **是什么**：`TG-SSH-check-notify.sh` 会在每次 SSH 登录时查你的公网 IP、归属地、登录名和登录地区，
-  通过 Telegram 机器人发出去；同目录的 `TG-check-notify.sh` 则每 5 分钟把 CPU/内存/硬盘/流量超阈值
-  告警连同 IP 归属地发到同一个机器人。
-- **在哪**：仓库根目录 `TG-SSH-check-notify.sh`、`TG-check-notify.sh`。二者都会被净化版脚本在运行时
-  下载下来：主菜单 13「系统工具」→ 25「TG-bot系统监控预警」会把它们拉到 `~/` 并用 `nano` 让你填
-  Bot Token 和 Chat ID，然后挂进 `@reboot` 定时任务和 `~/.profile`。
-  **下载地址已改指本仓库**（工单 #23）：原来指向原作者仓库的 raw 地址，现改指
-  `https://raw.githubusercontent.com/howi3c/sh/main/…`，与 `archive.key`、`upgrade_openssh9.8p1.sh`
-  同一批改完；改完后即便回退也不会从原作者仓库取内容。
-- **为什么这次不动**：规格 Out of Scope 原文"其他脚本的任何改动"；用户故事 29 要求改造范围可控。
-  这两个脚本不在 `kejilion.sh` 里，删它们不会让净化版少一分报信；改下载地址是取内容收敛（ADR-0002）
-  的要求，**不代表脚本内容被审计通过**。
-- **建议怎么处理**：单开工单，两个口径分开定——`TG-check-notify.sh` 的告警本体是有用功能（只报本机资源），
-  要做的是把消息体里的 `country`/`isp_info`/`masked_ip` 三行摘掉；`TG-SSH-check-notify.sh` 的存在意义
-  就是"登录即报地理位置"，要么整个不启用，要么改成只报时间与登录名、不查任何外部定位服务
-  （现在它查 `ipinfo.io` 和 `opendata.baidu.com`）。两个脚本的外联清单：
-  `TG-check-notify.sh` 查 `ipinfo.io`（归属地）、`ipv4.ip.sb`（本机公网 IPv4）、
-  `api.telegram.org`（用户自己的 bot）；`TG-SSH-check-notify.sh` 在此之上另加
-  `opendata.baidu.com`（归属地）。这些自带的外联**仍待治理**，URL 改指本仓库
-  只解决"从哪取"，不解决"取下来的内容会做什么"。
+- **是什么**：每次有人 SSH 登进你的机器，它就查登录方的 IP 与归属地，连同登录名、
+  登录时间，通过 Telegram 机器人发一条消息。
+- **在哪**：仓库根 `TG-SSH-check-notify.sh`。它由净化版脚本在运行时下载：主菜单 13
+  「系统工具」→ 25「TG-bot系统监控预警」会把它拉到 `~/`，用 `nano` 让你填 Bot Token 和
+  Chat ID，然后挂进 `@reboot` 定时任务和 `~/.profile`（开机自启、长期在后台跑）。下载地址
+  已在工单 #23 改指本仓库（`raw.githubusercontent.com/howi3c/sh/main/…`）。
+- **要紧的地方**：消息里"登录机器"那一行的 IP 是**打过码**的（只留后两段），但"登录 IP"
+  这一行是**完整未打码**的 `$SSH_CONNECTION` 原值；而且脚本第 18 行会把该 IP 拼进 URL
+  查询串发给 `opendata.baidu.com` 换地理位置。也就是说——"谁、什么时间、从哪个 IP、
+  用哪个账号、登了你的哪台服务器"这件事，除了进你自己的 Telegram，**登录 IP 和地理位置
+  还被送去了百度**。登你机器的人若是同事、朋友、客户，那就是在未经他同意的情况下把他的
+  IP 交给第三方。（`ipinfo.io` 查归属地另有一处，属规格明示已接受、不处理的"地区判断端点"。）
+- **为什么这次不动**：规格 Out of Scope 原文"其他脚本的任何改动"；用户故事 29 要求改造
+  范围可控。这些脚本不在 `kejilion.sh` 里。改下载地址是取内容收敛（ADR-0002）的要求，
+  **不代表脚本内容被审计通过**。
+- **建议怎么处理**：单开工单。最小改法是把第 18 行整行删掉（连同第 16~17 行注释和第 27 行
+  的「登录地区」字段），功能退化成本机 IP + 时间 + 登录名，安全上不再把登录者 IP 送出去；
+  要么整个不启用这个脚本。
+- **`TG-check-notify.sh` 已评估、不立项**：同目录那个每 5 分钟报一次 CPU/内存/硬盘/流量
+  超阈值的脚本，已逐行通读——它采集的**只有本机自己的信息**（`ipinfo.io` 查自己服务器的
+  国别与运营商、`ipv4.ip.sb` 取自己服务器的公网 IPv4），发出去的 IP 是打码的 `*.x.x`
+  形态，且只发到用户自己填的 bot。它与主脚本里 12 处同类用法同性质，属规格明示已接受、
+  不处理的"地区判断端点"，**判定不需要单独立项**，因此不列为本节待办。
 
 ### 2. 示例密码文件等 inert 项
 
@@ -167,19 +158,8 @@ bash <(curl -sL "$KJ_RAW_URL")
   5 项之一**保留**，且它的下载地址已在工单 #23 改指本仓库；`cloudflare.conf` 仍在仓库根，
   等"凭据体检"那一票；`kejilion_sh_log.txt` 已在此前的工单里连文件带链接一起删除，不再需要处理。
 
-### 3. `CONTRIBUTING.md` 的「KPanel 轻量节点运行时」一节（已随工单 #22 删除）
 
-- **原是什么**：`CONTRIBUTING.md` 开头第 3~10 行整节都在讲"KPanel 轻量节点运行时"的维护规则
-  （`KPANEL_NODE_LIFECYCLE` 模板、`KPANEL_NODE_RUNTIME_GENERATION` 版本号、
-  `/run/kejilion-node-lifecycle.lock` 锁文件）。它描述的那套运行时已在工单 #6 整块删掉，这一节是悬空文档。
-- **为什么拖到工单 #22 才动手**：工单 #6 按"本次不动其他文件"的约定故意留下，
-  工单 #6 的保留清单（`docs/kpanel-removal-keep-list.md`，已随工单 #17 删除，
-  原文见 git 历史）末尾已记了这一笔；那时的工单同样只被允许加"后续事项"这一节。
-- **怎么处理的**：工单 #22 按验收第 3 条把整个 `CONTRIBUTING.md` 删掉了——全文只有 10 行，
-  唯一一节就是上面那节悬空文档，删掉不损失任何规则。它不是脚本入口，也没有任何测试或构建依赖。
-  删除前的内容仍在 git 历史里（`git show 75d4868:CONTRIBUTING.md`），需要时可整份取回。
-
-### 4. `kpanel_backup_center_dispatch()` 调用的 `kejilion-agent`
+### 3. `kpanel_backup_center_dispatch()` 调用的 `kejilion-agent`
 
 - **是什么**：净化版脚本保留了 `kpanel_backup_center_dispatch()`（`k backup-center`，Docker/Web 备份菜单
   也会调它）。它会去执行 `/usr/local/libexec/kejilion-agent backup-center ...`——那是**另一个二进制**，
@@ -201,51 +181,8 @@ bash <(curl -sL "$KJ_RAW_URL")
   `kejilion-agent` 的审计结论写进 `docs/`，明确它是谁提供的、什么许可、本次调用会做什么。
   在那之前，不建议在装了 Agent 的机器上跑 `k backup-center`。
 
-### 5. 一处已经发生的越界删除：`CONTRIBUTING.md` 的「主脚本与中文脚本」同步节
 
-上面四项都是"明知没清、故意留下"的；这一项不一样——它是一次**已经发生、但没人要求过的改动**。
-
-- **是什么**：工单 #10 删七个语言副本目录时，把 `CONTRIBUTING.md` 里"主脚本与中文脚本
-  必须同步、提交前跑 `bash tests/test_cn_script_sync.sh`"那一整节（12 行）连带删掉了，
-  同一次提交还删掉了该节指向的 `tests/test_cn_script_sync.sh`。
-- **为什么不在要求内**：规格 Implementation Decisions 原文是"其余脚本与配置文件本次一律不动"，
-  没有任何工单要求改 `CONTRIBUTING.md`。这是范围蔓延。
-- **为什么不撤消**：那一节描述的两份脚本在 `cn/` 目录删除后已经不存在，它指向的测试也没了，
-  留着它是假话、会误导维护者；撤消它又等于把假话放回去。
-- **怎么办**：**不撤消**，由仓库主人决定是否接受。完整背景、为什么删、以及单点回滚方法
-  （删除前的内容在 `git show 7e770e8^:CONTRIBUTING.md` 里）详见验收报告第九节 9.2。
-  注意：工单 #22 已把 `CONTRIBUTING.md` 整个文件删除（见第 3 条），所以"把那一段按原文贴回去"
-  这件事的残响只剩历史记录——真要恢复那一节，现在得连整份文件一起从
-  `git show 75d4868:CONTRIBUTING.md` 取回。本条保留为历史披露，不再作为待决事项。
-
-### 6. 游戏开服脚本会把原版 `kejilion.sh` 装回来（重生路径）——已随工单 #22 解决
-
-- **原是什么**：净化版主菜单 16「游戏开服脚本合集」会从**原版仓库**下载并运行另外两个脚本
-  （`palworld.sh`、`mc.sh`）；这两个脚本自己的菜单里又各有一个入口（都绑在字母 `k` 上），会把
-  **原版未净化的 `kejilion.sh`** 下载到 `~/` 并直接运行。完整路径：
-  净化版菜单 → 16「游戏开服脚本合集」→ 幻兽帕鲁 / 我的世界 → `palworld.sh` / `mc.sh`
-  → 按 `k` → 下载并运行原版 `kejilion.sh` → **报信复活**。工单 #13 已把 README 的
-  一键安装命令改成本仓库 raw 地址，但这条路是从菜单里走的，改 README 拦不住它。
-- **当初的位置**（行号为 2026-10-09 逐个核对，随工单 #16 / #22 已全部消失）：
-
-  | 文件 | 行号 | 那一行在做什么 |
-  |---|---|---|
-  | `kejilion.sh` | 29674 | 菜单 16 → 1「幻兽帕鲁」：从原版仓库拉 `palworld.sh` 并运行 |
-  | `kejilion.sh` | 29678 | 菜单 16 → 2「我的世界」：从原版仓库拉 `mc.sh` 并运行 |
-  | `palworld.sh` | 419 | 帕鲁菜单按 `k`：从 `https://kejilion.pro/kejilion.sh` 下载原版脚本并立即运行 |
-  | `mc.sh` | 416 | MC 菜单按 `k`：同上，从 `https://kejilion.pro/kejilion.sh` 下载原版脚本并立即运行 |
-
-- **怎么解决的**：工单 #16 删掉主菜单 16「游戏开服脚本合集」的渲染行与 `16) games_server_tools`
-  分发行；工单 #22 接着把 `games_server_tools()` 函数体整个删掉（它只有 1/2 两个分支，
-  都是拉 `palworld.sh` / `mc.sh` 到 `~/` 运行），同时把仓库根这 6 个游戏脚本文件一并删除。
-  那两个 `k` 分支干的事只有三样：把 `https://kejilion.pro/kejilion.sh` 拉到 `~/`、加可执行权限、
-  立刻运行。文件不在仓库里了，这条路就彻底没有落脚点。
-  集群菜单里"安装原作者脚本"那条同源的路也一并掐断：`cluster_python3()` 从原作者
-  `python-for-vps` 仓库拉一个安装脚本到用户机器上直接 `python3` 执行，函数体随入口一起退役。
-- **结论**：重生路径已清零，`kejilion.sh` 里 `games_server_tools` / `cluster_python3` /
-  `python-for-vps` 三项均为零命中。本条改为历史记录，不再作为待办。
-
-### 7. README 的 3 处图片热链与 1 处官网链接（怎么处理待定）
+### 4. README 的 3 处图片热链与 1 处官网链接（怎么处理待定）
 
 - **是什么**：README 有 4 处把请求发到作者域名 `https://kejilion.sh/`：logo、两张效果图截图
   （都是 `<img src="https://kejilion.sh/...">`）和「科技lion官方网站」链接。任何人在 GitHub 上
@@ -261,34 +198,8 @@ bash <(curl -sL "$KJ_RAW_URL")
   `<img>` 的 `src` 改成相对路径，README 打开时对作者域名零请求；第 103 行的官网链接若只是想给读者
   一个作者站点参考，可保留文字说明但去掉跳转，或直接删。
 
-### 8. 三个零调用方的顶层函数（已随第三轮审查修复按孤儿收敛循环删除，只剩一处遗留说明）
 
-- **原是什么**：`kejilion.sh` 里曾有 3 个顶层函数一个调用方都没有（工单 #24 于 2026-10-09
-  复核）：`remove_app_id()`（应用编号移除）、`kpanel_app_update_marker()`（写
-  `/home/docker/appno.txt` 标记文件）、`find_container_by_host_port()`（按宿主端口找容器）。
-  其中 `kpanel_app_update_marker` 只被 `remove_app_id` 调用，而 `remove_app_id` 自身无调用方，
-  两个是**传递性孤儿**；`find_container_by_host_port` 则是定义即孤儿。
-- **怎么处理的**：第三轮审查（工单 #25，固定点 `4c5e44e`）复核后**推翻了上一轮"保留"的裁定**：
-  规格 Implementation Decisions 的判定规则原文是"仅被已删板块调用的一律删；跨板块共享的
-  一律保留"，且明写"删除任何函数前全局检索其调用方"——以 grep 结果为准。实测
-  `remove_app_id` 在 `4c5e44e` 上有 11 个调用点，宿主函数（`docker_app`、
-  `docker_app_plus`、`kpanel_app_remove_compatibility_state`、`install_panel`、
-  `yt_menu_pro`、`linux_panel`、`stream_panel`、`frpc_panel`、`frps_panel`、
-  `openclaw_backup_restore_menu`）全部随应用市场/AI 面板/FRP/OpenClaw 工单删除；
-  `kpanel_app_update_marker` 的唯一调用方就是 `remove_app_id` 自己；
-  `find_container_by_host_port` 的两个调用方（`linux_ldnmp` 与备份适配器里的建站分支）
-  也已删除。且 `/home/docker/appno.txt` 删后全脚本再无代码写它、读它（主菜单
-  `grep -qxF "kpanel"` 的状态显示已随工单 #16 消失）——语义已死。按"删除产生的新孤儿
-  逐一重新检索确认后同批清除"的孤儿收敛循环，三个函数已从 `kejilion.sh` 删除
-  （工单 #25，14172 → 14134 行），删除守卫原断言 2c（"函数仍在"）随之退役。
-- **遗留说明（仍欠仓库主人一眼）**：删掉这三个函数后，保留的并发锁基础设施
-  `kpanel_app_with_lock()` 的资源白名单 `markers` 与 `catalog` 两个分支**从此没有调用方**
-  （现存调用方走的全是 `system` 资源）。这是保留基础设施的防御性校验，按规格不删；
-  只是今后若再看到这两个分支，知道它们是历史遗留即可。`kpanel_app_with_lock` /
-  `kpanel_app_lock_held` 本身在保留区有十余处调用方（安装、卸载、iptables、防火墙…），
-  **保留不动**。
-
-### 9. 内核优化菜单的「还原默认设置」能力随工单 #21 消失（保留能力实质减少）
+### 5. 内核优化菜单的「还原默认设置」能力随工单 #21 消失（保留能力实质减少）
 
 - **是什么**：内核优化菜单（`k nhyh`，系统工具里那一条）原来第 6 项是「还原默认设置：
   将系统设置还原为默认配置」，由 `restore_defaults()` 实现（旧版 `kejilion.sh` 第
@@ -308,6 +219,8 @@ bash <(curl -sL "$KJ_RAW_URL")
 
 
 
+
+
 工单 #22 清掉的是"入口已断的功能本体 + 仓库孤儿"。逐项列出，便于复核：
 
 - **`kejilion.sh` 函数体（2 个）**
@@ -320,7 +233,7 @@ bash <(curl -sL "$KJ_RAW_URL")
   - 内容已被 `kejilion.sh` 内联生成、不经 URL 下发的 2 个仓库副本：
     `Limiting_Shut_down.sh`（脚本本体在 `kpanel_network_operations_build_script()` 的 heredoc 里逐行写死）、
     `sshd.local`（`cat > /etc/fail2ban/jail.d/sshd.local` 的内联 heredoc），功能都完整保留；
-  - 悬空文档 1 个：`CONTRIBUTING.md`（见第 3 条）。
+  - 悬空文档 1 个：`CONTRIBUTING.md`（删除提交 `80da4de`）。
 - **工单 #22 当时还欠着、现已清完的兄弟文件**（下载点随所属板块删除，仓库副本随之消失）
   - LDNMP 建站区，已随工单 #20 删除：`auto_cert_renewal.sh`、`beifen.sh`、`CF-Under-Attack.sh`、
     `fail2ban-nginx-cc.conf`、`custom_mysql_config.cnf`、`custom_mysql_config-1.cnf`、

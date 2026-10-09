@@ -145,7 +145,7 @@ done
 # find_container_by_host_port 的调用方 linux_ldnmp 与备份适配器里的建站分支已删），
 # 且 /home/docker/appno.txt 删后全脚本再无代码读写它。按"删除产生的新孤儿逐一
 # 重新检索确认后同批清除"的孤儿收敛循环，这三个函数已从 kejilion.sh 删除，
-# 记账在 README「后续事项」第 8 条（含 kpanel_app_with_lock 的 markers/catalog
+# 当时记账在 README「后续事项」第 8 条（含 kpanel_app_with_lock 的 markers/catalog
 # 两个 resource 分支从此没有调用方的说明——那是保留基础设施的防御性校验，不删）。
 # 因此本断言不再成立，整节退役；将来若这三个名字任何一个回来，它们会落在
 # absent_literals 之外的空白地带，重新评估时请以上面的 grep 证据为准。

@@ -59,6 +59,7 @@ _Status: accepted_
 
 - `kejilion.sh` 里指向原作者域名与作者组织仓库的取内容 URL 清零；留下的 5 个全部形如 `raw.githubusercontent.com/howi3c/sh/main/…`。
 - 守门有两处：`tests/test_network_inventory.sh --assert-clean` 新增"原版名下 URL 清零 + 留存 URL 指向本仓库"断言（URL **路径级**判定，因为 `raw.githubusercontent.com` 对 `kejilion/*` 与 `howi3c/*` 是同一主机，只比主机名分不出来源）；`tests/test_spec15_slim_down_removed.sh` 从"已删功能不许回来"的角度守同一批 URL——判据本身只实现一次（在清点检查里），删除守卫直接调用它，不重抄正则与目标清单。
-- **`TG-check-notify.sh` / `TG-SSH-check-notify.sh` 自带的外联没有被动过**。它们运行时还会查 `ipinfo.io`、`ipv4.ip.sb`、`opendata.baidu.com`，并把 IP 归属地经用户自己的 TG bot 发出。URL 改指只解决"从哪取"，不解决"取下来的内容会做什么"——README「后续事项」第 1 条继续记账，等单开工单治理。这是有意的取舍：规格 Out of Scope 明确"其他脚本本次不动"。
+- **两个 TG 脚本自带的外联没有被动过**。它们运行时还会查 `ipinfo.io`、`ipv4.ip.sb`、`opendata.baidu.com`，并把 IP 归属地经用户自己的 TG bot 发出。URL 改指只解决"从哪取"，不解决"取下来的内容会做什么"——README「后续事项」第 1 条继续记账，等单开工单治理。这是有意的取舍：规格 Out of Scope 明确"其他脚本本次不动"。
+  其中 `TG-check-notify.sh` 已逐行通读并**判定不立项**：它只采集本机自己的信息、发出去的 IP 是打码的，与主脚本里 12 处同类用法同性质；只有 `TG-SSH-check-notify.sh` 留在待办里（它发的是登录方的完整未打码 IP）。
 - 有人往 `kejilion.sh` 里加回指向 `kejilion/*` 或 `gh/dl/docker.kejilion.pro` 的 URL 时，总门会直接红。
 - 仓库净增 1 个文件：`fail2ban-ssh.conf`（部署到用户机时仍叫 `centos-ssh.conf`，见术语表"部署文件名"）。
