@@ -7994,7 +7994,7 @@ clamav() {
 # ============================================================================
 # Linux 内核调优模块（重构版）
 # 统一核心函数 + 场景差异化参数 + 持久化到配置文件 + 硬件自适应
-# 替换原 optimize_high_performance / optimize_balanced / optimize_web_server / restore_defaults
+# 替换原 optimize_high_performance / optimize_balanced / optimize_web_server
 # ============================================================================
 
 # 获取内存大小（MB）
@@ -8304,35 +8304,7 @@ optimize_web_server() {
 	_kernel_optimize_core "网站搭建优化模式" "web"
 }
 
-# ── 还原默认设置（完全清理） ──
-restore_defaults() {
-	echo -e "${gl_lv}还原到默认设置...${gl_bai}"
-
-	local CONF="/etc/sysctl.d/99-kejilion-optimize.conf"
-
-	# 删除优化配置文件
-	rm -f "$CONF"
-
-	# 清理 sysctl.conf 里可能残留的 bbr 配置
-	sed -i '/net.ipv4.tcp_congestion_control/d' /etc/sysctl.conf 2>/dev/null
-
-	# 重新加载系统默认配置
-	sysctl --system 2>/dev/null | tail -1
-
-	# 还原透明大页面
-	[ -f /sys/kernel/mm/transparent_hugepage/enabled ] && \
-		echo always > /sys/kernel/mm/transparent_hugepage/enabled 2>/dev/null
-
-	# 清理文件描述符配置
-	if grep -q "# kejilion-optimize" /etc/security/limits.conf 2>/dev/null; then
-		sed -i '/# kejilion-optimize/,+4d' /etc/security/limits.conf
-	fi
-
-	# 清理 BBR 持久化
-	rm -f /etc/modules-load.d/bbr.conf 2>/dev/null
-
-	echo -e "${gl_lv}系统已还原到默认设置${gl_bai}"
-}
+# ── 内核调优场景化参数 ──
 
 
 Kernel_optimize() {
