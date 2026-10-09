@@ -326,6 +326,13 @@ bash <(curl -sL "$KJ_RAW_URL")
     `upgrade_openssh9.8p1.sh`、`archive.key`，以及从 `kejilion/config` 仓收编进来的
     fail2ban SSH 防御配置（仓库内文件名 `fail2ban-ssh.conf`，部署到用户机时仍叫 `centos-ssh.conf`）。
 
+第二轮审查修复（工单 #24 验收报告写完之后）又补删了一个当时漏掉的孤儿：
+
+- **`update_log.sh`**（423 行，原版的脚本更新日志展示脚本）：它符合工单 #22 自己给的判据
+  ——`kejilion.sh` 零提及、零下载，全仓库零引用（`grep -rn 'update_log' . --exclude-dir=.git`
+  只命中验收报告里一句描述性文字），对应规格用户故事 34「仓库里每个文件都有存在的理由」。
+  删除前内容在 git 历史里，删除守卫的孤儿文件黑名单已加上它，今后不得回来。
+
 ## 开源许可
 
 本项目采用 [Apache License 2.0](LICENSE) 开源。

@@ -106,6 +106,8 @@ orphan_files=(
 	tests_openclaw_manager_smoke.sh run_openclaw_manager_matrix.sh
 	# —— 更新功能残留（工单 #7）——
 	kejilion_sh_log.txt
+	# —— 真孤儿：原版更新日志展示脚本（第二轮审查修复补删，全仓库零引用）——
+	update_log.sh
 	# —— 已退役的协作文档（工单 #22）——
 	CONTRIBUTING.md
 )
