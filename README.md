@@ -10,7 +10,7 @@
 
 <p align="center">
   面向 Linux 服务器的综合脚本工具箱，集成系统管理、网络测试、Docker、LDNMP 建站、
-  应用市场、备份迁移与安全防护。
+  备份迁移与安全防护。
 </p>
 
 <p align="center">
@@ -95,12 +95,9 @@ bash <(curl -sL "$KJ_RAW_URL")
   *Backup and migration for websites, databases, restoration, and remote transfer.*
 - **BBR 加速优化**：管理内核加速与网络拥塞控制算法。<br>
   *Network acceleration and TCP congestion control optimization.*
-- **应用市场集成**：一键安装和管理常用面板、服务与应用。<br>
-  *App market integration for one-click deployment and management.*
 
 ## 项目文档
 
-- [应用市场说明](apps/README.md)
 - [科技lion官方网站](https://kejilion.sh/)
 
 ## 使用与安全
