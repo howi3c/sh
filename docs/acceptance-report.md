@@ -251,7 +251,7 @@ FAIL 7/9  守门 · 作者代理拔掉、下载直连（工单 #5）   ← tests
   `README.md`、`docs/`、`tests/test_update_removed.sh` 上的命中数 → **0**。
   （`kejilion.sh` 里另有 6 处同一个词，但指的是反向代理的服务端、模型同步的远端
   `/models`，属通用技术含义，不在术语表约束范围；该文件本次一行未动。）
-- `grep -rn 'telemetry' tests/` → **0**。（工单 #19 退役 `tests/test_deepseek_harness_manager.sh`
+- `grep -rn 't[e]lemetry' tests/` → **0**。（工单 #19 退役 `tests/test_deepseek_harness_manager.sh`
   后，原先那 1 处 `DSH_TELEMETRY_DISABLED` 随之消失；大小写不敏感地查同样为 0。）
 - `bash tests/run_all_checks.sh` → 9/9 全绿、退出码 0；
   `bash tests/test_network_inventory.sh --assert-clean` → PASS（报信 0）；

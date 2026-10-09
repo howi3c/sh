@@ -83,6 +83,15 @@ fail() { printf 'error: %s\n' "$*" >&2; exit 1; }
 # 故把 expected_targets 的基准同步为本仓库 raw 基址，继续守这 4 个目标不丢。
 # 原版名下的 URL 清零由新增守门 tests/test_spec15_slim_down_removed.sh 负责，
 # 那里保留了对 kejilion 组织路径的反向清零断言。
+#
+# 【工单 #24 改写说明】这 4 个目标是全仓库**第三份**兄弟文件名清单。另两份：
+#   · tests/test_network_inventory.sh 的 assert_upstream_urls_impl —— 判据的
+#     唯一实现（5 个目标 + 原版 URL 清零正则），删除守卫已改为调用它；
+#   · tests/test_spec15_slim_down_removed.sh —— 现在同样调用上面那个函数。
+# 本清单**故意**保持独立基准：它是"改造前的原版脚本"推导出来的误删防护口径，
+# 只列 4 个目标（不含工单 #23 才收编的 fail2ban-ssh.conf），不从上面那份推导。
+# 若将来第 5 个兄弟文件也要进这份误删防护，改这里即可，但要同时核对其余两处
+# 的说明是否还成立。
 # ---------------------------------------------------------------------------
 repo_base='raw.githubusercontent.com/howi3c/sh'
 expected_targets=(

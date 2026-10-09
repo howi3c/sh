@@ -10,7 +10,8 @@ set -euo pipefail
 #      删除了什么、其余功能与原版一致——且与实际净化结果相符。
 #
 # 手法：静态文本检查，不跑脚本、不联网；与 tests/ 下其它守门测试同风格。
-# 菜单标题的“无遥测版”后缀由 tests/test_main_menu_noninteractive_smoke.sh 在渲染层守，本测试不管。
+# 菜单标题的净化版标识后缀（术语表"报信"条里记的特例）由
+# tests/test_main_menu_noninteractive_smoke.sh 在渲染层守，本测试不管。
 
 project_root="${PROJECT_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 script_path="${KEJILION_SCRIPT_PATH:-${project_root}/kejilion.sh}"

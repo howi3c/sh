@@ -4,18 +4,21 @@
 # 背景：规格 #15 把游戏开服、三类 AI 面板、OpenClaw、应用市场、LDNMP 建站、
 # FRP 内网穿透、network-optimize 外部脚本整块删除，取内容收敛到本仓库
 # （ADR-0002）。本测试守四类断言，让已删的东西与指向原版名下的 URL
-# **永远不会被悄悄加回来**：
+# **永远不会被悄悄加回来**，同时钉住该保留的没被删过头：
 #
 #   1. 已删功能词汇在主脚本中为零（只算非注释行，说明性注释提一句不算复辟）；
 #   2. 仓库根孤儿文件不存在（顺带钉住保留的兄弟文件一个不少）；
-#   3. 剩存取内容 URL 全部指向本仓库 raw，且指向原版名下的 URL 清零；
+#   2c. 规格点名保留的零调用方函数仍在，且 README「后续事项」第 8 条记着账；
+#   3. 剩存取内容 URL 全部指向本仓库 raw、指向原版名下的 URL 清零、报信为 0
+#      ——调用 tests/test_network_inventory.sh --assert-clean 判定，不重抄判据；
 #   4. 与 README 守门交叉确认——直接调用既有两个 README 守门，不重抄它们的逻辑。
 #
 # 与其它守门的分工（避免重复实现、避免判据漂移）：
-#   · test_network_inventory.sh --assert-clean  守"报信=0"与"原版 URL 清零"；
-#     本测试断言 3 的 URL 部分与它口径一致、互为备份，改判据时两处一起看。
+#   · 断言 3 的 URL 判据（报信=0 / 原版名下 URL 清零 / 留存 URL 指向本仓库）
+#     完全由 tests/test_network_inventory.sh --assert-clean 独揽，本测试只调用它，
+#     正则与 5 个取内容目标清单都只有那一份；改判据只需要改一个地方。
 #   · test_update_removed.sh 的 expected_targets 守"保留的取内容目标一条不少"，
-#     是同一批 4 个脚本兄弟文件的另一把尺子。
+#     是同一批兄弟文件的另一把尺子（独立基准，只列 4 个目标，见那里的改写说明）。
 #   · README 侧"安装来源 / 不残留原版引用"由那两个 README 守门负责，本测试只调用。
 #
 # 注意：本测试只做静态文本与存在性检查，绝不执行 kejilion.sh、绝不联网。
@@ -23,7 +26,6 @@ set -uo pipefail
 
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 main_script="${project_root}/kejilion.sh"
-repo_raw="https://raw.githubusercontent.com/howi3c/sh/main"
 
 fail_count=0
 fail() { printf 'FAIL: %s\n' "$*" >&2; fail_count=$((fail_count + 1)); }
@@ -117,11 +119,37 @@ kept_files=(
 	upgrade_openssh9.8p1.sh       # 系统工具 13-26 修复 OpenSSH 高危漏洞
 	archive.key                   # BBR 管理 XanMod 签名钥的回退源
 	fail2ban-ssh.conf             # 工单 #23 收编的 fail2ban SSH 防御配置
-	cloudflare.conf               # 凭据体检占位说明（README 后续事项 #3 记账）
+	cloudflare.conf               # 凭据体检占位说明（README 后续事项 #2 记账）
 )
 for f in "${kept_files[@]}"; do
 	[ -e "${project_root}/${f}" ] ||
 		fail "保留的兄弟文件意外缺失: ${f}（删过头就是事故，规格 #15 明确保留）"
+done
+
+# ---- 断言 2c：规格点名保留的零调用方函数一个不少，且 README 已记账 ----
+# 规格用户故事 33 要求"删除后调用方归零的函数被识别并逐一确认后清除"，但
+# Implementation Decisions 又点名"并发锁基础设施、应用编号登记…一律保留"，两者有张力。
+# 本轮（工单 #24 评审修复）的裁定是**保留不删**，记账在 README「后续事项」第 8 条。
+# 这里把裁定钉住两头：函数仍在（防悄悄删过头）、记账也在（防只剩代码没有说法）。
+# 将来若决定连"应用编号登记"一起退役，请同步改本断言与 README 第 8 条。
+zero_caller_kept_functions=(
+	remove_app_id              # 应用编号移除；只被自己人（无调用方）间接持有
+	kpanel_app_update_marker   # 写 /home/docker/appno.txt 标记文件；只被 remove_app_id 调用
+	find_container_by_host_port # 按宿主端口找容器；定义即孤儿
+)
+for fn in "${zero_caller_kept_functions[@]}"; do
+	grep -qE "^[[:space:]]*${fn}\\(\\)" "${main_script}" ||
+		fail "规格点名保留的零调用方函数不见了: ${fn}（按 Implementation Decisions 应保留；真要连应用编号登记一起退役，请同步改 README「后续事项」第 8 条）"
+done
+todo_section="$(awk -v want='## 后续事项' '
+	$0 == want { in_section = 1; next }
+	/^## /    { in_section = 0 }
+	in_section { print }
+' "${project_root}/README.md")"
+[ -n "${todo_section}" ] || fail "README 里找不到「## 后续事项」这一节（零调用方保留函数的记账无处安放）"
+for name in "${zero_caller_kept_functions[@]}" 'markers' 'catalog'; do
+	printf '%s\n' "${todo_section}" | grep -Fq "${name}" ||
+		fail "「后续事项」缺少零调用方保留函数的记账要素: ${name}（工单 #24 要求把这三个函数为什么保留、将来怎么一起退役写进第 8 条）"
 done
 
 # ===========================================================================
@@ -130,27 +158,22 @@ done
 #   3b 负面：指向原版名下的 URL 清零（URL 路径级，不是主机名级）。
 #       raw.githubusercontent.com 对 kejilion/* 与 howi3c/* 是同一直连主机，
 #       只比主机名分不出来源，故直接 grep owner/repo 路径段。
-#       两个已知不误报的点：kejilion.pro 提示示例域名（菜单 13-21 本机 host
-#       解析）与满篇 kejilion.sh 主脚本自身文件名，均不含组织路径段。
+#
+#   实现：调用 tests/test_network_inventory.sh --assert-clean，不在这里重抄判据。
+#   原先本文件抄了第二份同名正则与第二份 5 个取内容目标清单——换一次 raw 基址
+#   要动两处，是典型的双写（Duplicated Code）。判据与口径改由那一个脚本独揽，
+#   本处只把它的输出原样带出，与断言 4 对 README 守门"调用而非重抄"同一手法。
+#   顺带比原先更强：--assert-clean 同时守"报信=0"，这里一并继承。
 # ===========================================================================
-repo_targets=(
-	archive.key
-	TG-check-notify.sh
-	TG-SSH-check-notify.sh
-	upgrade_openssh9.8p1.sh
-	fail2ban-ssh.conf
-)
-for target in "${repo_targets[@]}"; do
-	grep -qF "${repo_raw}/${target}" "${main_script}" ||
-		fail "留存取内容 URL 缺失或未指向本仓库: ${target}（应为 ${repo_raw}/${target}）"
-done
-# fail2ban 配置收编后的部署文件名保持不变（用户机 jail 名），这是允许的
+url_out="$(bash "${project_root}/tests/test_network_inventory.sh" \
+	--assert-clean "${main_script}" 2>&1)" || {
+	printf '%s\n' "${url_out}" >&2
+	fail "取内容 URL 判据未过（报信 / 原版名下 URL 清零 / 留存 URL 指向本仓库），判据由 tests/test_network_inventory.sh --assert-clean 独揽，细节见上面原样带出的输出: ${main_script}"
+}
+# fail2ban 配置收编后的部署文件名保持不变（用户机 jail 名），这是允许的。
+# 这条只有本守卫在守（清点检查只判 URL，不判部署文件名），故留在这里。
 grep -qF -- '--output centos-ssh.conf' "${main_script}" ||
 	fail "fail2ban SSH 防御配置的部署文件名（--output centos-ssh.conf）不应改动"
-
-upstream_hits="$(grep -nE 'githubusercontent\.com/kejilion/|github\.com/kejilion/|[^a-z0-9.-]gh\.kejilion\.pro|[^a-z0-9.-]dl\.kejilion\.pro|[^a-z0-9.-]docker\.kejilion\.pro' "${main_script}" || true)"
-[ -z "${upstream_hits}" ] ||
-	fail "kejilion.sh 仍存在指向原版名下的 URL（应为 0）: ${upstream_hits}"
 
 # ===========================================================================
 # 断言 4：与 README 守门交叉确认（调用而非重抄）

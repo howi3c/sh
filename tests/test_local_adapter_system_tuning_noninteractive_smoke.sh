@@ -51,7 +51,7 @@ grep -Fqx '1:223.5.5.5 183.60.83.19' "$temporary/dns-action"
 KPANEL_SYSTEM_TUNING_SSHD_CONFIG="$temporary/sshd_config"
 KPANEL_SYSTEM_TUNING_SSHD_RUN_DIR="$temporary/run-sshd"
 KPANEL_SYSTEM_TUNING_SYSTEMD_DIR="$temporary/fake-systemd"
-# 上游 6ebb945 给 prepare_ssh_service 补了"无 init 系统就 return 1"的分支，
+# 原作者 6ebb945 给 prepare_ssh_service 补了"无 init 系统就 return 1"的分支，
 # 于是"装包成功"的断言在无 systemd/OpenRC 的机器上再也走不到。这里只垫一个假
 # systemctl：ssh.service 单元判定为不存在、enable --now 判定为成功，
 # 仍然跑真实的 prepare_ssh_service 代码路径，不 stub 掉被测函数本身。
