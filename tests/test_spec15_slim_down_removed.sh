@@ -11,7 +11,7 @@
 #   3. 剩存取内容 URL 全部指向本仓库 raw、指向原版名下的 URL 清零、报信为 0
 #      ——调用 tests/test_network_inventory.sh --assert-clean 判定，不重抄判据；
 #   4. 与 README 守门交叉确认——直接调用既有两个 README 守门，不重抄它们的逻辑。
-#   （曾经的 2c"规格点名保留的零调用方函数仍在"已随第二轮审查修复退役：
+#   （曾经的 2c"规格点名保留的零调用方函数仍在"已随第三轮审查修复（工单 #25）退役：
 #    那三个函数的调用方全在已删板块，按规格判定规则（以 grep 结果为准）已删除，
 #    理由记在下面断言 2 之后。）
 #
@@ -108,7 +108,7 @@ orphan_files=(
 	tests_openclaw_manager_smoke.sh run_openclaw_manager_matrix.sh
 	# —— 更新功能残留（工单 #7）——
 	kejilion_sh_log.txt
-	# —— 真孤儿：原版更新日志展示脚本（第二轮审查修复补删，全仓库零引用）——
+	# —— 真孤儿：原版更新日志展示脚本（第三轮审查修复补删，全仓库零引用）——
 	update_log.sh
 	# —— 已退役的协作文档（工单 #22）——
 	CONTRIBUTING.md
@@ -132,12 +132,12 @@ for f in "${kept_files[@]}"; do
 		fail "保留的兄弟文件意外缺失: ${f}（删过头就是事故，规格 #15 明确保留）"
 done
 
-# ---- 断言 2c 已退役（第二轮审查修复，工单 #25 执行）----
+# ---- 断言 2c 已退役（第三轮审查修复，工单 #25 执行）----
 # 这一节原来守"规格点名保留的零调用方函数仍在 + README 记着账"，三个函数是
 # remove_app_id / kpanel_app_update_marker / find_container_by_host_port。
 # 退役原因：规格 Implementation Decisions 的判定规则原文是"仅被已删板块调用的
 # 一律删；跨板块共享的一律保留"，且明确写了"删除任何函数前全局检索其调用方"
-# ——以 grep 结果为准。第二轮审查复核发现这三个的调用方全部落在已删板块
+# ——以 grep 结果为准。第三轮审查复核发现这三个的调用方全部落在已删板块
 # （remove_app_id 在 4c5e44e 上有 11 个调用点，宿主函数 kpanel_app_remove_compatibility_state、
 # docker_app、docker_app_plus、install_panel、yt_menu_pro、linux_panel、stream_panel、
 # frpc_panel、frps_panel、openclaw_backup_restore_menu 均已随对应工单删除；

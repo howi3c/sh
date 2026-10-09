@@ -153,10 +153,10 @@ bash <(curl -sL "$KJ_RAW_URL")
 
 - **是什么**：`archive.key` 是一个 PGP 公钥块（XanMod 内核仓库签名钥），文件名带 `.key`、内容像凭据，
   实际是公开信息，不构成泄露。同类的还有 `cloudflare.conf` 里的 `cftoken = APIKEY00000` 这类占位值。
-- **在哪**：仓库根目录 `archive.key`；`kejilion.sh` 第 3976~3977 行会优先从 `dl.xanmod.org` 拉它，
+- **在哪**：仓库根目录 `archive.key`；`kejilion.sh` 第 3938~3939 行会优先从 `dl.xanmod.org` 拉它，
   失败时才退回本仓库这份副本（工单 #23 已把回退源从原版仓库改指本仓库）。
 - **为什么这次不动**：规格 Out of Scope 原文"示例密码文件等 inert 项；记入后续清单"。它们不参与报信，
-  也不被装到用户机器上，删除反而会让第 3977 行的回退下载失败。
+  也不被装到用户机器上，删除反而会让第 3939 行的回退下载失败。
 - **建议怎么处理**：单开工单做一次"凭据体检"——用 `grep -rnE 'passwo?rd|secret|token|api[_-]?key'`
   把整个仓库扫一遍，逐条判断是真凭据、占位符还是公开钥：真凭据立刻改掉并轮换；占位符统一改成
   明显是占位的字样；`archive.key` 这类公开钥建议在文件头加一行注释说明"这是公开签名钥，不是私钥"，
@@ -182,10 +182,12 @@ bash <(curl -sL "$KJ_RAW_URL")
 - **是什么**：净化版脚本保留了 `kpanel_backup_center_dispatch()`（`k backup-center`，Docker/Web 备份菜单
   也会调它）。它会去执行 `/usr/local/libexec/kejilion-agent backup-center ...`——那是**另一个二进制**，
   与工单 #6 删掉的 `kejilion-node` 是两套东西。
-- **在哪**：`kejilion.sh` 第 13925~13936 行（函数定义）、第 6754 行（Docker 备份/迁移/还原
-  工具菜单里的 `5) kpanel_backup_center_dispatch menu docker`）、第 13945~13947 行（CLI
-  分发里的 `backup-center` 分支）。这三处行号由工单 #24 于 2026-10-09 重新核对——
-  脚本从 30229 行削到 14172 行后集体前移，旧记录里的 29831~29842 / 11148 / 13524 已失效。
+- **在哪**：`kejilion.sh` 第 13887~13898 行（函数定义）、第 6716 行（Docker 备份/迁移/还原
+  工具菜单里的 `5) kpanel_backup_center_dispatch menu docker`）、第 13907~13909 行（CLI
+  分发里的 `backup-center` 分支）。这三处行号 2026-10-10 由第三轮审查修复重新核对——
+  脚本从 30229 行削到 14172 行后集体前移过一次（旧记录里的 29831~29842 / 11148 / 13524
+  已失效），第三轮审查（工单 #25）又删了文件头三个零调用方函数（14172 → 14134 行），行号再前移 38 行，
+  13925~13936 / 6754 / 13945~13947 又失效，以这里写的为准。
 - **为什么这次不动**：工单 #6 的保留清单（`docs/kpanel-removal-keep-list.md`，已随工单 #17
   删除，原文见 git 历史）按边界留下了它：
   本脚本**从不下载**这个二进制（函数注释原文 "No downloaded helper or caller-supplied path"），
@@ -257,14 +259,14 @@ bash <(curl -sL "$KJ_RAW_URL")
   `<img>` 的 `src` 改成相对路径，README 打开时对作者域名零请求；第 103 行的官网链接若只是想给读者
   一个作者站点参考，可保留文字说明但去掉跳转，或直接删。
 
-### 8. 三个零调用方的顶层函数（已随第二轮审查修复按孤儿收敛循环删除，只剩一处遗留说明）
+### 8. 三个零调用方的顶层函数（已随第三轮审查修复按孤儿收敛循环删除，只剩一处遗留说明）
 
 - **原是什么**：`kejilion.sh` 里曾有 3 个顶层函数一个调用方都没有（工单 #24 于 2026-10-09
   复核）：`remove_app_id()`（应用编号移除）、`kpanel_app_update_marker()`（写
   `/home/docker/appno.txt` 标记文件）、`find_container_by_host_port()`（按宿主端口找容器）。
   其中 `kpanel_app_update_marker` 只被 `remove_app_id` 调用，而 `remove_app_id` 自身无调用方，
   两个是**传递性孤儿**；`find_container_by_host_port` 则是定义即孤儿。
-- **怎么处理的**：第二轮审查（固定点 `4c5e44e`）复核后**推翻了上一轮"保留"的裁定**：
+- **怎么处理的**：第三轮审查（工单 #25，固定点 `4c5e44e`）复核后**推翻了上一轮"保留"的裁定**：
   规格 Implementation Decisions 的判定规则原文是"仅被已删板块调用的一律删；跨板块共享的
   一律保留"，且明写"删除任何函数前全局检索其调用方"——以 grep 结果为准。实测
   `remove_app_id` 在 `4c5e44e` 上有 11 个调用点，宿主函数（`docker_app`、
@@ -328,7 +330,7 @@ bash <(curl -sL "$KJ_RAW_URL")
     `upgrade_openssh9.8p1.sh`、`archive.key`，以及从 `kejilion/config` 仓收编进来的
     fail2ban SSH 防御配置（仓库内文件名 `fail2ban-ssh.conf`，部署到用户机时仍叫 `centos-ssh.conf`）。
 
-第二轮审查修复（工单 #24 验收报告写完之后）又补删了一个当时漏掉的孤儿：
+第三轮审查修复（工单 #25，工单 #24 验收报告写完之后）又补删了一个当时漏掉的孤儿：
 
 - **`update_log.sh`**（423 行，原版的脚本更新日志展示脚本）：它符合工单 #22 自己给的判据
   ——`kejilion.sh` 零提及、零下载，全仓库零引用（`grep -rn 'update_log' . --exclude-dir=.git`
