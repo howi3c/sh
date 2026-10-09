@@ -149,4 +149,4 @@ grep -Fqx 'KPANEL_NETWORK_OPERATIONS_STATUS=failed' <<< "${rollback_output}" || 
 [ "$(kpanel_network_operations_traffic_version)" = "${version2}" ] || fail "failed enable did not restore the resource version"
 grep -Fqx '15 4 * * * reboot --reason unrelated' "${mock_crontab}" || fail "rollback did not restore unrelated cron"
 
-printf '%s\n' 'kpanel_network_operations_noninteractive_smoke=pass'
+printf '%s\n' 'local_adapter_network_operations_noninteractive_smoke=pass'

@@ -76,4 +76,4 @@ set -e
 [ "$failure_status" -eq 22 ]
 printf '%s\n' "$failure_output" | grep -F 'KPANEL_TEST_RESULT failed chatgpt' >/dev/null
 
-printf '%s\n' "kpanel_test_noninteractive_smoke=pass"
+printf '%s\n' "local_adapter_test_noninteractive_smoke=pass"

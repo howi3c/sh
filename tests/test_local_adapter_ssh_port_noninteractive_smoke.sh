@@ -52,4 +52,4 @@ for script_path in "${script_paths[@]}"; do
 	unset KJ_SSH_PORT_NONINTERACTIVE
 done
 
-printf '%s\n' "kpanel_ssh_port_noninteractive_smoke=pass"
+printf '%s\n' "local_adapter_ssh_port_noninteractive_smoke=pass"

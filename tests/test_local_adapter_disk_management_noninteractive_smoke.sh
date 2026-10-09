@@ -541,4 +541,4 @@ ln -- "${lock_hardlink_source}" "${mock_lock}"
 run_receipt failed 1 format 8:1 ext4
 if grep -q '^mkfs\.ext4' "${mock_log}"; then fail "hard-linked lock reached mkfs"; fi
 
-printf '%s\n' 'PASS: KPanel disk-management noninteractive smoke tests'
+printf '%s\n' 'PASS: local-adapter disk-management noninteractive smoke tests'

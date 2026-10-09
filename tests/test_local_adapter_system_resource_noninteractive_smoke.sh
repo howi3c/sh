@@ -731,4 +731,4 @@ run_dispatch applied firewall disable-ping "${firewall_v5}"
 [ "${RUN_RC}" -eq 0 ] || fail "firewall disable-ping failed"
 grep -Fqx -- '-A INPUT -p icmp --icmp-type echo-request -j DROP' "${test_iptables}" || fail "ping DROP rule is missing"
 
-printf '%s\n' "kpanel_system_resource_noninteractive_smoke=pass"
+printf '%s\n' "local_adapter_system_resource_noninteractive_smoke=pass"

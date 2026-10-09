@@ -62,4 +62,4 @@ eval "${protocol_guard_body}"
 KJ_LDNMP_NONINTERACTIVE=1
 kpanel_protocol_active
 
-printf '%s\n' "kpanel_ldnmp_environment_smoke=pass"
+printf '%s\n' "local_adapter_ldnmp_environment_smoke=pass"

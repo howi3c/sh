@@ -63,4 +63,4 @@ grep -F '"enabled":true' <<<"${status_output}" >/dev/null
 grep -F '"jail":"sshd"' <<<"${status_output}" >/dev/null
 grep -F '"banned":2' <<<"${status_output}" >/dev/null
 
-printf '%s\n' "kpanel_f2b_noninteractive_smoke=pass"
+printf '%s\n' "local_adapter_f2b_noninteractive_smoke=pass"
