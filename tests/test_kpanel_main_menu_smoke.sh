@@ -106,7 +106,8 @@ for script_path in "${project_root}/kejilion.sh"; do
 		'linux_ldnmp' \
 		'frps_panel' \
 		'frpc_panel' \
-		'moltbot_menu'
+		'moltbot_menu' \
+		'cluster_python3'
 	do
 		if grep -Fq "${retired_entry}" <<<"${cli_dispatch_body}"; then
 			fail "CLI 分发块仍通向已退役板块[${retired_entry}]: ${script_path}"

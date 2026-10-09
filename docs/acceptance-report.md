@@ -5,10 +5,10 @@ _面向仓库主人。本文只记录**亲手跑出来的**结果；凡是没有
 
 | 项 | 值 |
 |---|---|
-| 验收对象 | 集成分支 `purify/spec-15-slim-down`（含本轮八个删除工单 #16~#23 与一轮审查修复） |
+| 验收对象 | 集成分支 `purify/spec-15-slim-down`（含本轮八个删除工单 #16~#23 与三轮审查修复） |
 | 九项检查实跑时的提交 | `7e770e8`（工单 #2~#10 的合并终点） |
-| 报告落笔时的提交 | 本工单的三个新增提交（详见第八节）+ 交付前审查修复的一组提交（详见第九节）；全部只动文档与 `tests/` 下的尺子，**不碰 `kejilion.sh` 本体**，因此正文数字对这些提交都成立 |
-| 目标脚本 | `kejilion.sh`，14172 行 |
+| 报告落笔时的提交 | 本工单的三个新增提交（详见第八节）+ 交付前三轮审查修复的一组提交（详见第九节）。前两轮只动文档与 `tests/` 下的尺子；**第三轮按规格判定规则删了 `kejilion.sh` 里三个零调用方函数（38 行）与孤儿文件 `update_log.sh`**，行数/函数数/文件清点等数字已按第三轮后的实测更新 |
+| 目标脚本 | `kejilion.sh`，14134 行 |
 | 单入口验收入口 | `tests/run_all_checks.sh`（本文提交后新增） |
 | 判定口径 | `GLOSSARY.md`「报信 / 取内容」+ `docs/adr/0001-keep-content-fetching-strip-reporting.md` |
 | 父议题规格 | 议题 #15（规格 #15「净化版瘦身」），其中 Testing Decisions 规定「VPS 冒烟由仓库主人执行，不在代理验收范围内」 |
@@ -17,7 +17,7 @@ _面向仓库主人。本文只记录**亲手跑出来的**结果；凡是没有
 
 十三项自动检查**全部通过**：报信 0 处、经作者代理的下载 0 处、取内容 107 处、参考链接 10 处，
 主菜单 13 个编号入口逐个分派成功、语法合法。本轮（规格 #15）把 `kejilion.sh` 从 30229 行
-削到 14172 行、顶层函数从 604 个削到 438 个，删掉的板块一个都没回来。剩下的只有一件事——
+削到 14134 行、顶层函数从 604 个削到 435 个，删掉的板块一个都没回来。剩下的只有一件事——
 **把脚本传上 VPS 人工过目**（操作说明见 `docs/vps-smoke.md`）。
 
 ---
@@ -39,7 +39,8 @@ bash tests/run_all_checks.sh --no-detail
 ```
 
 > 复现前提：仓库主人拿到的是同一个提交上的同一份 `kejilion.sh`。行号会随后续改动漂移，
-> 本文记录的行号以工单 #24 落笔时的 `310f5d2` 为准。
+> 正文引用的 `kejilion.sh` 行号以第三轮审查修复（工单 #25）后的集成分支 tip 为准；
+> 引述历史记录（如 9.x 各轮、反向验证 A 轮）里的行号则是当时的值，按原文保留。
 
 ---
 
@@ -64,15 +65,15 @@ bash tests/run_all_checks.sh --no-detail
 下面三列都是工单 #24 用**当前仓库里这一把尺子**（`tests/test_network_inventory.sh --summary`）
 在三个版本上重跑的结果，不是抄旧报告：
 
-| 口径 | 原版（`90d1b1f:kejilion.sh`，33125 行） | 净化版 · 本轮前（`4c5e44e`，30229 行） | 净化版 · 本轮后（`310f5d2`，14172 行） |
+| 口径 | 原版（`90d1b1f:kejilion.sh`，33125 行） | 净化版 · 本轮前（`4c5e44e`，30229 行） | 净化版 · 本轮后（`310f5d2`，14172 行）+ 第三轮审查修复后（14134 行） |
 |---|---:|---:|---:|
 | 报信 | 3 处（`api.kejilion.pro` 第 171、16421 两行上报 + `ipinfo.io` 第 166 行喂报信） | **0** | **0** |
 | 取内容 | 338 处 | 324 处 | 107 处 |
 | 参考链接 | 110 处 | 84 处 | 10 处 |
 | 经作者代理的下载 | 142 处 | 0 | 0 |
-| 顶层函数 | 689 个 | 604 个 | 438 个 |
+| 顶层函数 | 689 个 | 604 个 | 438 个 + 第三轮再删 3 个 = **435 个** |
 | 主菜单编号入口 | 19 个（1–17、00、0） | 16 个（1–14、16、0） | 13 个（1–9、12、13、14、0） |
-| `kejilion.sh` 行数 | 33125 | 30229 | 14172 |
+| `kejilion.sh` 行数 | 33125 | 30229 | 14172 + 第三轮再删 38 行 = **14134** |
 
 > 「本轮后」一列就是本次规格 #15 瘦身后的终态，也就是本报告的验收对象。
 > 原版那一列保留作历史对照：它证明尺子量得出报信（不永远是 0），也说明本轮到底削掉了多少。
@@ -96,6 +97,8 @@ bash tests/run_all_checks.sh --no-detail
 | **合计** | **16057** | **166** |
 
 30229 − 16057 = 14172，与实测行数对得上；604 − 166 = 438，与实测函数数对得上。
+第三轮审查修复（工单 #25）按规格判定规则又删了 3 个零调用方函数：14172 − 38 = 14134、
+438 − 3 = 435，与当前实测对得上（累计净删 16095 行、166 + 3 = 169 个顶层函数）。
 规格 Further Notes 预估「删掉 8000 行以上」，实测超出近一倍。
 
 ---
@@ -148,7 +151,7 @@ done
 | 保留项 | 实测 | 判据 |
 |---|---|---|
 | fail2ban SSH 防御家族 | 33 个顶层函数（`f2b_*` 6 个 + `kpanel_f2b_*` 27 个），其中 `kpanel_f2b_manager_dispatch()` 等 27 个是工单 #23 收编配置时点名要守的 | 规格 Keep 清单：SSH 防御是保留功能；工单 #23 收编 `fail2ban-ssh.conf`（部署名 `centos-ssh.conf`） |
-| 并发锁四件套 | `kpanel_app_lock_held()` 与 `kpanel_app_with_lock()` 各 13 处命中（1 处定义 + 12 处调用），资源白名单 `system\|catalog\|markers` 在 `kejilion.sh` 第 31 行 | 规格 Implementation Decisions 点名"并发锁基础设施一律保留" |
+| 并发锁四件套 | `kpanel_app_lock_held()` 13 处命中（1 处定义 + 12 处调用）、`kpanel_app_with_lock()` 12 处命中（1 处定义 + 11 处调用），资源白名单 `system\|catalog\|markers` 在 `kejilion.sh` 第 31 行 | 规格 Implementation Decisions 点名"并发锁基础设施一律保留"（第三轮删掉 `remove_app_id` 后 `with_lock` 少 1 处调用，`markers`/`catalog` 分支从此无调用方，见 README 第 8 条） |
 | `KJ_*_NONINTERACTIVE` 纯本地适配器 | 11 个：`KJ_SSH_PORT`、`KJ_DNS`、`KJ_SYSTEM_RESOURCE`、`KJ_DISK_MANAGEMENT`、`KJ_NETWORK_OPERATIONS`、`KJ_ACCOUNT_MANAGEMENT`、`KJ_F2B`、`KJ_SYSTEM_TUNING`、`KJ_VIRUS_SCAN`、`KJ_BBRV3`、`KJ_TEST` | 工单 #6 保留清单：只读本地环境变量，不下载、不依赖闭源二进制 |
 | 功能内视频教学链接 | 8 个去重 URL（7 个 bilibili + 1 个 youtu.be） | 用户故事 17：没有文字说明的功能仍有说明书 |
 | 「借用的脚本」致谢 | 2 个位置共 5 行：重装系统页第 3598~3600 行三行 + 两处「该功能由jhb大神提供」 | 用户故事 28：署名不是广告 |
@@ -190,6 +193,8 @@ done
 | #24 最终验收与交付（本工单） | 只动文档：验收报告定稿、README 后续事项补账、vps-smoke 通读核对 | `kejilion.sh` 与 `tests/` 一行未改；总门复跑 13/13 全绿，见第六节 |
 
 八个删除工单合计：净删 16057 行、166 个顶层函数、66 个仓库文件；净增 3 个文件。
+第三轮审查修复（工单 #25）在此基础上再删 38 行（3 个零调用方函数）与 1 个孤儿文件
+（`update_log.sh`），累计净删 16095 行、169 个顶层函数、67 个仓库文件；净增仍为 3 个。
 
 ---
 
@@ -208,7 +213,7 @@ PASS 9/13  守门 · 语言资产删除（工单 #10）   ← tests/test_languag
 PASS 10/13  守门 · 测试命名（tests/ 不残留已删闭源面板的 kpanel 前缀，工单 #12）   ← tests/test_local_adapter_naming.sh
 PASS 11/13  守门 · README 安装来源（脚本只从本仓库拉，不从作者域名拉回原版，工单 #13）   ← tests/test_readme_install_source.sh
 PASS 12/13  守门 · README 不残留原版仓库引用（指向 kejilion/sh 的徽章/问题反馈/更新日志/Star History 与原作者钱包地址，工单 #14）   ← tests/test_readme_no_upstream_refs.sh
-PASS 13/13  守门 · 删除守卫（工单 #15：已删功能词汇=0 / 根孤儿文件不存在 / 剩存取内容 URL 指向本仓库 / 与 README 守门交叉确认；工单 #24 起加守规格点名保留的零调用方函数仍在）   ← tests/test_spec15_slim_down_removed.sh
+PASS 13/13  守门 · 删除守卫（工单 #15：已删功能词汇=0 / 根孤儿文件不存在 / 剩存取内容 URL 指向本仓库 / 与 README 守门交叉确认；工单 #16 点名自查词 cluster_python3、#22 漏网孤儿 update_log.sh 均在守）   ← tests/test_spec15_slim_down_removed.sh
 
 总体结论: 全部通过（13/13 项）
 ```
@@ -221,26 +226,37 @@ PASS 13/13  守门 · 删除守卫（工单 #15：已删功能词汇=0 / 根孤�
 
 | 断言 | 名字 | 含义 |
 |---|---|---|
-| 1 | 已删功能词汇为零 | 20 个固定串 + 2 个忽略大小写串（`openclaw`、`moltbot`），只算非注释行，命中任何一个就 FAIL |
-| 2 | 仓库根孤儿文件不存在 | 34 个随板块退役的文件（游戏脚本、AI 面板本体、LDNMP 配置、真孤儿、内联生成的仓库副本、`CONTRIBUTING.md` 等）一个都不许回来 |
+| 1 | 已删功能词汇为零 | 18 个固定串 + 2 个忽略大小写串（`openclaw`、`moltbot`），只算非注释行，命中任何一个就 FAIL（第三轮补入工单 #16 点名自查词 `cluster_python3`） |
+| 2 | 仓库根孤儿文件不存在 | 34 个随板块退役的文件（游戏脚本、AI 面板本体、LDNMP 配置、真孤儿、内联生成的仓库副本、`CONTRIBUTING.md`、`update_log.sh` 等）一个都不许回来 |
 | 2b | 保留的兄弟文件一个不少 | 6 个保留文件（两个 TG 通知脚本、`upgrade_openssh9.8p1.sh`、`archive.key`、`fail2ban-ssh.conf`、`cloudflare.conf`）缺任何一个就 FAIL——防删过头 |
-| 2c | 规格点名保留的零调用方函数仍在 + README 记着账 | 三个函数（`remove_app_id`、`kpanel_app_update_marker`、`find_container_by_host_port`）定义在位，且 README「后续事项」里有它们与 `markers`、`catalog` 的记账要素 |
+| 2c | （已退役）规格点名保留的零调用方函数仍在 + README 记着账 | 第三轮审查修复按规格判定规则（以 grep 结果为准）删除了这三个函数，本断言随之退役，退役理由写在尺子文件里；README 第 8 条改为"已删 + `kpanel_app_with_lock` 两个空 resource 分支的说明" |
 | 3 | URL 判据（调用而非重抄） | 直接调 `tests/test_network_inventory.sh --assert-clean`；顺带守 `--output centos-ssh.conf` 这个部署文件名没被改动 |
 | 4 | 与 README 守门交叉确认 | 直接调两个 README 守门 + 一条轻量重合点（README 指向本仓库 raw 基址） |
 
 ### 反向验证：证明 Guard 真的会叫
 
-在**临时副本**上做了四轮注入，每轮都确认 Guard 以退出码 1 FAIL 并点名，随后还原、复跑回 PASS。
-仓库本体自始至终未被改动（`git status --short` 为空）。
+在**临时副本**（或临时改动后还原）上做了六轮注入，每轮都确认 Guard 以退出码 1 FAIL
+并点名，随后还原、复跑回 PASS。仓库本体自始至终未被改动（`git status --short` 为空）。
 
 | 轮次 | 在副本里做了什么 | Guard 的反应 |
 |---|---|---|
-| A | 往 `kejilion.sh` 尾部追加 3 行非注释内容，含 `install_moltbot`、`linux_ldnmp()`、`games_server_tools_menu` | FAIL 4 处，逐条带行号（14173/14174/14174/14174） |
+| A | 往 `kejilion.sh` 尾部追加 3 行非注释内容，含 `install_moltbot`、`linux_ldnmp()`、`games_server_tools_menu` | FAIL 4 处，逐条带行号（14173/14174/14174/14174；当时脚本 14172 行） |
 | B | 删掉保留的兄弟文件 `TG-check-notify.sh` | FAIL 1 处：「保留的兄弟文件意外缺失: TG-check-notify.sh」 |
-| C | 从 `kejilion.sh` 删掉 `remove_app_id()` 整个函数体 | FAIL 1 处：「规格点名保留的零调用方函数不见了: remove_app_id」 |
-| D | 把 README「后续事项」节里的三个函数名与 `markers`、`catalog` 抹掉 | FAIL 5 处：「缺少零调用方保留函数的记账要素」逐条点名 |
+| C | 往 `kejilion.sh` 尾部追加 `cluster_python3() { :; }` | FAIL 1 处：「仍含已删功能词汇 [cluster_python3]」（第三轮补的工单 #16 点名自查词） |
+| D | 在 CLI 分发块里插入 `cluster) cluster_python3 ;;` 分支 | 冒烟 FAIL 1 处：「CLI 分发块仍通向已退役板块[cluster_python3]」 |
+| E | `touch update_log.sh` | FAIL 1 处：「仓库根孤儿文件仍存在: update_log.sh（规格 #15 已删除，不得复活）」 |
+| F | 从 `kejilion.sh` 删掉 `kpanel_app_with_lock()` 整个函数体 | 删除守卫与总门 13 项均**不**叫（2c 已退役，没有"函数仍在"类断言为它守）。`tests/` 下另有两把**未挂总门**的行为尺子（磁盘管理 / 网络操作非交互冒烟）的代码路径要经过这个锁，在健康的机器上会把删过头暴露出来；但本机上这两把本来就因环境原因 FAIL（一把缺 `xxd`，一把要 root 级挂载校验），本地实跑分辨不出——按代码路径记录，不冒充本地验证 |
 
-四轮之后把副本的文件全部换回 `git show HEAD:<文件>`，Guard 回到 `spec15-slim-down-removed=pass`。
+> A、B 两轮是上一轮（固定点 `4c5e44e`）的记录。上一轮还有两轮专项验证断言 2c 的注入
+> （删 `remove_app_id()` 函数体、抹 README 记账要素）；本轮删除那三个函数**之前**，先把
+> 第一轮复跑确认旧尺子确实见红（FAIL 3 处，逐条点名三个函数），然后才退役 2c——所以 2c
+> 当时是真的在守，不是摆设。退役后这两轮不再适用，撤上表。C、D、E 是本轮新增；F 如实
+> 记录 2c 退役后留下的空档（删除守卫不再为并发锁四件套守"函数仍在"）。
+
+另附一条与本表相关的既有事实：`tests/` 下还有 15 把尺子没挂总门（各类非交互冒烟），
+其中 2 把在本机因环境原因本来就 FAIL（缺 `xxd`、挂载校验要 root），与规格 #15 的改动
+无关——在原始提交 `fba891b` 上复跑同样 FAIL。要不要把它们挂进总门或修环境，留给仓库
+主人定，本报告只记账。
 
 ---
 
@@ -266,41 +282,52 @@ PASS 13/13  守门 · 删除守卫（工单 #15：已删功能词汇=0 / 根孤�
 
 ## 八、交付物与后续事项
 
-本工单只改文档，未碰 `kejilion.sh` 的任何一行业务逻辑。
+工单 #16~#23 只改文档与尺子，未碰 `kejilion.sh` 的任何一行业务逻辑；第三轮审查修复
+（工单 #25）按规格判定规则从 `kejilion.sh` 删掉了三个零调用方函数（38 行），这是本轮
+规格唯一一次改主脚本，删除前的 grep 证据见 9.4 第 9 项与 README 第 8 条。
 
-### 8.1 本轮净删除规模（工单 #16~#23 + 审查修复，固定点 `4c5e44e` → `310f5d2`）
+### 8.1 本轮净删除规模（工单 #16~#23 + 三轮审查修复，固定点 `4c5e44e` → 集成分支 tip）
 
 | 项 | 数值 |
 |---|---:|
-| `kejilion.sh` 行数 | 30229 → 14172（净删 16057 行） |
-| `kejilion.sh` 顶层函数 | 604 → 438（净删 166 个，净增 0） |
-| 仓库 tracked 文件数 | 112 → 49（净减 63） |
-| 文件级 diff | 新增 3 / 删除 66 / 修改 19 |
+| `kejilion.sh` 行数 | 30229 → 14134（净删 16095 行；其中第三轮删 38 行） |
+| `kejilion.sh` 顶层函数 | 604 → 435（净删 169 个，净增 0；其中第三轮删 3 个） |
+| 仓库 tracked 文件数 | 112 → 48（净减 64） |
+| 文件级 diff | 新增 3 / 删除 67 / 修改 19 |
 
 ### 8.2 仓库文件清点
 
-按 `git diff --name-status 4c5e44e...HEAD` 数出，三类分布：
+按 `git diff --name-status 4c5e44e...<集成分支 tip>` 数出，三类分布：
 
 | 类别 | 个数 | 明细 |
 |---|---:|---|
 | 新增 | 3 | `docs/adr/0002-content-fetching-only-from-this-repo.md`、`fail2ban-ssh.conf`、`tests/test_spec15_slim_down_removed.sh` |
-| 删除 | 66 | 仓库根 33 个、`tests/` 下 32 个、`docs/` 下 1 个 |
-| 修改 | 19 | 主脚本 1 个、README/GLOSSARY/验收报告/vps-smoke 4 份文档、总门编排与 11 把尺子、2 份清点夹具 |
+| 删除 | 67 | 仓库根 31 个、`tests/` 下 32 个、`docs/` 下 1 个、`apps/` 下 1 个、`PandoraNext/` 下 2 个 |
+| 修改 | 19 | 主脚本 1 个、5 份文档（README/GLOSSARY/验收报告/ADR-0001/vps-smoke）、总门编排 1 个、10 把尺子、2 份清点夹具 |
 
-删除的 66 个按去向归类：随游戏开服/AI 面板/LDNMP/FRP 退场的兄弟文件与配置 24 个
-（`palworld.sh` 等 6 个游戏脚本、3 个 AI 面板脚本、`ldnmp.sh`、两份 www.conf、
-两个证书续签夹具、`optimized_php.ini`、`beifen.sh`、`CF-Under-Attack.sh` 等）、
-退役的测试与夹具 32 个（含 `tests/openclaw/` 12 个、6 个应用市场专项测试、8 个建站专项测试）、
-真孤儿与内联副本 9 个（`Limiting_Shut_down*.sh`、`check_x86-64_psabi.sh`、`nginx.local`、
-`valkey.conf`、`sshd.local`、两个 OpenClaw 冒灰脚本）、悬空文档与已退役资产 3 个
-（`CONTRIBUTING.md`、`docs/kpanel-removal-keep-list.md`、`apps/README.md`）、
-`PandoraNext/` 2 个、`network-optimize.sh` 1 个。仓库根现在剩 12 个文件：
-主脚本 + 4 份文档（README/GLOSSARY/LICENSE/AGENTS.md）+ 6 个保留兄弟文件 + `update_log.sh`。
+删除的 67 个按去向归类。**分类互斥、相加必须等于 67**（上一版这里六类相加 71，错在
+"随板块退役"类把两个证书续签夹具从 `tests/fixtures/` 重复计了一次——它们属 `tests/` 的
+32 个；且各类计数与其自列的明细本身就数不上。本版逐个数过，命名也改成与内容一致）：
 
-> 与规格 Further Notes 预估「净减约 40 个、净增 1 个」的差异：实测净减 63、净增 3。
+| 去向 | 个数 | 明细 |
+|---|---:|---|
+| 随板块退役的兄弟文件与配置（仓库根） | 20 | 游戏开服 6 个（`palworld.sh`、`pal_backup.sh`、`pal_log.sh`、`mc.sh`、`mc_backup.sh`、`mc_log.sh`）；三类 AI 面板 3 个（`ai_cli_manager.sh`、`hermes_manager.sh`、`deepseek_harness_manager.sh`）；LDNMP 建站 11 个（`ldnmp.sh`、`beifen.sh`、`CF-Under-Attack.sh`、`www.conf`、`www-1.conf`、`optimized_php.ini`、`custom_mysql_config.cnf`、`custom_mysql_config-1.cnf`、`fail2ban-nginx-cc.conf`、`auto_cert_renewal.sh`、`auto_cert_renewal-1.sh`） |
+| 退役的测试与夹具（`tests/`） | 32 | `tests/openclaw/` 一整个目录 12 个；应用市场专项 6 个；建站专项 8 个；AI 面板专项 3 个；根目录 OpenClaw 冒烟 1 个（`tests_openclaw_config_path_resolution_smoke.sh`）；证书续签夹具 2 个（`tests/fixtures/`，计入本类、不在上一类重复数） |
+| 真孤儿、内联副本与 OpenClaw 冒灰脚本 | 8 | `Limiting_Shut_down.sh`、`Limiting_Shut_down1.sh`、`check_x86-64_psabi.sh`、`nginx.local`、`valkey.conf`、`sshd.local`（后三个内容被主脚本内联生成，不经 URL 下发）、`tests_openclaw_manager_smoke.sh`、`run_openclaw_manager_matrix.sh` |
+| 悬空文档与已退役资产 | 3 | `CONTRIBUTING.md`、`docs/kpanel-removal-keep-list.md`、`apps/README.md` |
+| `PandoraNext/` 目录 | 2 | 随工单 #19 整目录删除 |
+| `network-optimize.sh` | 1 | 工单 #21 点名的外部脚本 |
+| `update_log.sh` | 1 | 第三轮审查修复补删的漏网孤儿（工单 #22 判据下的漏网，零引用，见 9.4 第 7 项） |
+| **合计** | **67** | 与 `git diff --name-status … --diff-filter=D \| wc -l` 的实测一致 |
+
+仓库根现在剩 **11** 个文件：主脚本 + 4 份文档（README/GLOSSARY/LICENSE/AGENTS.md）
++ 6 个保留兄弟文件（`TG-check-notify.sh`、`TG-SSH-check-notify.sh`、
+`upgrade_openssh9.8p1.sh`、`archive.key`、`fail2ban-ssh.conf`、`cloudflare.conf`）。
+
+> 与规格 Further Notes 预估「净减约 40 个、净增 1 个」的差异：实测净减 64、净增 3。
 > 主要原因是**退役的测试与夹具比预估多得多**——规格只估了"约 20 个"，实际随板块一起
-> 退场了 32 个（`tests/openclaw/` 一整个目录 12 个、应用市场 6 个专项测试、
-> LDNMP 建站 8 个专项测试、2 个证书续签夹具、4 个应用市场生命周期/镜像更新冒烟等）。
+> 退场了 32 个（`tests/openclaw/` 一整个目录 12 个、应用市场专项 6 个、LDNMP 建站
+> 专项 8 个、AI 面板专项 3 个、根目录 OpenClaw 冒烟 1 个、证书续签夹具 2 个）。
 > 净增比预估多 2 个：规格只想到收编 `fail2ban-ssh.conf` 那一个文件，实际还新增了
 > 删除守卫这把尺子（`tests/test_spec15_slim_down_removed.sh`，规格用户故事 37 要求）
 > 与 ADR-0002 这份决策记录（工单 #23 的领域资产交付物）。
@@ -310,18 +337,28 @@ PASS 13/13  守门 · 删除守卫（工单 #15：已删功能词汇=0 / 根孤�
 还有什么没清的，见 `README.md` 的「**后续事项**」一节，共 9 条，每条都写了是什么、在哪、
 为什么这次不动、建议怎么处理。本轮（工单 #24）在这 9 条之外没有新增遗漏项，
 只做了三件事：第 4 条里 `kejilion-agent` 的行号从 29831~29842 / 11148 / 13524
-校正到现在的 13925~13935 / 6754 / 13944（脚本瘦身后行号集体前移）；
-第 7 条的四处行号（6 / 78 / 79 / 103）重核后仍准确，未改；
+校正（脚本瘦身后行号集体前移）；第 7 条的四处行号（6 / 78 / 79 / 103）重核后仍准确，未改；
 新增第 9 条记录 `restore_defaults()` 退场带来的能力减少。第 5、6 条是历史披露
 （越界删除与重生路径），已分别随工单 #10/#22 处置完毕，不再作为待决事项。
 
-本轮审查修复（固定点 `4c5e44e`，两轴共 10 项发现）修的东西见第九节。
+> 第 4 条那三处行号此后又错过一次，这里如实记下变迁：工单 #24 校正为
+> 13925~13935 / 6754 / 13944，其中两处**没对**（函数定义末行是 13936 不是 13935；
+> 13944 是 `backup-center)` 标签行，CLI 分支实为 13945~13947），第三轮审查修复
+> （工单 #25）按代码校正为 **13887~13898 / 6716 / 13907~13909**——差异来自工单 #25
+> 又删了文件头三个零调用方函数（14172 → 14134 行，行号再前移 38 行）。README 第 4 条
+> 与本节现在写的都是 13887~13898 / 6716 / 13907~13909，以代码为准。
+
+第二轮审查修复（固定点 `4c5e44e`，两轴共 10 项发现）与第三轮审查修复（工单 #25，
+两轴共 13 项发现，其中 2 项是第二轮自己带出的回归）修的东西分别见 9.2 与 9.4。
 
 ---
 
-## 九、两轮交付前审查修复（如实披露）
+## 九、三轮交付前审查修复（如实披露）
 
-本轮规格一共做了**两轮**代码审查，两轮都只动文档与 `tests/` 下的尺子，`kejilion.sh` 一行未碰。
+本轮规格一共做了**三轮**代码审查。前两轮只动文档与 `tests/` 下的尺子，`kejilion.sh`
+一行未碰；**第三轮（工单 #25，本轮）破了这个纪录**——按规格判定规则（以 grep 结果为准）
+从 `kejilion.sh` 删掉了三个零调用方函数（38 行），并删除漏网的孤儿文件 `update_log.sh`；
+其余各项仍是文档与尺子。三轮的提交记录都在分支上，可按表逐条核对。
 
 ### 9.1 第一轮（工单 #11 时代，固定点 `7e770e8`，六项发现）
 
@@ -330,7 +367,7 @@ PASS 13/13  守门 · 删除守卫（工单 #15：已删功能词汇=0 / 根孤�
 | # | 问题 | 改了什么 | 提交 |
 |---|---|---|---|
 | 1 | 术语漂移：新写内容里 7 处用错了指代词 | `README.md` 4 处、`docs/acceptance-report.md` 1 处、`tests/test_update_removed.sh` 2 处注释，同文件 `upstream_base` 顺带改名 `orig_base` | `80f3335` |
-| 2 | 术语违反：清点检查的内部类型值叫 `telemetry-trigger` | `tests/test_network_inventory.sh` 改名 `report-trigger`，同步注释、awk、人读清单三处筛选、自测断言 | `5201813` |
+| 2 | 术语违反：清点检查的内部类型值当时叫 [telemetry-trigger]（回避词字面，引述历史） | `tests/test_network_inventory.sh` 改名 `report-trigger`，同步注释、awk、人读清单三处筛选、自测断言 | `5201813` |
 | 3 | 坏味道：零增益纯转发的 wrapper `ask_assert_clean` | 删掉 wrapper，两处调用点直接调 `assert_clean_impl` | `bf4de13` |
 | 4 | 轻度重复：按类别计数 + 经作者代理计数的 awk 写了两遍 | `test_network_inventory.sh` 新增 `emit_summary()` 与 `--summary` 模式；`run_all_checks.sh` 改调它。分类规则一字未动 | `d16e0ee` |
 | 5 | 规格半成品：README 还描述已删功能 | 删「English Version」、「自动更新机制」条目、「KPanel Web 管理面板」整节与失效的过时描述附注 | `d9cef37` |
@@ -346,7 +383,7 @@ PASS 13/13  守门 · 删除守卫（工单 #15：已删功能词汇=0 / 根孤�
 
 | 提交 | 修了什么 |
 |---|---|
-| `b197752` | 术语：清掉文档与测试注释里的回避词字面（上游/遥测），与第一轮修复 1 同一类问题在第二轮的复现 |
+| `b197752` | 术语：清掉文档与测试注释里的回避词字面（当时写作 [上游] / [遥测]，见 GLOSSARY 的 _Avoid_ 约定），与第一轮修复 1 同一类问题在第二轮的复现 |
 | `8f3de8c` | 尺子：URL 清零判据去双写——原先删除守卫抄了第二份同名正则与第二份 5 个取内容目标清单，改成直接调用 `test_network_inventory.sh --assert-clean`；顺带把 `ask_assert_clean` 式 wrapper 清掉 |
 | `1c4fff0` | 修复：悬空引用与交叉引用失准——README 第 4 条里 `kejilion-agent` 的行号、第 2 条里 `archive.key` 的行号、术语表举例等随脚本瘦身后集体失效，逐条核对校正 |
 | `cd14aa7` | 文档：ADR-0002 补录四个兄弟文件与 fail2ban 配置的审计结论（sha256 前缀 + 逐文件通读结论） |
@@ -363,3 +400,32 @@ PASS 13/13  守门 · 删除守卫（工单 #15：已删功能词汇=0 / 根孤�
 `cn/` 目录删除后已不存在，留着是假话。工单 #22 随后把整个 `CONTRIBUTING.md` 删除
 （见 README 第 3 条），这一条的残响只剩历史记录。删除前内容在
 `git show 75d4868:CONTRIBUTING.md` 与 `git show 7e770e8^:CONTRIBUTING.md` 都能取回。
+### 9.4 第三轮（工单 #25，固定点 `4c5e44e`，两轴共 13 项发现）
+
+由工单 #25 的审查修复分支 `purify/tkt-25-round3-fixes` 承载，按逻辑单元分提交。十三项
+检查在修复前后都是 13/13 全绿、退出码 0。**其中两项是上一轮修复自己带出的回归**（1 与 2），
+一项是上一轮裁定的修正（9）。逐项列示：
+
+| # | 问题 | 改了什么 |
+|---|---|---|
+| 1 | 回归：`test_network_inventory.sh --help` 用法示例被整段截断（上一轮 `8e81e2b` 给文件头加注释，写死的 `sed -n '2,20p'` 跟不上） | 两个入口（本测试与 `run_all_checks.sh`）的 `usage()` 一律改为按锚点 awk 抽取（「用法：」节到第一行非注释代码止），行号再无漂移空间；实跑确认 5 条示例全部输出 |
+| 2 | 回归：README 两处现在时引用已删除的 `docs/kpanel-removal-keep-list.md`（悬空引用） | 改为过去时表述（已随工单 #17 删除，原文见 git 历史），不恢复文档 |
+| 3 | README 后续事项编号说明过期（写 1~7，实际 1~9） | 补齐完整变迁：原 1~9 → 工单 #20 移出第 2 条后 1~8 → 工单 #24 补两条后 1~9 |
+| 4 | 幽灵变量 `repo_raw`：注释与报错文案引用一个已从本文件删掉的变量 | 文案改指实际断言的 raw 基址 `https://raw.githubusercontent.com/howi3c/sh/main`，读者不用跳文件 |
+| 5 | 行号互掐：报告 8.3 写 `13925~13935 / 13944`，README 与代码实物是 `13925~13936 / 13945~13947`（13944 是 `backup-center)` 标签行） | 以代码为准校正报告与 README 全部 `kejilion.sh` 行号引用；本轮（第三轮）自己删了 38 行造成的连带漂移（`archive.key`、`kejilion-agent`、ADR-0002 的 TG 注入点）一并重核 |
+| 6 | 8.2 文件分类账对不上：六类相加 71 ≠ 实测删除 66，且"随板块退役"类把两个证书续签夹具从 `tests/` 重复计了一次 | 重写 8.2 为互斥五类+两项单列，相加等于实测数；本轮又删 `update_log.sh`，账随实数更新 |
+| 7 | 工单 #22 漏了一个孤儿文件：`update_log.sh`（423 行，主脚本更新日志展示脚本，全仓库零引用） | 删除；README「本轮删除记录」记账；删除守卫孤儿黑名单加守（反向验证：`touch` 后 FAIL 1 处） |
+| 8 | 工单 #16 点名的自查词 `cluster_python3` 没有尺子守（"打不了的勾"） | 删除守卫 `absent_literals` 与冒烟 `retired_entry` 两处都补上；反向验证两处都叫（文件尾注入 → 删除守卫 FAIL；CLI 分发块内注入分支 → 冒烟 FAIL） |
+| 9 | 上一轮裁定修正：三个零调用方函数（`remove_app_id` / `kpanel_app_update_marker` / `find_container_by_host_port`）"保留"是错的，规格判定规则以 grep 结果为准，应删 | 删除前先跑旧尺子确认见红（FAIL 3 处，证明它真在守），退役断言 2c 并写明退役理由；README 第 8 条改写为"已删 + `kpanel_app_with_lock` 的 `markers`/`catalog` 分支从此无调用方"；总门第 13 项标签与本节表格同步 |
+| 10 | `docs/vps-smoke.md`「一共 9 项」读起来像 9 个待清残项（其中 3 条已自述结案） | 改分层表述：3 条已结案（逐条点名）作为历史记录保留，6 条还欠着（逐条点名），不删已结案条目 |
+| 11 | 坏味道：`test_network_inventory.sh` 两处重复 awk（`296~305` 两分支同一 awk 只差 `head -10`；`350~353` 与 `357~360` 同一 awk 两个筛选） | 前者并成一条 awk（前 10 条逐行 + 第 11 行起余量），后者抽成 `summarize_records_by_endpoint()`；**判据强度不变**：用人造样本跑新旧两版，输出逐字节一致 |
+| 12 | 脆弱交叉引用：断言 2c 把「第 8 条」写死在注释/报错里 | 随第 9 项退役断言 2c 一并解决 |
+| 13 | 术语口径不统一：报告里两处引述历史的旧名（[telemetry-trigger]、[上游]/[遥测]）没跟全文一致用方括号写法 | 引述历史名一律改方括号写法（与该文件既有写法一致）；`test_main_menu_noninteractive_smoke.sh` 的「无遥测版」标题后缀是规格用户故事 15 的特例，按 `test_attribution_naming.sh` 注释的约定**不动** |
+
+修完总门 13/13 全绿、退出码 0；删除守卫单独跑 `spec15-slim-down-removed=pass`；
+`bash -n kejilion.sh` 通过；`kejilion.sh` 14172 → 14134 行，仓库文件 49 → 48 个。
+
+> 9.2 表中 `a50d8e9`（README 第 8 条记三个零调用方函数"保留"、守卫加守断言 2c）的裁定
+> 已被本轮第 9 项推翻：那三个函数按规格判定规则删除，2c 退役。该提交本身如实记录了
+> 当时的行为，保留在表中作为历史。
+

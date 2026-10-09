@@ -114,15 +114,19 @@ bash <(curl -sL "$KJ_RAW_URL")
 规格的初始约定是"只动 `kejilion.sh`"（外加删掉随主脚本退役的语言资产）。从工单 #16
 起"其他文件"按事由逐个清理：游戏开服、AI 面板、LDNMP 建站各自带走一批兄弟文件，
 又删掉了孤儿文件与整份 `CONTRIBUTING.md`——这些删除的明细见本节末尾的
-「本轮删除记录」。下面这些是**明知没清、但按规格故意留下**的项，
-逐条记在这里，等决定要不要单开工单。父议题规格的 Out of Scope 与用户故事 29/30 要求
+「本轮删除记录」。下面这些条目里，**一部分是明知没清、但按规格故意留下**的项，
+逐条记在这里，等决定要不要单开工单；**另一部分是已经处置完毕的披露与记录**（标题带
+"已随工单 #N 处理"或开头写"原是什么/怎么处理的"），保留原文是为了后人不用翻 git
+历史就知道当时发生了什么。父议题规格的 Out of Scope 与用户故事 29/30 要求
 "其他脚本本次完全不动，剩下的记入后续清单"。
 
 > 从工单 #16 起的后续清理里，"其他文件"已经可以动了：凡是事由已消失的条目，就地标注
 > "已随工单 #N 处理"并保留原文作为记录；凡还欠着的，原样留在本节等后面的工单。
-> 编号 1~7（工单 #20 删掉 LDNMP 下载点后，原第 2 条 beifen.sh 事由已消失、随文件
-> 一并移出，其后条目顺次上移；其余条目原文不动、不重排），本轮（工单 #22）的
-> 删除清单见本节末尾。
+> 本节编号的完整变迁：**原编号 1~9**（规格初始的后续清单）→ 工单 #20 删掉 LDNMP
+> 下载点后，原第 2 条 beifen.sh 事由已消失、随文件一并移出，其后条目顺次上移成
+> **1~8** → 工单 #24 补了 `restore_defaults()` 退场（能力减少）与三个零调用方函数
+> 两条，恢复成 **1~9**（其余条目原文不动、不重排）。本轮（工单 #22）的删除清单
+> 见本节末尾。
 
 ### 1. 登录通知类脚本（每次 SSH 登录查询 IP 与定位）
 
@@ -151,10 +155,10 @@ bash <(curl -sL "$KJ_RAW_URL")
 
 - **是什么**：`archive.key` 是一个 PGP 公钥块（XanMod 内核仓库签名钥），文件名带 `.key`、内容像凭据，
   实际是公开信息，不构成泄露。同类的还有 `cloudflare.conf` 里的 `cftoken = APIKEY00000` 这类占位值。
-- **在哪**：仓库根目录 `archive.key`；`kejilion.sh` 第 3976~3977 行会优先从 `dl.xanmod.org` 拉它，
+- **在哪**：仓库根目录 `archive.key`；`kejilion.sh` 第 3938~3939 行会优先从 `dl.xanmod.org` 拉它，
   失败时才退回本仓库这份副本（工单 #23 已把回退源从原版仓库改指本仓库）。
 - **为什么这次不动**：规格 Out of Scope 原文"示例密码文件等 inert 项；记入后续清单"。它们不参与报信，
-  也不被装到用户机器上，删除反而会让第 3977 行的回退下载失败。
+  也不被装到用户机器上，删除反而会让第 3939 行的回退下载失败。
 - **建议怎么处理**：单开工单做一次"凭据体检"——用 `grep -rnE 'passwo?rd|secret|token|api[_-]?key'`
   把整个仓库扫一遍，逐条判断是真凭据、占位符还是公开钥：真凭据立刻改掉并轮换；占位符统一改成
   明显是占位的字样；`archive.key` 这类公开钥建议在文件头加一行注释说明"这是公开签名钥，不是私钥"，
@@ -169,7 +173,8 @@ bash <(curl -sL "$KJ_RAW_URL")
   （`KPANEL_NODE_LIFECYCLE` 模板、`KPANEL_NODE_RUNTIME_GENERATION` 版本号、
   `/run/kejilion-node-lifecycle.lock` 锁文件）。它描述的那套运行时已在工单 #6 整块删掉，这一节是悬空文档。
 - **为什么拖到工单 #22 才动手**：工单 #6 按"本次不动其他文件"的约定故意留下，
-  `docs/kpanel-removal-keep-list.md` 末尾已记了这一笔；那时的工单同样只被允许加"后续事项"这一节。
+  工单 #6 的保留清单（`docs/kpanel-removal-keep-list.md`，已随工单 #17 删除，
+  原文见 git 历史）末尾已记了这一笔；那时的工单同样只被允许加"后续事项"这一节。
 - **怎么处理的**：工单 #22 按验收第 3 条把整个 `CONTRIBUTING.md` 删掉了——全文只有 10 行，
   唯一一节就是上面那节悬空文档，删掉不损失任何规则。它不是脚本入口，也没有任何测试或构建依赖。
   删除前的内容仍在 git 历史里（`git show 75d4868:CONTRIBUTING.md`），需要时可整份取回。
@@ -179,11 +184,14 @@ bash <(curl -sL "$KJ_RAW_URL")
 - **是什么**：净化版脚本保留了 `kpanel_backup_center_dispatch()`（`k backup-center`，Docker/Web 备份菜单
   也会调它）。它会去执行 `/usr/local/libexec/kejilion-agent backup-center ...`——那是**另一个二进制**，
   与工单 #6 删掉的 `kejilion-node` 是两套东西。
-- **在哪**：`kejilion.sh` 第 13925~13936 行（函数定义）、第 6754 行（Docker 备份/迁移/还原
-  工具菜单里的 `5) kpanel_backup_center_dispatch menu docker`）、第 13945~13947 行（CLI
-  分发里的 `backup-center` 分支）。这三处行号由工单 #24 于 2026-10-09 重新核对——
-  脚本从 30229 行削到 14172 行后集体前移，旧记录里的 29831~29842 / 11148 / 13524 已失效。
-- **为什么这次不动**：工单 #6 的保留清单（`docs/kpanel-removal-keep-list.md`）按边界留下了它：
+- **在哪**：`kejilion.sh` 第 13887~13898 行（函数定义）、第 6716 行（Docker 备份/迁移/还原
+  工具菜单里的 `5) kpanel_backup_center_dispatch menu docker`）、第 13907~13909 行（CLI
+  分发里的 `backup-center` 分支）。这三处行号 2026-10-10 由第三轮审查修复重新核对——
+  脚本从 30229 行削到 14172 行后集体前移过一次（旧记录里的 29831~29842 / 11148 / 13524
+  已失效），第三轮审查（工单 #25）又删了文件头三个零调用方函数（14172 → 14134 行），行号再前移 38 行，
+  13925~13936 / 6754 / 13945~13947 又失效，以这里写的为准。
+- **为什么这次不动**：工单 #6 的保留清单（`docs/kpanel-removal-keep-list.md`，已随工单 #17
+  删除，原文见 git 历史）按边界留下了它：
   本脚本**从不下载**这个二进制（函数注释原文 "No downloaded helper or caller-supplied path"），
   只在机器上已经有人装了匹配版本的 Agent 时才会真的调它；函数开头就校验 root、文件存在且不是符号链接、
   属主为 0、权限不带 group/other 写位、协议版本匹配，任一条不过就报错返回。也就是说它不会偷偷装东西，
@@ -253,30 +261,32 @@ bash <(curl -sL "$KJ_RAW_URL")
   `<img>` 的 `src` 改成相对路径，README 打开时对作者域名零请求；第 103 行的官网链接若只是想给读者
   一个作者站点参考，可保留文字说明但去掉跳转，或直接删。
 
-### 8. 三个零调用方的顶层函数（保留：规格点名，待连"应用编号登记"一起退役时再处理）
+### 8. 三个零调用方的顶层函数（已随第三轮审查修复按孤儿收敛循环删除，只剩一处遗留说明）
 
-- **是什么**：`kejilion.sh` 里有三个顶层函数现在**一个调用方都没有**（工单 #24 于 2026-10-09
+- **原是什么**：`kejilion.sh` 里曾有 3 个顶层函数一个调用方都没有（工单 #24 于 2026-10-09
   复核）：`remove_app_id()`（应用编号移除）、`kpanel_app_update_marker()`（写
   `/home/docker/appno.txt` 标记文件）、`find_container_by_host_port()`（按宿主端口找容器）。
   其中 `kpanel_app_update_marker` 只被 `remove_app_id` 调用，而 `remove_app_id` 自身无调用方，
   两个是**传递性孤儿**；`find_container_by_host_port` 则是定义即孤儿。
-- **在哪**：`kejilion.sh` 第 57 行 `kpanel_app_update_marker()`、第 74 行 `remove_app_id()`、
-  第 2524 行 `find_container_by_host_port()`。
-- **为什么这次不动**：规格 Implementation Decisions 点名"并发锁基础设施、应用编号登记…
-  一律保留"，这条点名压倒了"删除后调用方归零的函数逐一确认后清除"的通用规则。锁四件套
-  （`kpanel_app_lock_held` / `kpanel_app_with_lock` 及其 `system` 资源）在保留区有十余处
-  调用方（安装、卸载、iptables、防火墙…），`markers` 分支只服务上面那两个孤儿函数，
-  `catalog` 分支的调用方（应用市场目录刷新）已随工单 #17 退役——但整套基础设施是一个整体，
-  按规格意图保留。
-- **建议怎么处理**：将来若决定连"应用编号登记"（`/home/docker/appno.txt` 那套标记机制）
-  一起退役，需**同时**收尾三件事：删掉这三个函数；把 `kpanel_app_with_lock` 的资源白名单
-  里的 `markers` 与 `catalog` 两个分支一并去掉（第 31 行 `case "$resource" in system|catalog|markers)`）；
-  检查还有没有别处读 `/home/docker/appno.txt`。删除守卫
-  `tests/test_spec15_slim_down_removed.sh` 已就"这三个函数仍在 + 本条记账在位"设了断言
-  （断言 2c），动手时要同步改尺子，不要静默删除。
-- **`find_container_by_host_port` 单独说明**：它不属"应用编号登记"那一套（只是 Docker 查询
-  辅助），但同为零调用方、同样按上面的理由保留。它体积小、无副作用；若单开工单只清它，
-  不牵动锁与标记机制。
+- **怎么处理的**：第三轮审查（工单 #25，固定点 `4c5e44e`）复核后**推翻了上一轮"保留"的裁定**：
+  规格 Implementation Decisions 的判定规则原文是"仅被已删板块调用的一律删；跨板块共享的
+  一律保留"，且明写"删除任何函数前全局检索其调用方"——以 grep 结果为准。实测
+  `remove_app_id` 在 `4c5e44e` 上有 11 个调用点，宿主函数（`docker_app`、
+  `docker_app_plus`、`kpanel_app_remove_compatibility_state`、`install_panel`、
+  `yt_menu_pro`、`linux_panel`、`stream_panel`、`frpc_panel`、`frps_panel`、
+  `openclaw_backup_restore_menu`）全部随应用市场/AI 面板/FRP/OpenClaw 工单删除；
+  `kpanel_app_update_marker` 的唯一调用方就是 `remove_app_id` 自己；
+  `find_container_by_host_port` 的两个调用方（`linux_ldnmp` 与备份适配器里的建站分支）
+  也已删除。且 `/home/docker/appno.txt` 删后全脚本再无代码写它、读它（主菜单
+  `grep -qxF "kpanel"` 的状态显示已随工单 #16 消失）——语义已死。按"删除产生的新孤儿
+  逐一重新检索确认后同批清除"的孤儿收敛循环，三个函数已从 `kejilion.sh` 删除
+  （工单 #25，14172 → 14134 行），删除守卫原断言 2c（"函数仍在"）随之退役。
+- **遗留说明（仍欠仓库主人一眼）**：删掉这三个函数后，保留的并发锁基础设施
+  `kpanel_app_with_lock()` 的资源白名单 `markers` 与 `catalog` 两个分支**从此没有调用方**
+  （现存调用方走的全是 `system` 资源）。这是保留基础设施的防御性校验，按规格不删；
+  只是今后若再看到这两个分支，知道它们是历史遗留即可。`kpanel_app_with_lock` /
+  `kpanel_app_lock_held` 本身在保留区有十余处调用方（安装、卸载、iptables、防火墙…），
+  **保留不动**。
 
 ### 9. 内核优化菜单的「还原默认设置」能力随工单 #21 消失（保留能力实质减少）
 
@@ -321,6 +331,13 @@ bash <(curl -sL "$KJ_RAW_URL")
   - 取内容终局 5 项，已随工单 #23 全部改指本仓库：`TG-check-notify.sh`、`TG-SSH-check-notify.sh`、
     `upgrade_openssh9.8p1.sh`、`archive.key`，以及从 `kejilion/config` 仓收编进来的
     fail2ban SSH 防御配置（仓库内文件名 `fail2ban-ssh.conf`，部署到用户机时仍叫 `centos-ssh.conf`）。
+
+第三轮审查修复（工单 #25，工单 #24 验收报告写完之后）又补删了一个当时漏掉的孤儿：
+
+- **`update_log.sh`**（423 行，原版的脚本更新日志展示脚本）：它符合工单 #22 自己给的判据
+  ——`kejilion.sh` 零提及、零下载，全仓库零引用（`grep -rn 'update_log' . --exclude-dir=.git`
+  只命中验收报告里一句描述性文字），对应规格用户故事 34「仓库里每个文件都有存在的理由」。
+  删除前内容在 git 历史里，删除守卫的孤儿文件黑名单已加上它，今后不得回来。
 
 ## 开源许可
 

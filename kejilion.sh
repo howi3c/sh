@@ -54,31 +54,6 @@ kpanel_app_with_lock() {
 	return "$result"
 }
 
-kpanel_app_update_marker() (
-	local action="$1" marker="/home/docker/appno.txt" temporary status
-	[[ "${app_id:-}" =~ ^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$ ]] || return 1
-	mkdir -p /home/docker || return 1
-	[ ! -L "$marker" ] || return 1
-	[ ! -e "$marker" ] || [ -f "$marker" ] || return 1
-	temporary=$(mktemp /home/docker/.appno.XXXXXX) || return 1
-	trap 'rm -f -- "$temporary"' EXIT
-	if [ -f "$marker" ]; then
-		if grep -vxF -- "$app_id" "$marker" > "$temporary"; then status=0; else status=$?; fi
-		[ "$status" -le 1 ] || return "$status"
-	fi
-	case "$action" in add) printf '%s\n' "$app_id" >> "$temporary" || return 1 ;; remove) ;; *) return 1 ;; esac
-	chmod 600 "$temporary" || return 1
-	mv -f -- "$temporary" "$marker"
-)
-
-remove_app_id() {
-	if [ "${KJ_APP_CONCURRENCY:-}" = "1" ]; then
-		kpanel_app_with_lock markers kpanel_app_update_marker remove
-	else
-		sed -i "/\\b${app_id}\\b/d" /home/docker/appno.txt
-	fi
-}
-
 kpanel_protocol_active() {
 	[ "${KJ_SSH_PORT_NONINTERACTIVE:-}" = "1" ] ||
 	[ "${KJ_DNS_NONINTERACTIVE:-}" = "1" ] ||
@@ -2516,19 +2491,6 @@ output_status() {
 	rx=$(echo "$output" | awk '{print $1}')
 	tx=$(echo "$output" | awk '{print $2}')
 
-}
-
-
-
-
-find_container_by_host_port() {
-	port="$1"
-	docker_name=$(docker ps --format '{{.ID}} {{.Names}}' | while read id name; do
-		if docker port "$id" | grep -q ":$port"; then
-			echo "$name"
-			break
-		fi
-	done)
 }
 
 current_timezone() {

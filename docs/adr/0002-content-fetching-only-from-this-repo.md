@@ -40,7 +40,7 @@ _Status: accepted_
 | 文件 | sha256 前缀 | 审计结论 |
 |---|---|---|
 | `TG-check-notify.sh` | `8ab9e069…` | TG bot **本机资源告警**：CPU/内存/硬盘/流量超阈值时给用户自己的 bot 发消息。两处凭据（`TELEGRAM_BOT_TOKEN`、`CHAT_ID`）是用户自填的占位符文本（原文写的是"输入TG的机器人API"这类字样），脚本里没有预置任何凭据。外联三处：`ipinfo.io`（取 IP 归属地）、`ipv4.ip.sb`（取本机公网 IPv4）、`api.telegram.org`（用户自己的 bot）。发出去的 IP 是打码的 `*.*.*.*` 形态。无广告、无指向原版仓库的引用、无后门。 |
-| `TG-SSH-check-notify.sh` | `61813dc1…` | SSH 登录通知：每次登录给用户自己的 bot 发一条消息。凭据不在文件里，由主脚本 `sed -i "3i…"/"4i…"` 从 `TG-check-notify.sh` 注入（`kejilion.sh` 13293~13294 行）。外联在上一行基础上另加 `opendata.baidu.com`（IP 归属地查询）。**如实记录两点**：登录来源 IP 是**完整未打码**的（`$SSH_CONNECTION` 第一个字段原样发出），IP 归属地经用户的 TG bot 发出——这正是它在术语表口径下仍属报信的原因，README「后续事项」第 1 条已就此记账。按规格 Out of Scope"其他脚本本次不动"，**本次只改 URL，未改一个字的内容**。 |
+| `TG-SSH-check-notify.sh` | `61813dc1…` | SSH 登录通知：每次登录给用户自己的 bot 发一条消息。凭据不在文件里，由主脚本 `sed -i "3i…"/"4i…"` 从 `TG-check-notify.sh` 注入（`kejilion.sh` 13255~13256 行，2026-10-10 第三轮审查修复（工单 #25）删除文件头三个零调用方函数后重核）。外联在上一行基础上另加 `opendata.baidu.com`（IP 归属地查询）。**如实记录两点**：登录来源 IP 是**完整未打码**的（`$SSH_CONNECTION` 第一个字段原样发出），IP 归属地经用户的 TG bot 发出——这正是它在术语表口径下仍属报信的原因，README「后续事项」第 1 条已就此记账。按规格 Out of Scope"其他脚本本次不动"，**本次只改 URL，未改一个字的内容**。 |
 | `upgrade_openssh9.8p1.sh` | `d366a044…` | OpenSSH 源码编译升级。仅外联 `cdn.openbsd.org`（OpenSSH 官方发布站，取版本列表与源码包），无报信、无后门。另有一行 bilibili 视频链接，是 `echo` 给用户看的说明书，不发请求。 |
 | `archive.key` | `f5f465c1…` | `BEGIN PGP PUBLIC KEY BLOCK`，XanMod 内核仓库的签名**公钥**。纯公开信息、无任何网络行为。文件名带 `.key`、内容像凭据，容易让人误会——README「后续事项」已就这类"inert 项"记账。 |
 
