@@ -23713,44 +23713,6 @@ done
 
 
 
-games_server_tools() {
-
-	while true; do
-	  clear
-	  echo -e "游戏开服脚本合集"
-	  echo -e "${gl_kjlan}------------------------"
-	  echo -e "${gl_kjlan}1. ${gl_bai}幻兽帕鲁开服脚本"
-	  echo -e "${gl_kjlan}2. ${gl_bai}我的世界开服脚本"
-	  echo -e "${gl_kjlan}------------------------"
-	  echo -e "${gl_kjlan}0. ${gl_bai}返回主菜单"
-	  echo -e "${gl_kjlan}------------------------${gl_bai}"
-	  read -e -p "请输入你的选择: " sub_choice
-
-	  case $sub_choice in
-
-		  1) cd ~
-			 curl -sS -O https://raw.githubusercontent.com/kejilion/sh/main/palworld.sh ; chmod +x palworld.sh ; ./palworld.sh
-			 exit
-			 ;;
-		  2) cd ~
-			 curl -sS -O https://raw.githubusercontent.com/kejilion/sh/main/mc.sh ; chmod +x mc.sh ; ./mc.sh
-			 exit
-			 ;;
-
-		  0)
-			kejilion
-			;;
-
-		  *)
-			echo "无效的输入!"
-			;;
-	  esac
-	  break_end
-
-	done
-
-
-}
 
 
 
