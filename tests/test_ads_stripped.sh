@@ -4,7 +4,17 @@
 # 判定口径（来自 GLOSSARY.md / ADR-0001）：删利益导流与推广引流，留功能说明书与署名。
 # 只静态分析 kejilion.sh 的文本：绝不执行目标脚本、绝不联网。
 # 与 tests/test_network_inventory.sh 互补——后者盯“报信=0”，本测试盯“推销清空、
-# 但教学链接 / 面板官网信息 / 致谢一个不少”。
+# 但教学链接 / 致谢一个不少”。
+#
+# 【工单 #17 改写说明】应用市场板块整块退场（工单 #17），下列两条“必须保留”断言
+# 随板块一起退役，不再作为保留项：
+#   · bt.cn/new/index.html  —— 三方面板自身中性官网信息，只出现在应用市场的
+#     「安装宝塔面板」分支里（linux_panel 内），linux_panel 删除后自然归零；
+#   · install_panel()      —— 面板安装器本体，是应用市场的专属函数，已整体删除。
+# 理由：保留项清单必须描述“仍然存在的功能”，面板官网信息与面板安装器都已不存在，
+# 留着只会变成防已删之物的死断言（与工单 #17 验收第 2 条同源）。
+# 与之相对，dev.kejilion.sh（应用市场“开发者指南”引流）留在 absent_patterns 里
+# ——删区清空后该串在 kejilion.sh 中应为 0，继续守住它不许复活，比删掉更稳。
 set -uo pipefail
 
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -67,9 +77,6 @@ for target in "${targets[@]}"; do
 	do
 		grep -Fq -- "$keep" "$target" || fail "${name} 丢了功能内教学视频链接 [$keep]"
 	done
-	# 安装第三方面板时打印该面板自己的中性官网信息 + 面板安装器本体
-	grep -Fq -- 'bt.cn/new/index.html' "$target" || fail "${name} 丢了三方面板自身中性官网信息（bt.cn）"
-	grep -Fq -- 'install_panel()' "$target" || fail "${name} 丢了 install_panel() 面板安装器"
 	# “借用的脚本”致谢段（署名，不是广告）
 	grep -Fq -- '感谢bin456789' "$target" || fail "${name} 丢了致谢段（bin456789/leitbogioro）"
 	grep -Fq -- 'leitbogioro项目地址' "$target" || fail "${name} 丢了致谢链接（leitbogioro）"

@@ -5129,62 +5129,6 @@ ldnmp_web_status() {
 }
 
 
-check_panel_app() {
-if $lujing > /dev/null 2>&1; then
-	check_panel="${gl_lv}已安装${gl_bai}"
-else
-	check_panel=""
-fi
-}
-
-
-
-install_panel() {
-while true; do
-	clear
-	check_panel_app
-	echo -e "$panelname $check_panel"
-	echo "${panelname}是一款时下流行且强大的运维管理面板。"
-	echo "官网介绍: $panelurl "
-
-	echo ""
-	echo "------------------------"
-	echo "1. 安装            2. 管理            3. 卸载"
-	echo "------------------------"
-	echo "0. 返回上一级选单"
-	echo "------------------------"
-	read -e -p "请输入你的选择: " choice
-	 case $choice in
-		1)
-			check_disk_space 1
-			install wget
-			iptables_open
-			panel_app_install
-
-			add_app_id || return 1
-			;;
-		2)
-			panel_app_manage
-
-			add_app_id || return 1
-
-			;;
-		3)
-			panel_app_uninstall
-
-			remove_app_id || return 1
-			;;
-		*)
-			break
-			;;
-	 esac
-	 break_end
-done
-
-}
-
-
-
 check_frp_app() {
 
 if [ -d "/home/frp/" ]; then
