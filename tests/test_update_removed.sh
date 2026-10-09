@@ -31,12 +31,11 @@ fail() { printf 'error: %s\n' "$*" >&2; exit 1; }
 
 # ---------------------------------------------------------------------------
 # 判据 5 的独立基准：改造前的原版脚本从原版仓库取内容的全部目标。
-# 本次只应拿掉 2 个"自更新/自覆盖"目标（kejilion.sh、
-# kejilion_sh_log.txt），其余一条都不许少。
+# 本次只应拿掉"自更新/自覆盖"目标（kejilion.sh、kejilion_sh_log.txt）与
+# network-optimize 外部脚本的两个地址（工单 #21），其余一条都不许少。
 # ---------------------------------------------------------------------------
 orig_base='raw.githubusercontent.com/kejilion/sh'
 expected_targets=(
-	"${orig_base}/\${KPANEL_SYSTEM_TUNING_NETWORK_COMMIT}/network-optimize.sh"
 	"${orig_base}/main/\${mysql_source}"
 	"${orig_base}/main/\${php_fpm_source}"
 	"${orig_base}/main/ai_cli_manager.sh"
@@ -54,12 +53,12 @@ expected_targets=(
 	"${orig_base}/main/TG-check-notify.sh"
 	"${orig_base}/main/TG-SSH-check-notify.sh"
 	"${orig_base}/main/upgrade_openssh9.8p1.sh"
-	"${orig_base}/refs/heads/main/network-optimize.sh"
 )
 # 本次删除要拿掉的自更新目标
 removed_targets=(
 	"${orig_base}/main/kejilion.sh"
 	"${orig_base}/main/kejilion_sh_log.txt"
+	"${orig_base}/refs/heads/main/network-optimize.sh"
 )
 
 check_one_script() {
