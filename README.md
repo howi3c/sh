@@ -141,7 +141,10 @@ bash <(curl -sL "$KJ_RAW_URL")
 - **建议怎么处理**：单开工单，两个口径分开定——`TG-check-notify.sh` 的告警本体是有用功能（只报本机资源），
   要做的是把消息体里的 `country`/`isp_info`/`masked_ip` 三行摘掉；`TG-SSH-check-notify.sh` 的存在意义
   就是"登录即报地理位置"，要么整个不启用，要么改成只报时间与登录名、不查任何外部定位服务
-  （现在它查 `ipinfo.io` 和 `opendata.baidu.com`）。这两个脚本自带的外联**仍待治理**，URL 改指本仓库
+  （现在它查 `ipinfo.io` 和 `opendata.baidu.com`）。两个脚本的外联清单：
+  `TG-check-notify.sh` 查 `ipinfo.io`（归属地）、`ipv4.ip.sb`（本机公网 IPv4）、
+  `api.telegram.org`（用户自己的 bot）；`TG-SSH-check-notify.sh` 在此之上另加
+  `opendata.baidu.com`（归属地）。这些自带的外联**仍待治理**，URL 改指本仓库
   只解决"从哪取"，不解决"取下来的内容会做什么"。
 
 ### 2. 示例密码文件等 inert 项
@@ -176,8 +179,10 @@ bash <(curl -sL "$KJ_RAW_URL")
 - **是什么**：净化版脚本保留了 `kpanel_backup_center_dispatch()`（`k backup-center`，Docker/Web 备份菜单
   也会调它）。它会去执行 `/usr/local/libexec/kejilion-agent backup-center ...`——那是**另一个二进制**，
   与工单 #6 删掉的 `kejilion-node` 是两套东西。
-- **在哪**：`kejilion.sh` 第 29831~29842 行（函数定义）、第 11148 与 13524 行（两处调用）、
-  以及 CLI 分发里的 `backup-center` 分支。
+- **在哪**：`kejilion.sh` 第 13925~13936 行（函数定义）、第 6754 行（Docker 备份/迁移/还原
+  工具菜单里的 `5) kpanel_backup_center_dispatch menu docker`）、第 13945~13947 行（CLI
+  分发里的 `backup-center` 分支）。这三处行号由工单 #24 于 2026-10-09 重新核对——
+  脚本从 30229 行削到 14172 行后集体前移，旧记录里的 29831~29842 / 11148 / 13524 已失效。
 - **为什么这次不动**：工单 #6 的保留清单（`docs/kpanel-removal-keep-list.md`）按边界留下了它：
   本脚本**从不下载**这个二进制（函数注释原文 "No downloaded helper or caller-supplied path"），
   只在机器上已经有人装了匹配版本的 Agent 时才会真的调它；函数开头就校验 root、文件存在且不是符号链接、
@@ -272,6 +277,24 @@ bash <(curl -sL "$KJ_RAW_URL")
 - **`find_container_by_host_port` 单独说明**：它不属"应用编号登记"那一套（只是 Docker 查询
   辅助），但同为零调用方、同样按上面的理由保留。它体积小、无副作用；若单开工单只清它，
   不牵动锁与标记机制。
+
+### 9. 内核优化菜单的「还原默认设置」能力随工单 #21 消失（保留能力实质减少）
+
+- **是什么**：内核优化菜单（`k nhyh`，系统工具里那一条）原来第 6 项是「还原默认设置：
+  将系统设置还原为默认配置」，由 `restore_defaults()` 实现（旧版 `kejilion.sh` 第
+  9192~9220 行，29 行函数体，干的是"完全清理"：删掉 `99-kejilion-optimize.conf` 与
+  `99-network-optimize.conf` 两个优化配置文件）。工单 #21 删除 `network-optimize.sh`
+  外部脚本后，这个函数的调用方归零，被后续的孤儿收敛提交 `f324d6b` 一并清掉。
+  现在 `kejilion.sh` 里 `restore_defaults` 与「还原默认设置」字样均为 **0 命中**
+  （工单 #24 复核）。
+- **为什么这次不动**：规格 Further Notes 把内核调优相关项归入"内核调优剩余项"，判为可接受；
+  且规格要求"删除后调用方归零的函数被识别并逐一确认后清除"，`restore_defaults()`
+  正是按这条规则走的，不是误删。
+- **为什么仍要记账**：这是一次**保留能力的实质减少**——用户原来能把调优改过的系统设置
+  一键还原，现在只能手动逐项改回。规格判"可接受"不等于"没有代价"，仓库主人应该知道这事。
+- **建议怎么处理**：若要恢复，从 `git show f324d6b^:kejilion.sh` 取回该函数、它的菜单项
+  与分发调用三处，重新挂回内核优化菜单；恢复前先确认它引用的调优项编号与现在的菜单
+  （一条龙调优已从 12 项变 11 项）还对得上。不恢复也完全说得过去，本条只是把账记下。
 
 
 
