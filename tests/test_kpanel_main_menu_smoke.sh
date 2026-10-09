@@ -170,7 +170,10 @@ for script_path in "${project_root}/kejilion.sh"; do
 			fail "保留边界被误伤[${kept}]: ${script_path}"
 	done
 
-	# 协议门仍认全部本地适配器环境变量（去掉的只有 KJ_LIGHT_NODE_PROTOCOL）
+	# 协议门仍认全部保留板块的本地适配器环境变量。
+	# 工单 #15/#16：应用市场与建站的非交互闸门随板块退役，KJ_APP_* /
+	# KJ_WEB_* / KJ_LDNMP_NONINTERACTIVE 五个变量已从闸门移除；系统工具、
+	# 系统调优、集群控制、BBRv3、测试合集的闸门一律保留（下面逐条反向断言）。
 	protocol_body="$(
 		awk '
 			/^kpanel_protocol_active\(\) \{/ { capture=1 }
@@ -189,13 +192,25 @@ for script_path in "${project_root}/kejilion.sh"; do
 		'KJ_F2B_NONINTERACTIVE' \
 		'KJ_SYSTEM_TUNING_NONINTERACTIVE' \
 		'KJ_VIRUS_SCAN_NONINTERACTIVE' \
-		'KJ_APP_NONINTERACTIVE' \
-		'KJ_WEB_NONINTERACTIVE' \
-		'KJ_LDNMP_NONINTERACTIVE' \
 		'KJ_TEST_NONINTERACTIVE'
 	do
 		grep -Fq "${variable}" <<<"${protocol_body}" ||
 			fail "协议门丢了本地适配器环境变量[${variable}]: ${script_path}"
+	done
+
+	# 反向：随应用市场 / 建站退役的五个闸门变量不许回来。
+	# （只在协议门函数体内断言——这些变量在被删板块的函数体里还有残留，
+	#   那些函数体归工单 #17/#20，不在本守门的射程内。）
+	for retired_variable in \
+		'KJ_APP_NONINTERACTIVE' \
+		'KJ_APP_INTERACTIVE' \
+		'KJ_WEB_NONINTERACTIVE' \
+		'KJ_WEB_INTERACTIVE' \
+		'KJ_LDNMP_NONINTERACTIVE'
+	do
+		if grep -Fq "${retired_variable}" <<<"${protocol_body}"; then
+			fail "协议门仍残留随板块退役的闸门变量[${retired_variable}]: ${script_path}"
+		fi
 	done
 
 	# ---- 行为断言：应用编号 kpanel 一律拒绝，且拒绝前不拉第三方应用目录 ----

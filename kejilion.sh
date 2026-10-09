@@ -90,11 +90,6 @@ kpanel_protocol_active() {
 	[ "${KJ_SYSTEM_TUNING_NONINTERACTIVE:-}" = "1" ] ||
 	[ "${KJ_VIRUS_SCAN_NONINTERACTIVE:-}" = "1" ] ||
 	[ "${KJ_BBRV3_NONINTERACTIVE:-}" = "1" ] ||
-	[ "${KJ_APP_NONINTERACTIVE:-}" = "1" ] ||
-	[ "${KJ_APP_INTERACTIVE:-}" = "1" ] ||
-	[ "${KJ_WEB_NONINTERACTIVE:-}" = "1" ] ||
-	[ "${KJ_WEB_INTERACTIVE:-}" = "1" ] ||
-	[ "${KJ_LDNMP_NONINTERACTIVE:-}" = "1" ] ||
 	[ "${KJ_TEST_NONINTERACTIVE:-}" = "1" ]
 }
 
