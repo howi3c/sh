@@ -12,11 +12,16 @@
 #   bash tests/run_all_checks.sh --no-detail   # 只跑清单上的全部项与汇总，不打印端点明细附录
 #   bash tests/run_all_checks.sh --help
 #
-# 约定（沿用父议题 #1 的 Testing Decisions）：
+# 约定（沿用父议题 #1 的 Testing Decisions，并与工单 #15 的瘦身删除口径并列）：
 #   · 本入口与它调用的测试全部只做静态分析 / 非交互冒烟，不执行 kejilion.sh 本体、
 #     不安装任何软件、不发出任何网络请求；
 #   · shellcheck 未安装时语法检查的 lint 部分按约定跳过，不算失败；
-#   · tests/test_network_inventory.sh 的报信/取内容分类规则在此只被调用，不被改写。
+#   · tests/test_network_inventory.sh 的报信/取内容分类规则在此只被调用，不被改写；
+#     工单 #23 在其内部新增“原版名下 URL 清零 + 留存取内容 URL 指向本仓库”断言（URL 路径级，
+#     因为 raw.githubusercontent.com 对 kejilion/* 与 howi3c/* 是同一直连主机），
+#     分类口径仍不变，本入口依旧只调用；
+#   · 工单 #15 起，被删板块的专项尺子随板块退役（不挂本入口），并新增删除守卫；
+#     本入口的 ITEMS 行数只增不减，标签文字随保留面收窄而同步。
 
 set -uo pipefail   # 不用 -e：每一项都要跑完，不能在第一项失败时就收工
 
@@ -27,8 +32,11 @@ target_script="${KEJILION_SCRIPT_PATH:-${project_root}/kejilion.sh}"
 detail=1
 show_detail() { [ "${detail}" -eq 1 ]; }
 
+# 用法说明整份打印文件头注释：跳过第一行 shebang，打到第一行真正的代码
+# （下面的 set -uo pipefail）之前为止。不写死行号范围——注释增改时既不会把
+# 用法截断，也不会把代码行一起带进 --help 输出。
 usage() {
-	sed -n '2,26p' "${BASH_SOURCE[0]}"
+	awk 'NR == 1 { next } /^[^#[:space:]]/ { exit } { print }' "${BASH_SOURCE[0]}"
 }
 
 # ---------------------------------------------------------------------------
@@ -40,15 +48,16 @@ ITEMS=(
 	"缝 1 · 网络请求清点（报信清零闸门）	tests/test_network_inventory.sh	--assert-clean"
 	"缝 2 · 非交互菜单冒烟（主菜单渲染与分发）	tests/test_main_menu_noninteractive_smoke.sh	"
 	"缝 3 · 语法检查（bash -n，shellcheck 缺装则跳过）	tests/test_kejilion_syntax_check.sh	"
-	"守门 · 广告清扫（工单 #8：返利与推广清空、教学链接/面板官网/致谢保留）	tests/test_ads_stripped.sh	"
+	"守门 · 广告清扫（工单 #8：返利与推广清空、教学链接/致谢保留）	tests/test_ads_stripped.sh	"
 	"守门 · 更新功能整体删除（工单 #7）	tests/test_update_removed.sh	"
-	"守门 · 闭源面板整块移除（工单 #6）	tests/test_kpanel_main_menu_smoke.sh	"
+	"守门 · 闭源面板痕迹为零 + 本地适配器保留边界（工单 #6，应用市场退场后保留面收窄）	tests/test_kpanel_main_menu_smoke.sh	"
 	"守门 · 作者代理拔掉、下载直连（工单 #5）	tests/test_direct_downloads.sh	"
 	"守门 · 署名、命名与 README（工单 #9）	tests/test_attribution_naming.sh	"
 	"守门 · 语言资产删除（工单 #10）	tests/test_language_assets_removed.sh	"
 	"守门 · 测试命名（tests/ 不残留已删闭源面板的 kpanel 前缀，工单 #12）	tests/test_local_adapter_naming.sh	"
 	"守门 · README 安装来源（脚本只从本仓库拉，不从作者域名拉回原版，工单 #13）	tests/test_readme_install_source.sh	"
 	"守门 · README 不残留原版仓库引用（指向 kejilion/sh 的徽章/问题反馈/更新日志/Star History 与原作者钱包地址，工单 #14）	tests/test_readme_no_upstream_refs.sh	"
+	"守门 · 删除守卫（工单 #15：已删功能词汇=0 / 根孤儿文件不存在 / 剩存取内容 URL 指向本仓库 / 与 README 守门交叉确认；工单 #16 点名自查词 cluster_python3、#22 漏网孤儿 update_log.sh 均在守）	tests/test_spec15_slim_down_removed.sh	"
 )
 TOTAL="${#ITEMS[@]}"
 

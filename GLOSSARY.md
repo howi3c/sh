@@ -11,6 +11,7 @@ _注_: 面向使用者的菜单标签“无遥测版”是已接受的特例—�
 
 **取内容**:
 为了拿到用户要的东西而发出的网络请求——比如下载安装包、获取测速节点；请求里不夹带任何关于用户的信息。
+净化版从本仓库取内容（raw.githubusercontent.com/howi3c/sh/main/…），不再从原作者域名或作者组织下的仓库取，见 ADR-0002。
 _Avoid_: 下载请求、联网功能、网络调用
 
 **净化版**:
@@ -22,5 +23,12 @@ kejilion 项目作者发布的、未做任何清洗的脚本。
 _Avoid_: 上游、官方版、正版
 
 **兄弟文件**:
-主脚本之外、与主脚本配套、经 URL 取内容下发给用户机器的文件——比如证书续签脚本、网络配置文件、备份脚本、通知脚本。
+主脚本之外、与主脚本配套、经 URL 取内容下发给用户机器的文件——比如通知脚本、网络配置文件、公钥文件。
+取内容只从本仓库（raw.githubusercontent.com/howi3c/sh/main/…）拿，见 ADR-0002。
+_举例（规格 #15 删除后现存 5 个）_: `TG-check-notify.sh` 与 `TG-SSH-check-notify.sh`（TG 通知）、`upgrade_openssh9.8p1.sh`（OpenSSH 升级）、`archive.key`（XanMod 签名钥）、`fail2ban-ssh.conf`（SSH 防御 jail）。
 _Avoid_: 配套脚本、附属文件、sibling 文件
+
+**部署文件名**:
+兄弟文件下发给用户机器时落盘用的名字，与它在仓库里的文件名可以不同。目前唯一一例：仓库里的 `fail2ban-ssh.conf` 部署到用户机时仍叫 `centos-ssh.conf`（`f2b_install_sshd()` 里的 `--output centos-ssh.conf`），这样改动不牵动用户机上的 jail 文件名与既有配置。
+_Avoid_: 目标文件名、落地名
+

@@ -6,6 +6,12 @@
 # 输出人可读清单（另附一类“参考链接”：脚本只是打印给用户看、并不真发请求）。
 # 红线：报信类改造后必须为 0。
 #
+# 另一条边界（ADR-0002，规格 #15）：取内容只从本仓库。`--assert-clean` 除守报信=0
+# 外，还守"指向原版名下的 URL 清零"与"留存取内容 URL 全部指向本仓库 raw"。该断言做
+# URL **路径级**匹配（raw.githubusercontent.com 对 kejilion/* 与 howi3c/* 是同一
+# 直连主机，只比主机名分不出来源），且不碰 `kejilion.pro` 提示示例域名与满篇
+# `kejilion.sh` 主脚本自身文件名这两个已知非取内容字样。
+#
 # 重要约束（设计红线）：
 #   · 只 grep/awk 分析文本，绝不执行目标脚本，绝不发出任何网络请求；
 #   · 分类口径写在下面的 awk 规则里，可读可改，来源为术语表的报信/取内容定义；
@@ -14,7 +20,7 @@
 # 用法：
 #   bash tests/test_network_inventory.sh            # 自测（默认）+ 打印 kejilion.sh 清单
 #   bash tests/test_network_inventory.sh <脚本路径>  # 只打印某个脚本的清单
-#   bash tests/test_network_inventory.sh --assert-clean [脚本路径]  # 守门：有报信则非零退出
+#   bash tests/test_network_inventory.sh --assert-clean [脚本路径]  # 守门：有报信 / 原版 URL 未清零则非零退出
 #   bash tests/test_network_inventory.sh --records [脚本路径]       # 输出机器可读分类记录
 #   bash tests/test_network_inventory.sh --summary [脚本路径]       # 只输出四类计数（key=value）
 #   bash tests/test_network_inventory.sh --write-baseline <目录>    # 生成/刷新基线产物
@@ -49,7 +55,6 @@ netinv_mktemp() {
 #     类别 ∈ {报信, 取内容, 参考链接}
 #     报信·类型 report-post     = 直接把资料 POST 出去的上报端点
 #     报信·类型 report-feed     = 先被抓取、再随上报发出的数据源（端点本身在别处合法）
-#     报信·类型 report-trigger  = 附属报信的触发行（不带端点，但带 ENABLE_STATS）
 #     取内容·类型 author-proxy   = 经作者代理 gh.kejilion.pro 拼接出来的下载
 #     取内容·类型 author-host    = 作者自有站点/镜像（非上报）
 #     取内容·类型 direct         = 直连取内容
@@ -68,7 +73,6 @@ inventory_records() {
 	awk '
 		# ---- 静态知识：真实域名后缀白名单，以及“只是文件后缀”的排除集 ----
 		BEGIN {
-			q = sprintf("%c", 39)
 			n = split("com net org io sh pro cn dev ai xyz top eu me tv cloud run app wiki place cat", tl, " ")
 			for (i = 1; i <= n; i++) tld[tl[i]] = 1
 			n = split("json yml yaml conf cnf ini txt log lock bak py pyc toml service sock so a d md bin", ex, " ")
@@ -122,7 +126,7 @@ inventory_records() {
 			if (t ~ /^[[:space:]]*(apt|apt-get|yum|dnf|zypper|apk|pip|pip3|npm|yarn|pnpm|gem)/) return 1
 			if (t ~ /(^|[^A-Za-z0-9._-])(curl|wget|nc|ncat|telnet|ssh|scp|rsync|git)([^A-Za-z0-9._-]|$)/) return 1
 			if (t ~ /(^|[^A-Za-z0-9._-])docker([^A-Za-z0-9._-]|$)/) return 1
-			if (t ~ /(^|[^A-Za-z0-9._-])(kpanel_run_remote_bash|openclaw_memory_probe_url|install)([^A-Za-z0-9._-]|$)/) return 1
+			if (t ~ /(^|[^A-Za-z0-9._-])(kpanel_run_remote_bash|install)([^A-Za-z0-9._-]|$)/) return 1
 			if (t ~ /--source(-registry)?([^A-Za-z0-9._-]|$)/) return 1
 			# 整行就是一个容器镜像引用（命名空间/仓库[:标签]）
 			if (t ~ /^[[:space:]]*[a-z0-9]([a-z0-9._-]*[a-z0-9])?(\/[a-z0-9._-]+)+(:[a-z0-9._-]+)?[[:space:]]*$/) return 1
@@ -138,7 +142,7 @@ inventory_records() {
 			if (raw ~ /^[[:space:]]*#/) next
 
 			line = raw
-			# 作者代理的几种前缀变量（gh_proxy / cron_proxy / mirror_prefix / OPENCLAW_MEMORY_GH_PROXY）
+			# 作者代理的几种前缀变量（gh_proxy / cron_proxy / mirror_prefix）
 			# 统一还原成 https:// 前缀，才能抽出它后面的真实目标主机
 			gsub(/\$\{[A-Za-z0-9_]*(proxy|PROXY|mirror_prefix)\}/, "https://", line)
 			via_proxy = (raw ~ /\$\{[A-Za-z0-9_]*(proxy|PROXY|mirror_prefix)\}/) ? 1 : 0
@@ -146,11 +150,6 @@ inventory_records() {
 			# send_stats() 函数体跟踪：它整体就是“报信上下文”
 			if (line ~ /^send_stats\(\)[[:space:]]*\{/) { in_stats = 1; next }
 			if (in_stats && line ~ /^[}]/)            { in_stats = 0; next }
-
-			# Python 版附属报信触发：openclaw_api_python 携带 ENABLE_STATS 且以 PY heredoc 传参
-			if (raw ~ /openclaw_api_python/ && raw ~ /ENABLE_STATS/ && index(raw, "<<" q "PY" q) > 0) {
-				printf "报信\t<python-附属报信>\treport-trigger\t%d\n", NR
-			}
 
 			# 先抹掉 sed 的 s/旧/新/ 段，避免里面的占位域名被当成端点
 			work = line
@@ -217,12 +216,67 @@ inventory_records() {
 }
 
 # ---------------------------------------------------------------------------
+# 闸门：assert_upstream_urls_impl <文件>
+#   "原版名下的 URL 清零" + "留存取内容 URL 全部指向本仓库"（ADR-0002，规格 #15
+#   用户故事 18/19）。与 assert_clean_impl 的报信清零互补，同为 --assert-clean 的守门项。
+#
+#   实现要点：URL **路径级**而非主机名级。raw.githubusercontent.com 对
+#   kejilion/* 与 howi3c/* 是同一直连主机（inventory_records 只抽主机名，两者
+#   都归"取内容/direct"），所以必须直接 grep owner/repo 路径段才分得清来源。
+#
+#   两个必须避开的误报（都不碰）：
+#     · `kejilion.pro` 在 read -p 提示示例域名里出现过（菜单 13-21 本机 host
+#       解析，保留项，非取内容）——本断言只锚 kejilion 组织路径与作者自有子域，
+#       不匹配裸域名；
+#     · 满篇 `kejilion.sh` 是主脚本自身文件名，同样不含组织路径段。
+#
+#   口径为全文零容忍（含注释行）：注释里残留原版 URL 会误导后来者以为还能从那里
+#   取内容，与 ADR-0002 的边界冲突。
+#
+#   消费者（改这条正则或下面那份 5 个取内容目标清单时，这两处都会跟着变，
+#   不需要、也不允许在别处再抄一份）：
+#     · tests/run_all_checks.sh 把它挂成"缝 1 · 网络请求清点（报信清零闸门）"；
+#     · tests/test_spec15_slim_down_removed.sh（删除守卫断言 3）直接调用本函数，
+#       见那里的说明。
+# ---------------------------------------------------------------------------
+assert_upstream_urls_impl() {
+	local f="$1" hits count
+	hits="$(grep -nE 'githubusercontent\.com/kejilion/|github\.com/kejilion/|[^a-z0-9.-]gh\.kejilion\.pro|[^a-z0-9.-]dl\.kejilion\.pro|[^a-z0-9.-]docker\.kejilion\.pro' "$f" || true)"
+	if [ -n "${hits}" ]; then
+		count="$(printf '%s\n' "${hits}" | grep -c . || true)"
+		printf 'FAIL: %s 仍存在指向原版名下的 URL（应为 0，实为 %s 处）\n' "${f}" "${count}" >&2
+		printf '%s\n' "${hits}" | awk -F: '{ printf "  [原版URL] 第 %s 行: %s\n", $1, substr($0, index($0, ":") + 1) }' >&2
+		return 1
+	fi
+
+	# 正面：留存 5 个取内容 URL 必须以本仓库 raw 形式在位（防止靠删 URL 凑清零）。
+	local repo_raw="https://raw.githubusercontent.com/howi3c/sh/main" missing="" target
+	for target in archive.key TG-check-notify.sh TG-SSH-check-notify.sh upgrade_openssh9.8p1.sh fail2ban-ssh.conf; do
+		grep -qF "${repo_raw}/${target}" "${f}" || missing="${missing} ${target}"
+	done
+	if [ -n "${missing}" ]; then
+		printf 'FAIL: %s 留存取内容 URL 缺失或未指向本仓库:%s（应为 %s/<文件名>）\n' \
+			"${f}" "${missing}" "${repo_raw}" >&2
+		return 1
+	fi
+
+	printf 'PASS: %s 原版名下 URL 已清零；5 个留存取内容 URL 均指向本仓库 raw\n' "${f}"
+	return 0
+}
+
+# ---------------------------------------------------------------------------
 # 闸门：assert_clean_impl <文件>
 #   报信类为 0 则 PASS 并返回 0；否则把“哪个端点、哪一行、归到哪一类”逐条点名后返回 1。
 #   源级兜底：即便端点被字符串拼接藏起来，只要出现作者上报主机名或报信函数名，也算未净化。
+#   另守"原版名下 URL 清零 + 留存 URL 指向本仓库"（见 assert_upstream_urls_impl）。
 # ---------------------------------------------------------------------------
 assert_clean_impl() {
-	local f="$1" records reporting src_hits src_count
+	local f="$1" records reporting src_hits src_count url_out url_rc=0
+
+	# 红线优先：报信比取内容来源更严重，先判报信；URL 违规的结果暂存，
+	# 报信失败时一并点名（一次看全），报信干净时再由它单独决定成败。
+	url_out="$(assert_upstream_urls_impl "${f}" 2>&1)" || url_rc=1
+
 	records="$(inventory_records "$f")"
 	reporting="$(grep -E $'^报信\t' <<<"${records}" || true)"
 	# 源级兜底：端点即使被字符串拼接藏起来，只要出现作者上报主机名或报信函数名就算未净化。
@@ -230,31 +284,49 @@ assert_clean_impl() {
 	src_hits="$(grep -nE 'api\.kejilion\.pro|send_stats' "$f" | grep -vE '^[0-9]+:[[:space:]]*#' || true)"
 	src_count="$(printf '%s\n' "${src_hits}" | grep -c . || true)"
 
-	if [ -z "${reporting}" ] && [ -z "${src_hits}" ]; then
-		printf 'PASS: %s 未检出报信端点（报信类 = 0）\n' "${f}"
-		return 0
-	fi
-
-	printf 'FAIL: %s 仍存在报信，净化验收不通过\n' "${f}" >&2
-	if [ -n "${reporting}" ]; then
-		printf '%s\n' "${reporting}" | awk -F'\t' '
-			{ lines[$2] = lines[$2] (lines[$2] == "" ? "" : "、") "第 " $4 " 行"; kinds[$2] = $3 }
-			END { for (e in lines) printf "  [报信] 类别=报信 · 端点=%s · 类型=%s · %s\n", e, kinds[e], lines[e] }
-		' | sort >&2
-	fi
-	if [ -n "${src_hits}" ]; then
-		if [ "${src_count}" -gt 10 ]; then
-			printf '%s\n' "${src_hits}" | head -10 | awk -F: '
-				{ printf "  [报信·源级] 类别=报信 · 第 %s 行 命中作者上报特征: %s\n", $1, substr($0, index($0, ":") + 1) }
-			' >&2
-			printf '  [报信·源级] …… 另有余下 %s 处同类命中（作者上报主机名或报信函数名残留）\n' "$(( src_count - 10 ))" >&2
-		else
-			printf '%s\n' "${src_hits}" | awk -F: '
-				{ printf "  [报信·源级] 类别=报信 · 第 %s 行 命中作者上报特征: %s\n", $1, substr($0, index($0, ":") + 1) }
+	if [ -n "${reporting}" ] || [ -n "${src_hits}" ]; then
+		printf 'FAIL: %s 仍存在报信，净化验收不通过\n' "${f}" >&2
+		if [ -n "${reporting}" ]; then
+			printf '%s\n' "${reporting}" | awk -F'\t' '
+				{ lines[$2] = lines[$2] (lines[$2] == "" ? "" : "、") "第 " $4 " 行"; kinds[$2] = $3 }
+				END { for (e in lines) printf "  [报信] 类别=报信 · 端点=%s · 类型=%s · %s\n", e, kinds[e], lines[e] }
+			' | sort >&2
+		fi
+		if [ -n "${src_hits}" ]; then
+			# 一条 awk 同时干原来两个分支的活：前 10 条逐行点名，第 11 行起只报余量
+			# （判据强度不变，只是不再把同一 awk 逐字抄两遍、只差一个 head -10）。
+			printf '%s\n' "${src_hits}" | awk -F: -v total="${src_count}" '
+				NR <= 10 { printf "  [报信·源级] 类别=报信 · 第 %s 行 命中作者上报特征: %s\n", $1, substr($0, index($0, ":") + 1) }
+				NR == 11 { printf "  [报信·源级] …… 另有余下 %s 处同类命中（作者上报主机名或报信函数名残留）\n", total - 10 }
 			' >&2
 		fi
+		# 顺手把取内容来源的问题一起点名，免得修完报信又才发现 URL 没收敛
+		if [ "${url_rc}" -ne 0 ]; then
+			printf '%s\n' "${url_out}" >&2
+		fi
+		return 1
 	fi
-	return 1
+
+	if [ "${url_rc}" -ne 0 ]; then
+		printf '%s\n' "${url_out}" >&2
+		return 1
+	fi
+
+	printf '%s\n' "${url_out}"
+	printf 'PASS: %s 未检出报信端点（报信类 = 0）\n' "${f}"
+	return 0
+}
+
+# ---------------------------------------------------------------------------
+# 按端点汇总行号：stdin 读入按类型筛过的记录（TSV），打印
+# 「      · 端点                        第 N 行、第 M 行」。
+# 报信栏的「上报端点 / 喂给上报的数据源」两类共用这一份汇总，避免同一 awk 写两遍。
+# ---------------------------------------------------------------------------
+summarize_records_by_endpoint() {
+	sort -t$'\t' -k2,2 -k4,4n | awk -F'\t' '
+		{ lines[$2] = lines[$2] (lines[$2] == "" ? "" : "、") "第 " $4 " 行"; if (!seen[$2]++) order[++n] = $2 }
+		END { for (i = 1; i <= n; i++) printf "      · %-28s %s\n", order[i], lines[order[i]] }
+	'
 }
 
 # ---------------------------------------------------------------------------
@@ -283,28 +355,18 @@ print_inventory() {
 		printf '  （无）报信已清零。\n'
 	else
 		printf ' 1) 上报端点（把版本号 / 系统信息 / IP 归属地 POST 给作者）\n'
-		grep -E $'^报信\t[^\t]+\treport-post\t' <<<"${records}" | sort -t$'\t' -k2,2 -k4,4n | awk -F'\t' '
-			{ lines[$2] = lines[$2] (lines[$2] == "" ? "" : "、") "第 " $4 " 行"; if (!seen[$2]++) order[++n] = $2 }
-			END { for (i = 1; i <= n; i++) printf "      · %-28s %s\n", order[i], lines[order[i]] }
-		' || true
+		grep -E $'^报信\t[^\t]+\treport-post\t' <<<"${records}" | summarize_records_by_endpoint || true
 
 		printf ' 2) 喂给上报的数据源（端点本身在别处是合法取内容，但在报信函数里被抓去上报）\n'
 		if grep -Eq $'^报信\t[^\t]+\treport-feed\t' <<<"${records}"; then
-			grep -E $'^报信\t[^\t]+\treport-feed\t' <<<"${records}" | sort -t$'\t' -k2,2 -k4,4n | awk -F'\t' '
-				{ lines[$2] = lines[$2] (lines[$2] == "" ? "" : "、") "第 " $4 " 行"; if (!seen[$2]++) order[++n] = $2 }
-				END { for (i = 1; i <= n; i++) printf "      · %-28s %s\n", order[i], lines[order[i]] }
-			' || true
+			grep -E $'^报信\t[^\t]+\treport-feed\t' <<<"${records}" | summarize_records_by_endpoint || true
 		else
 			printf '      （无）\n'
 		fi
 
 		printf ' 3) 附属报信触发点（Python 版 / 子进程里把版本号等发出去）\n'
-		local n_trig=0
-		if grep -Eq $'report-trigger\t' <<<"${records}"; then
-			grep -E $'report-trigger\t' <<<"${records}" | sort -t$'\t' -k4,4n | awk -F'\t' '{printf "      · 第 %s 行（openclaw_api_python ... ENABLE_STATS ... <<PY）\n", $4}' || true
-			n_trig="$(grep -cE $'report-trigger\t' <<<"${records}" || true)"
-		fi
-		if [ "${n_trig}" -eq 0 ]; then printf '      （无）\n'; fi
+		printf '      （无）——原先盯 OpenClaw 的 Python 附属报信触发（openclaw_api_python +\n'
+		printf '      ENABLE_STATS + <<PY heredoc）随工单 #19 的整块删除一并退役。\n'
 
 		local stats_calls
 		stats_calls="$( { grep -nE 'send_stats[[:space:]]+"' "${f}" || true; } | wc -l)"
@@ -396,15 +458,16 @@ write_baseline() {
 #   D) 纯静态属性                 哨兵文件证明目标从未被执行
 # ---------------------------------------------------------------------------
 selftest() {
-	local tmp_dir dirty clean hostile
+	local dirty clean hostile upstream
 	tmp_dir="$(netinv_mktemp)"
 
 	dirty="${tmp_dir}/dirty.sh"
 	clean="${tmp_dir}/clean.sh"
 	hostile="${tmp_dir}/hostile.sh"
+	upstream="${tmp_dir}/upstream.sh"
 	local canary="${tmp_dir}/EXECUTED"
 
-	# 样本一：含全部已知报信形态（bash 上报 + Python 附属报信 + 喂报信数据源）
+	# 样本一：含全部已知报信形态（bash 上报 + 喂报信数据源）
 	cat >"${dirty}" <<'EOF'
 send_stats() {
 	if [ "$ENABLE_STATS" == "false" ]; then
@@ -420,12 +483,6 @@ send_stats() {
 	) &
 }
 send_stats "测试菜单"
-deepseek_helper() {
-	openclaw_api_python "$config_file" "$ENABLE_STATS" "$sh_v" <<'PY'
-import urllib.request
-req = urllib.request.Request("https://api.kejilion.pro/api/log", method="POST")
-PY
-}
 wget -O x.conf ${gh_proxy}raw.githubusercontent.com/kejilion/nginx/main/nginx10.conf
 mo=newthing; gh_proxy="https://gh.kejilion.pro/"
 curl -s https://ipinfo.io/ip && echo
@@ -444,14 +501,32 @@ echo "视频教学: https://www.bilibili.com/video/BV1"
 local app_url="官网介绍: https://1panel.cn/"
 EOF
 
-	# 样本二：只取内容、无报信（净化后应有的样子）
+	# 样本二：只从本仓库取内容、无报信（工单 #15 之后应有的样子，见 ADR-0002）
 	cat >"${clean}" <<'EOF'
 show_ip() {
 	local ip=$(curl -s https://ipinfo.io/ip && echo)
 	printf '%s\n' "$ip"
 }
-wget -O nginx.conf https://raw.githubusercontent.com/kejilion/nginx/main/nginx10.conf
+wget -O nginx.conf https://raw.githubusercontent.com/howi3c/sh/main/nginx10.conf
 curl -sS -o install.sh https://get.docker.com/install.sh
+curl -sS -O https://raw.githubusercontent.com/howi3c/sh/main/archive.key
+curl -sS -O https://raw.githubusercontent.com/howi3c/sh/main/TG-check-notify.sh
+curl -sS -O https://raw.githubusercontent.com/howi3c/sh/main/TG-SSH-check-notify.sh
+curl -sS -O https://raw.githubusercontent.com/howi3c/sh/main/upgrade_openssh9.8p1.sh
+curl -sS -O https://raw.githubusercontent.com/howi3c/sh/main/fail2ban-ssh.conf
+EOF
+
+	# 样本四：无报信、留存取内容 URL 齐全，但夹了一条原版名下的取内容 URL
+	#   （工单 #15 之前的状态）。用来单独证明"原版 URL 清零"断言会叫——
+	#   它不是因为报信而失败，报信口径在这个样例上是干净的。
+	cat >"${upstream}" <<'EOF'
+wget -O nginx.conf https://raw.githubusercontent.com/howi3c/sh/main/nginx10.conf
+wget -O cc.conf https://raw.githubusercontent.com/kejilion/nginx/main/nginx10.conf
+curl -sS -O https://raw.githubusercontent.com/howi3c/sh/main/archive.key
+curl -sS -O https://raw.githubusercontent.com/howi3c/sh/main/TG-check-notify.sh
+curl -sS -O https://raw.githubusercontent.com/howi3c/sh/main/TG-SSH-check-notify.sh
+curl -sS -O https://raw.githubusercontent.com/howi3c/sh/main/upgrade_openssh9.8p1.sh
+curl -sS -O https://raw.githubusercontent.com/howi3c/sh/main/fail2ban-ssh.conf
 EOF
 
 	# 样本三：若被本工具执行，就会留下哨兵文件并真的发起联网请求
@@ -467,7 +542,6 @@ EOF
 
 	grep -qP '^报信\tapi\.kejilion\.pro\treport-post\t' <<<"${dirty_records}"
 	grep -qP '^报信\tipinfo\.io\treport-feed\t' <<<"${dirty_records}"
-	grep -qP '^报信\t<python-附属报信>\treport-trigger\t' <<<"${dirty_records}"
 	grep -qP '^取内容\traw\.githubusercontent\.com\tauthor-proxy\t' <<<"${dirty_records}"
 	grep -qP '^取内容\tipinfo\.io\tdirect\t' <<<"${dirty_records}"
 
@@ -500,6 +574,24 @@ EOF
 	grep -qE '第 ?[0-9]+ ?行' <<<"${gate_out}"
 	grep -q 'report-post' <<<"${gate_out}"
 
+	# 接口 B 补：原版 URL 清零 + 留存 URL 指向本仓库（ADR-0002，工单 #15）
+	#   样本四无报信，失败只能来自原版 URL 断言——单独证明这条会叫。
+	local upstream_out upstream_rc=0
+	upstream_out="$(assert_clean_impl "${upstream}" 2>&1)" || upstream_rc=$?
+	if [ "${upstream_rc}" -eq 0 ]; then
+		die "原版 URL 清零断言在夹带原版取内容 URL 的样例上应判定失败"
+	fi
+	grep -q '仍存在指向原版名下的 URL' <<<"${upstream_out}"
+	grep -q 'kejilion/nginx' <<<"${upstream_out}"
+	grep -qE '第 ?[0-9]+ ?行' <<<"${upstream_out}"
+	# 留存清单缺失也必须叫（证明正面断言同样生效，不只是负面在守）
+	local drop_out drop_rc=0
+	drop_out="$(assert_upstream_urls_impl <(grep -v 'fail2ban-ssh.conf' "${clean}") 2>&1)" || drop_rc=$?
+	if [ "${drop_rc}" -eq 0 ]; then
+		die "留存取内容 URL 缺失时闸门应判定失败"
+	fi
+	grep -q 'fail2ban-ssh.conf' <<<"${drop_out}"
+
 	# 接口 C：人读清单覆盖全部已知项
 	local printed
 	printed="$(print_inventory "${dirty}")"
@@ -526,7 +618,15 @@ EOF
 # ---------------------------------------------------------------------------
 # 入口分发
 # ---------------------------------------------------------------------------
-usage() { sed -n '2,20p' "${BASH_SOURCE[0]}"; }
+# 用法说明不写死行号范围（写死的范围已被注释增改漂移过两次：2026-10-09 第二轮
+# 审查修复提交 8e81e2b 给文件头加了 6 行注释，把 2,20 这五条用法示例整段漏掉）。
+# 改为按锚点抽取：从「# 用法：」打到第一行非注释代码（下面的 set -euo pipefail）
+# 之前为止，注释再增删都不会截断用法。
+usage() {
+	awk '/^# 用法：/ { in_usage = 1 }
+		in_usage && /^[^#[:space:]]/ { exit }
+		in_usage { print }' "${BASH_SOURCE[0]}"
+}
 
 main() {
 	local action="print" target="${default_target}"
