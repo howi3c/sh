@@ -54,7 +54,7 @@ ITEMS=(
 	"守门 · 测试命名（tests/ 不残留已删闭源面板的 kpanel 前缀，工单 #12）	tests/test_local_adapter_naming.sh	"
 	"守门 · README 安装来源（脚本只从本仓库拉，不从作者域名拉回原版，工单 #13）	tests/test_readme_install_source.sh	"
 	"守门 · README 不残留原版仓库引用（指向 kejilion/sh 的徽章/问题反馈/更新日志/Star History 与原作者钱包地址，工单 #14）	tests/test_readme_no_upstream_refs.sh	"
-	"守门 · 删除守卫（工单 #15：已删功能词汇=0 / 根孤儿文件不存在 / 剩存取内容 URL 指向本仓库 / 与 README 守门交叉确认）	tests/test_spec15_slim_down_removed.sh	"
+	"守门 · 删除守卫（工单 #15：已删功能词汇=0 / 根孤儿文件不存在 / 剩存取内容 URL 指向本仓库 / 与 README 守门交叉确认；工单 #24 起加守规格点名保留的零调用方函数仍在）	tests/test_spec15_slim_down_removed.sh	"
 )
 TOTAL="${#ITEMS[@]}"
 

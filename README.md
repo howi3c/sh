@@ -248,7 +248,32 @@ bash <(curl -sL "$KJ_RAW_URL")
   `<img>` 的 `src` 改成相对路径，README 打开时对作者域名零请求；第 103 行的官网链接若只是想给读者
   一个作者站点参考，可保留文字说明但去掉跳转，或直接删。
 
-### 本轮删除记录（工单 #22，后续由 #19 / #20 / #23 补齐）
+### 8. 三个零调用方的顶层函数（保留：规格点名，待连"应用编号登记"一起退役时再处理）
+
+- **是什么**：`kejilion.sh` 里有三个顶层函数现在**一个调用方都没有**（工单 #24 于 2026-10-09
+  复核）：`remove_app_id()`（应用编号移除）、`kpanel_app_update_marker()`（写
+  `/home/docker/appno.txt` 标记文件）、`find_container_by_host_port()`（按宿主端口找容器）。
+  其中 `kpanel_app_update_marker` 只被 `remove_app_id` 调用，而 `remove_app_id` 自身无调用方，
+  两个是**传递性孤儿**；`find_container_by_host_port` 则是定义即孤儿。
+- **在哪**：`kejilion.sh` 第 57 行 `kpanel_app_update_marker()`、第 74 行 `remove_app_id()`、
+  第 2524 行 `find_container_by_host_port()`。
+- **为什么这次不动**：规格 Implementation Decisions 点名"并发锁基础设施、应用编号登记…
+  一律保留"，这条点名压倒了"删除后调用方归零的函数逐一确认后清除"的通用规则。锁四件套
+  （`kpanel_app_lock_held` / `kpanel_app_with_lock` 及其 `system` 资源）在保留区有十余处
+  调用方（安装、卸载、iptables、防火墙…），`markers` 分支只服务上面那两个孤儿函数，
+  `catalog` 分支的调用方（应用市场目录刷新）已随工单 #17 退役——但整套基础设施是一个整体，
+  按规格意图保留。
+- **建议怎么处理**：将来若决定连"应用编号登记"（`/home/docker/appno.txt` 那套标记机制）
+  一起退役，需**同时**收尾三件事：删掉这三个函数；把 `kpanel_app_with_lock` 的资源白名单
+  里的 `markers` 与 `catalog` 两个分支一并去掉（第 31 行 `case "$resource" in system|catalog|markers)`）；
+  检查还有没有别处读 `/home/docker/appno.txt`。删除守卫
+  `tests/test_spec15_slim_down_removed.sh` 已就"这三个函数仍在 + 本条记账在位"设了断言
+  （断言 2c），动手时要同步改尺子，不要静默删除。
+- **`find_container_by_host_port` 单独说明**：它不属"应用编号登记"那一套（只是 Docker 查询
+  辅助），但同为零调用方、同样按上面的理由保留。它体积小、无副作用；若单开工单只清它，
+  不牵动锁与标记机制。
+
+
 
 工单 #22 清掉的是"入口已断的功能本体 + 仓库孤儿"。逐项列出，便于复核：
 

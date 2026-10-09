@@ -4,10 +4,11 @@
 # 背景：规格 #15 把游戏开服、三类 AI 面板、OpenClaw、应用市场、LDNMP 建站、
 # FRP 内网穿透、network-optimize 外部脚本整块删除，取内容收敛到本仓库
 # （ADR-0002）。本测试守四类断言，让已删的东西与指向原版名下的 URL
-# **永远不会被悄悄加回来**：
+# **永远不会被悄悄加回来**，同时钉住该保留的没被删过头：
 #
 #   1. 已删功能词汇在主脚本中为零（只算非注释行，说明性注释提一句不算复辟）；
 #   2. 仓库根孤儿文件不存在（顺带钉住保留的兄弟文件一个不少）；
+#   2c. 规格点名保留的零调用方函数仍在，且 README「后续事项」第 8 条记着账；
 #   3. 剩存取内容 URL 全部指向本仓库 raw、指向原版名下的 URL 清零、报信为 0
 #      ——调用 tests/test_network_inventory.sh --assert-clean 判定，不重抄判据；
 #   4. 与 README 守门交叉确认——直接调用既有两个 README 守门，不重抄它们的逻辑。
@@ -123,6 +124,32 @@ kept_files=(
 for f in "${kept_files[@]}"; do
 	[ -e "${project_root}/${f}" ] ||
 		fail "保留的兄弟文件意外缺失: ${f}（删过头就是事故，规格 #15 明确保留）"
+done
+
+# ---- 断言 2c：规格点名保留的零调用方函数一个不少，且 README 已记账 ----
+# 规格用户故事 33 要求"删除后调用方归零的函数被识别并逐一确认后清除"，但
+# Implementation Decisions 又点名"并发锁基础设施、应用编号登记…一律保留"，两者有张力。
+# 本轮（工单 #24 评审修复）的裁定是**保留不删**，记账在 README「后续事项」第 8 条。
+# 这里把裁定钉住两头：函数仍在（防悄悄删过头）、记账也在（防只剩代码没有说法）。
+# 将来若决定连"应用编号登记"一起退役，请同步改本断言与 README 第 8 条。
+zero_caller_kept_functions=(
+	remove_app_id              # 应用编号移除；只被自己人（无调用方）间接持有
+	kpanel_app_update_marker   # 写 /home/docker/appno.txt 标记文件；只被 remove_app_id 调用
+	find_container_by_host_port # 按宿主端口找容器；定义即孤儿
+)
+for fn in "${zero_caller_kept_functions[@]}"; do
+	grep -qE "^[[:space:]]*${fn}\\(\\)" "${main_script}" ||
+		fail "规格点名保留的零调用方函数不见了: ${fn}（按 Implementation Decisions 应保留；真要连应用编号登记一起退役，请同步改 README「后续事项」第 8 条）"
+done
+todo_section="$(awk -v want='## 后续事项' '
+	$0 == want { in_section = 1; next }
+	/^## /    { in_section = 0 }
+	in_section { print }
+' "${project_root}/README.md")"
+[ -n "${todo_section}" ] || fail "README 里找不到「## 后续事项」这一节（零调用方保留函数的记账无处安放）"
+for name in "${zero_caller_kept_functions[@]}" 'markers' 'catalog'; do
+	printf '%s\n' "${todo_section}" | grep -Fq "${name}" ||
+		fail "「后续事项」缺少零调用方保留函数的记账要素: ${name}（工单 #24 要求把这三个函数为什么保留、将来怎么一起退役写进第 8 条）"
 done
 
 # ===========================================================================
