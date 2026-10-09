@@ -23575,12 +23575,6 @@ EOF
 
 
 
-cluster_python3() {
-	install python3 python3-paramiko
-	cd ~/cluster/
-	curl -sS -O https://raw.githubusercontent.com/kejilion/python-for-vps/main/cluster/$py_task
-	python3 ~/cluster/$py_task
-}
 
 
 run_commands_on_servers() {
