@@ -13,10 +13,15 @@ grep -Fqx 'KPANEL_SYSTEM_TUNING_PROTOCOL_VERSION="1"' "$script_path"
 [ "$(grep -Fxc 'KPANEL_SYSTEM_TUNING_PROTOCOL_VERSION="1"' "$script_path")" -eq 1 ]
 grep -Fqx 'KPANEL_SYSTEM_TUNING_MIRROR_COMMIT="649e948763042e485e411be540d21c32cface1c1"' "$script_path"
 grep -Fqx 'KPANEL_SYSTEM_TUNING_MIRROR_SHA256="2e3b78a460f10ef291f30e3cbf3d3b28a9521d6615364f11b36e4a70ec97d18d"' "$script_path"
-grep -Fqx 'KPANEL_SYSTEM_TUNING_NETWORK_COMMIT="e9c3078eb516b05f9df6d2a9294cf3b226ca02bd"' "$script_path"
-grep -Fqx 'KPANEL_SYSTEM_TUNING_NETWORK_SHA256="94f86598805b7a8155f444f35a446df4657985ef81b25f96f7799aa465033bbb"' "$script_path"
 grep -F '[ "${KJ_SYSTEM_TUNING_NONINTERACTIVE:-}" = 1 ] ||' "$script_path" >/dev/null
 grep -F 'kpanel_system_tuning_dispatch "$@"' "$script_path" >/dev/null
+# network-optimize 外部脚本及其钉版本常量、登记项已整体移除（工单 #21）
+for gone in KPANEL_SYSTEM_TUNING_NETWORK_COMMIT KPANEL_SYSTEM_TUNING_NETWORK_SHA256 network-optimize kernel-auto kpanel_system_tuning_kernel_auto restore_network_defaults; do
+	if grep -Fq "$gone" "$script_path"; then
+		echo "kejilion.sh 仍残留 network-optimize 相关内容: ${gone}" >&2
+		exit 1
+	fi
+done
 
 functions="$(awk '
 	/^KPANEL_SYSTEM_TUNING_PROTOCOL_VERSION=/ { capture=1 }
@@ -45,7 +50,22 @@ grep -Fqx '1:223.5.5.5 183.60.83.19' "$temporary/dns-action"
 
 KPANEL_SYSTEM_TUNING_SSHD_CONFIG="$temporary/sshd_config"
 KPANEL_SYSTEM_TUNING_SSHD_RUN_DIR="$temporary/run-sshd"
-KPANEL_SYSTEM_TUNING_SYSTEMD_DIR="$temporary/no-systemd"
+KPANEL_SYSTEM_TUNING_SYSTEMD_DIR="$temporary/fake-systemd"
+# 上游 6ebb945 给 prepare_ssh_service 补了"无 init 系统就 return 1"的分支，
+# 于是"装包成功"的断言在无 systemd/OpenRC 的机器上再也走不到。这里只垫一个假
+# systemctl：ssh.service 单元判定为不存在、enable --now 判定为成功，
+# 仍然跑真实的 prepare_ssh_service 代码路径，不 stub 掉被测函数本身。
+mkdir -p "$temporary/fake-systemd" "$temporary/fake-bin"
+cat > "$temporary/fake-bin/systemctl" <<'SHIM'
+#!/bin/bash
+case "$1" in
+	cat) exit 1 ;;
+	*) exit 0 ;;
+esac
+SHIM
+chmod +x "$temporary/fake-bin/systemctl"
+PATH="$temporary/fake-bin:$PATH"
+export PATH
 apt() { :; }
 sshd() { :; }
 ss() { :; }
@@ -61,6 +81,8 @@ if kpanel_system_tuning_ensure_ssh_server 2>/dev/null; then
 fi
 unset KPANEL_SYSTEM_TUNING_SSHD_CONFIG KPANEL_SYSTEM_TUNING_SSHD_RUN_DIR KPANEL_SYSTEM_TUNING_SYSTEMD_DIR
 unset -f apt sshd ss install
+PATH="${PATH#"$temporary/fake-bin":}"
+export PATH
 
 : > "$temporary/system-update-actions"
 (
@@ -77,16 +99,17 @@ kpanel_system_tuning_run_item() { printf '%s\n' "$1" >> "$temporary/run-items"; 
 
 status_output="$(kpanel_system_tuning_emit ok)"
 grep -F 'KPANEL_SYSTEM_TUNING_STATUS=ok' <<< "$status_output" >/dev/null
-[ "$(grep -c '^KPANEL_SYSTEM_TUNING_ITEM=' <<< "$status_output")" -eq 12 ]
-for item in system-update system-cleanup swap-1g ssh-port-5522 ssh-defense firewall-open-all bbr timezone-shanghai dns-auto ipv4-preferred basic-tools kernel-auto; do
+[ "$(grep -c '^KPANEL_SYSTEM_TUNING_ITEM=' <<< "$status_output")" -eq 11 ]
+for item in system-update system-cleanup swap-1g ssh-port-5522 ssh-defense firewall-open-all bbr timezone-shanghai dns-auto ipv4-preferred basic-tools; do
 	grep -F "KPANEL_SYSTEM_TUNING_ITEM=$item:pending" <<< "$status_output" >/dev/null
 	kpanel_system_tuning_valid_item "$item"
 done
 version="$(grep '^KPANEL_SYSTEM_TUNING_VERSION=' <<< "$status_output" | cut -d= -f2)"
 [[ "$version" =~ ^[0-9a-f]{64}$ ]]
 ! kpanel_system_tuning_valid_item arbitrary-command
+! kpanel_system_tuning_valid_item kernel-auto
 
-for item in system-update system-cleanup swap-1g ssh-port-5522 ssh-defense firewall-open-all bbr timezone-shanghai dns-auto ipv4-preferred basic-tools kernel-auto; do
+for item in system-update system-cleanup swap-1g ssh-port-5522 ssh-defense firewall-open-all bbr timezone-shanghai dns-auto ipv4-preferred basic-tools; do
 	apply_output="$(kpanel_system_tuning_apply_item "$item")"
 	grep -F 'KPANEL_SYSTEM_TUNING_STATUS=applied' <<< "$apply_output" >/dev/null
 	grep -F "KPANEL_SYSTEM_TUNING_SELECTED=$item" <<< "$apply_output" >/dev/null
@@ -114,7 +137,7 @@ if kpanel_system_tuning_menu_item system-cleanup 2 "清理系统垃圾文件" > 
 	echo "interactive tuning item unexpectedly ignored a failure" >&2
 	exit 1
 fi
-grep -F '[FAIL] 2/12. 清理系统垃圾文件，一条龙调优已停止' "$temporary/menu-failure.out" >/dev/null
+grep -F '[FAIL] 2/11. 清理系统垃圾文件，一条龙调优已停止' "$temporary/menu-failure.out" >/dev/null
 if grep -Fq '[OK]' "$temporary/menu-failure.out"; then
 	echo "interactive tuning item printed a false success" >&2
 	exit 1
