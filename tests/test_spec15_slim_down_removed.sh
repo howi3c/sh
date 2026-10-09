@@ -8,14 +8,16 @@
 #
 #   1. 已删功能词汇在主脚本中为零（只算非注释行，说明性注释提一句不算复辟）；
 #   2. 仓库根孤儿文件不存在（顺带钉住保留的兄弟文件一个不少）；
-#   3. 剩存取内容 URL 全部指向本仓库 raw，且指向原版名下的 URL 清零；
+#   3. 剩存取内容 URL 全部指向本仓库 raw、指向原版名下的 URL 清零、报信为 0
+#      ——调用 tests/test_network_inventory.sh --assert-clean 判定，不重抄判据；
 #   4. 与 README 守门交叉确认——直接调用既有两个 README 守门，不重抄它们的逻辑。
 #
 # 与其它守门的分工（避免重复实现、避免判据漂移）：
-#   · test_network_inventory.sh --assert-clean  守"报信=0"与"原版 URL 清零"；
-#     本测试断言 3 的 URL 部分与它口径一致、互为备份，改判据时两处一起看。
+#   · 断言 3 的 URL 判据（报信=0 / 原版名下 URL 清零 / 留存 URL 指向本仓库）
+#     完全由 tests/test_network_inventory.sh --assert-clean 独揽，本测试只调用它，
+#     正则与 5 个取内容目标清单都只有那一份；改判据只需要改一个地方。
 #   · test_update_removed.sh 的 expected_targets 守"保留的取内容目标一条不少"，
-#     是同一批 4 个脚本兄弟文件的另一把尺子。
+#     是同一批兄弟文件的另一把尺子（独立基准，只列 4 个目标，见那里的改写说明）。
 #   · README 侧"安装来源 / 不残留原版引用"由那两个 README 守门负责，本测试只调用。
 #
 # 注意：本测试只做静态文本与存在性检查，绝不执行 kejilion.sh、绝不联网。
@@ -23,7 +25,6 @@ set -uo pipefail
 
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 main_script="${project_root}/kejilion.sh"
-repo_raw="https://raw.githubusercontent.com/howi3c/sh/main"
 
 fail_count=0
 fail() { printf 'FAIL: %s\n' "$*" >&2; fail_count=$((fail_count + 1)); }
@@ -130,27 +131,22 @@ done
 #   3b 负面：指向原版名下的 URL 清零（URL 路径级，不是主机名级）。
 #       raw.githubusercontent.com 对 kejilion/* 与 howi3c/* 是同一直连主机，
 #       只比主机名分不出来源，故直接 grep owner/repo 路径段。
-#       两个已知不误报的点：kejilion.pro 提示示例域名（菜单 13-21 本机 host
-#       解析）与满篇 kejilion.sh 主脚本自身文件名，均不含组织路径段。
+#
+#   实现：调用 tests/test_network_inventory.sh --assert-clean，不在这里重抄判据。
+#   原先本文件抄了第二份同名正则与第二份 5 个取内容目标清单——换一次 raw 基址
+#   要动两处，是典型的双写（Duplicated Code）。判据与口径改由那一个脚本独揽，
+#   本处只把它的输出原样带出，与断言 4 对 README 守门"调用而非重抄"同一手法。
+#   顺带比原先更强：--assert-clean 同时守"报信=0"，这里一并继承。
 # ===========================================================================
-repo_targets=(
-	archive.key
-	TG-check-notify.sh
-	TG-SSH-check-notify.sh
-	upgrade_openssh9.8p1.sh
-	fail2ban-ssh.conf
-)
-for target in "${repo_targets[@]}"; do
-	grep -qF "${repo_raw}/${target}" "${main_script}" ||
-		fail "留存取内容 URL 缺失或未指向本仓库: ${target}（应为 ${repo_raw}/${target}）"
-done
-# fail2ban 配置收编后的部署文件名保持不变（用户机 jail 名），这是允许的
+url_out="$(bash "${project_root}/tests/test_network_inventory.sh" \
+	--assert-clean "${main_script}" 2>&1)" || {
+	printf '%s\n' "${url_out}" >&2
+	fail "取内容 URL 判据未过（报信 / 原版名下 URL 清零 / 留存 URL 指向本仓库），判据由 tests/test_network_inventory.sh --assert-clean 独揽，细节见上面原样带出的输出: ${main_script}"
+}
+# fail2ban 配置收编后的部署文件名保持不变（用户机 jail 名），这是允许的。
+# 这条只有本守卫在守（清点检查只判 URL，不判部署文件名），故留在这里。
 grep -qF -- '--output centos-ssh.conf' "${main_script}" ||
 	fail "fail2ban SSH 防御配置的部署文件名（--output centos-ssh.conf）不应改动"
-
-upstream_hits="$(grep -nE 'githubusercontent\.com/kejilion/|github\.com/kejilion/|[^a-z0-9.-]gh\.kejilion\.pro|[^a-z0-9.-]dl\.kejilion\.pro|[^a-z0-9.-]docker\.kejilion\.pro' "${main_script}" || true)"
-[ -z "${upstream_hits}" ] ||
-	fail "kejilion.sh 仍存在指向原版名下的 URL（应为 0）: ${upstream_hits}"
 
 # ===========================================================================
 # 断言 4：与 README 守门交叉确认（调用而非重抄）
