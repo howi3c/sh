@@ -29889,93 +29889,6 @@ else
 			shift
 			kpanel_run_http_site "$@"
 			;;
-		wp|wordpress)
-			shift
-			ldnmp_wp "$@"
-
-			;;
-		discuz)
-			shift
-			kpanel_run_web_recipe_cli 3 "$@"
-			;;
-		kodbox)
-			shift
-			kpanel_run_web_recipe_cli 4 "$@"
-			;;
-		maccms)
-			shift
-			kpanel_run_web_recipe_cli 5 "$@"
-			;;
-		dujiaoka)
-			shift
-			kpanel_run_web_recipe_cli 6 "$@"
-			;;
-		flarum)
-			shift
-			kpanel_run_web_recipe_cli 7 "$@"
-			;;
-		typecho)
-			shift
-			kpanel_run_web_recipe_cli 8 "$@"
-			;;
-		linkstack)
-			shift
-			kpanel_run_web_recipe_cli 9 "$@"
-			;;
-		ai-prompt)
-			shift
-			kpanel_run_web_recipe_cli 27 "$@"
-			;;
-		php-site)
-			shift
-			kpanel_run_web_recipe_cli 20 "$@"
-			;;
-		redirect-site)
-			shift
-			kpanel_run_web_recipe_cli 22 "$@"
-			;;
-		domain-proxy)
-			shift
-			kpanel_run_web_recipe_cli 24 "$@"
-			;;
-		bitwarden-site)
-			shift
-			kpanel_run_web_recipe_cli 25 "$@"
-			;;
-		halo-site)
-			shift
-			kpanel_run_web_recipe_cli 26 "$@"
-			;;
-		loadbalance-site)
-			shift
-			kpanel_run_web_recipe_cli 28 "$@"
-			;;
-		static-site)
-			shift
-			kpanel_run_web_recipe_cli 30 "$@"
-			;;
-		fd|rp|反代)
-			shift
-			ldnmp_Proxy "$@"
-	  		find_container_by_host_port "$port"
-	  		if [ -z "$docker_name" ]; then
-	  		  close_port "$port"
-			  echo "已阻止IP+端口访问该服务"
-	  		else
-			  ip_address
-			  close_port "$port"
-			block_container_port "$docker_name" "$ipv4_address" || return 1
-	  		fi
-			;;
-
-		loadbalance|负载均衡)
-			ldnmp_Proxy_backend
-			;;
-
-
-		stream|L4负载均衡)
-			ldnmp_Proxy_backend_stream
-			;;
 
 		swap)
 			shift
@@ -30006,19 +29919,9 @@ else
 			fi
 			;;
 
-
 		iptables_open)
 			iptables_open
 			;;
-
-		frps)
-			frps_panel
-			;;
-
-		frpc)
-			frpc_panel
-			;;
-
 
 		打开端口|dkdk)
 			shift
@@ -30101,31 +30004,6 @@ else
 			esac
 			;;
 
-		web)
-		   shift
-			if [ "$1" = "env" ] || [ "$1" = "environment" ] || [ "$1" = "环境" ]; then
-				shift
-				kpanel_ldnmp_dispatch "$@"
-			elif [ "$1" = "certificate-replace" ]; then
-				shift
-				kpanel_web_replace_certificate "$@"
-				exit $?
-			elif [ "$1" = "cache" ]; then
-				web_cache
-			elif [ "$1" = "del" ] || [ "$1" = "delete" ] || [ "$1" = "删除" ]; then
-				shift
-				web_del "$@"
-			elif [ "$1" = "sec" ]; then
-				web_security
-			elif [ "$1" = "opt" ]; then
-				web_optimization
-			elif [ -z "$1" ]; then
-				ldnmp_web_status
-			else
-				k_info
-			fi
-			;;
-
 		kpanel)
 			shift
 			if [ "${1:-}" = "system-resource" ]; then
@@ -30152,16 +30030,6 @@ else
 			fi
 			;;
 
-
-		app)
-			shift
-			linux_panel "$@"
-			;;
-
-		claw|oc|OpenClaw)
-			moltbot_menu
-			;;
-
 		info)
 			linux_info
 			;;
@@ -30174,7 +30042,6 @@ else
 				kpanel_f2b_dispatch "$@"
 			fi
 			;;
-
 
 		sshkey)
 
