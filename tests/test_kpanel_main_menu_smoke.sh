@@ -4,10 +4,12 @@ set -euo pipefail
 # 工单 #6「闭源面板整块移除」的守门尺子。
 #
 # 【命名例外 · 工单 #12】tests/ 下其余本地系统适配器测试已把 kpanel 前缀改掉——kpanel
-# 在脚本里有两层含义，见 docs/kpanel-removal-keep-list.md 第二节。唯独本测试保留 kpanel
-# 之名：它是这个被删名字的**反向守门人**，逐条断言二进制那一层的痕迹（kejilion-node、
-# kpanel_node_、KPanel/releases、KJ_LIGHT_NODE_PROTOCOL、每小时 crontab 行）必须为 0。
-# 名字恰带 kpanel，后来者一眼就知它在盯"kpanel 那一层不许回来"，故不改。
+# 在脚本里有两层含义：一层是给二进制那一层（kejilion-node 那套闭源面板）起的名字，
+# 已整块移除；另一层是纯本地系统工具适配器（system-resource / disk-management 等），
+# 仍在服务。唯独本测试保留 kpanel 之名：它是这个被删名字的**反向守门人**，逐条断言
+# 二进制那一层的痕迹（kejilion-node、kpanel_node_、KPanel/releases、
+# KJ_LIGHT_NODE_PROTOCOL、每小时 crontab 行）必须为 0。名字恰带 kpanel，
+# 后来者一眼就知它在盯"kpanel 那一层不许回来"，故不改。
 #
 # 【工单 #17 改写说明】应用市场板块整块退场（工单 #17）后，本尺子的职责收窄，
 # 现在只守两件事：
