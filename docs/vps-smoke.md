@@ -145,14 +145,15 @@ leitbogioro项目地址: https://github.com/leitbogioro/Tools
 官网（`https://www.bt.cn/new/index.html`）。这是安装引导的一部分，属保留项。
 看完直接退出，不要真的装宝塔。
 
-### 6. API 厂商推荐列表（应该只剩官方入口）
+### 6. API 厂商推荐列表（已随 AI 管理面板删除）
 
-主菜单 `11` → `114`「OpenClaw机器人管理工具」→ `6`「OpenClaw API 管理」→ `5`「API 厂商推荐」。
-这一页应该列出 **8 个纯官网入口**：DeepSeek、OpenRouter、Kimi、超算互联网、MiniMax、NVIDIA、
-Ollama、白山云。
+原来的路径是「主菜单 `11` → `114`「OpenClaw机器人管理工具」→ `6`「OpenClaw API 管理」→
+`5`「API 厂商推荐」」。**这条路径已经不存在了**：OpenClaw 机器人管理面板连同 AI 管理面板
+整体移除，应用市场里不再有 `114`「OpenClaw机器人管理工具」这一项，自然也没有那一页
+「8 个纯官网入口」和图例可看。
 
-**不该看到**任何带 `aff` / `referral_code` / `AFF` 字样的返利链接，图例里也不该再有
-「● AFF 推荐入口」这一档。
+返利链接（`aff` / `referral_code` / `AFF`）的清扫改由 `tests/test_ads_stripped.sh`
+自动守着，不需要再人工翻这页确认。
 
 ### 7. 下载地址已改成直连
 
