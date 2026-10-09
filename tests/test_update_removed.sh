@@ -31,10 +31,12 @@ fail() { printf 'error: %s\n' "$*" >&2; exit 1; }
 
 # ---------------------------------------------------------------------------
 # 判据 5 的独立基准：改造前的原版脚本从原版仓库取内容的全部目标。
-# 删除要拿掉的目标分三类，其余一条都不许少：
+# 删除要拿掉的目标分五类，其余一条都不许少：
 #   1. "自更新/自覆盖"目标（kejilion.sh、kejilion_sh_log.txt）；
 #   2. network-optimize 外部脚本的两个地址（工单 #21）；
-#   3. AI 面板三个管理器脚本的下载地址（ai_cli_manager / hermes / deepseek）。
+#   3. 应用市场 hermes / deepseek 两个管理器脚本的下载地址（工单 #17）；
+#   4. AI 面板 ai_cli_manager 的下载地址（工单 #19）；
+#   5. 游戏开服 palworld.sh / mc.sh 两个下载地址（工单 #22）。
 #
 # 【工单 #21 改写说明】network-optimize 外部脚本不再取内容，那两个地址从清单删掉。
 #
@@ -48,6 +50,16 @@ fail() { printf 'error: %s\n' "$*" >&2; exit 1; }
 # 一并消失，清单删掉这一条；仓库根的 hermes_manager.sh /
 # deepseek_harness_manager.sh / ai_cli_manager.sh 三个文件本体也已在本工单删除。
 #
+# 【工单 #22 追加说明】集群菜单「安装原作者脚本」项（#16 断入口）的函数体
+#   cluster_python3() 与游戏开服 games_server_tools() 整函数，随工单 #22
+#   一并删除；函数体里那两行
+#     curl -sS -O …/kejilion/sh/main/palworld.sh ; ./palworld.sh
+#     curl -sS -O …/kejilion/sh/main/mc.sh ; ./mc.sh
+#   从 kejilion.sh 中清零，故这两条下载目标移入 removed_targets。这两个游戏
+#   脚本按 k 会把原版未净化的 kejilion.sh 下载回 ~/ 并直接运行，是"报信复活"
+#   路径；仓库根的本体 palworld.sh / pal_backup.sh / pal_log.sh / mc.sh /
+#   mc_backup.sh / mc_log.sh 也随工单 #22 一并删除。
+#
 # 判据始终只有一条：kejilion.sh 里该 URL 已不存在，不按文件是否存在推导。
 # ---------------------------------------------------------------------------
 orig_base='raw.githubusercontent.com/kejilion/sh'
@@ -60,9 +72,7 @@ expected_targets=(
 	"${orig_base}/main/CF-Under-Attack.sh"
 	"${orig_base}/main/custom_mysql_config-1.cnf"
 	"${orig_base}/main/fail2ban-nginx-cc.conf"
-	"${orig_base}/main/mc.sh"
 	"${orig_base}/main/optimized_php.ini"
-	"${orig_base}/main/palworld.sh"
 	"${orig_base}/main/TG-check-notify.sh"
 	"${orig_base}/main/TG-SSH-check-notify.sh"
 	"${orig_base}/main/upgrade_openssh9.8p1.sh"
@@ -72,6 +82,8 @@ removed_targets=(
 	"${orig_base}/main/kejilion.sh"
 	"${orig_base}/main/kejilion_sh_log.txt"
 	"${orig_base}/refs/heads/main/network-optimize.sh"
+	"${orig_base}/main/mc.sh"
+	"${orig_base}/main/palworld.sh"
 )
 
 check_one_script() {
@@ -125,6 +137,16 @@ ${cron_hits}"
 	done
 	[ -z "${missing}" ] || fail "${label}: 误删了取内容目标:${missing}"
 }
+
+# ---------------------------------------------------------------------------
+# 判据 6：游戏开服的 6 个仓库根脚本不得再回到仓库里
+#   工单 #22 删的不只是 kejilion.sh 里的下载行，还有仓库根的本体——
+#   palworld.sh:419 与 mc.sh:416 的 k 分支会把原版未净化的 kejilion.sh
+#   下载到 ~/ 并直接运行，文件留着就是"报信复活"的落脚点。
+# ---------------------------------------------------------------------------
+for f in palworld.sh pal_backup.sh pal_log.sh mc.sh mc_backup.sh mc_log.sh; do
+	[ -e "${project_root}/${f}" ] && fail "${f} 又回到了仓库（游戏开服脚本，工单 #22 已删除，含按 k 下载原版 kejilion.sh 的后门）"
+done
 
 check_one_script "${script}" "kejilion.sh"
 
