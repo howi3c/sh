@@ -50,6 +50,21 @@ fail() { printf 'error: %s\n' "$*" >&2; exit 1; }
 # 一并消失，清单删掉这一条；仓库根的 hermes_manager.sh /
 # deepseek_harness_manager.sh / ai_cli_manager.sh 三个文件本体也已在本工单删除。
 #
+# 【工单 #20 改写说明】LDNMP 建站整块删除，随板块一起消失的取内容目标共 8 条：
+#   raw…/main/custom_mysql_config.cnf（变量 ${mysql_source}，nginx_upgrade）
+#   raw…/main/www.conf（变量 ${php_fpm_source}，fix_phpfpm_conf）
+#   raw…/main/www-1.conf（variables 同 ${php_fpm_source}，php 7.4 分支）
+#   raw…/main/custom_mysql_config-1.cnf（update_docker_compose_with_db_creds）
+#   raw…/main/optimized_php.ini（web_optimization）
+#   raw…/main/auto_cert_renewal.sh（install_certbot）
+#   raw…/main/beifen.sh（linux_ldnmp 站点远程备份）
+#   raw…/main/CF-Under-Attack.sh（web_security / ldnmp_protection_action_apply）
+#   raw…/main/fail2ban-nginx-cc.conf（web_security / ldnmp_protection_action_apply）
+# 这些 URL 在 kejilion.sh 里已不存在（删后 grep -F 计数为 0），故从清单删掉。
+# 注意 fail2ban-nginx-cc.conf 是 nginx CC 防护配置，随建站退场、不收编；
+# fail2ban SSH 防御配置（centos-ssh.conf，f2b_install_sshd 内）不在本清单口径内
+# （它取自 kejilion/config 仓，且属 #23 收编范围），不受本次改写影响。
+#
 # 【工单 #22 追加说明】集群菜单「安装原作者脚本」项（#16 断入口）的函数体
 #   cluster_python3() 与游戏开服 games_server_tools() 整函数，随工单 #22
 #   一并删除；函数体里那两行
@@ -64,15 +79,7 @@ fail() { printf 'error: %s\n' "$*" >&2; exit 1; }
 # ---------------------------------------------------------------------------
 orig_base='raw.githubusercontent.com/kejilion/sh'
 expected_targets=(
-	"${orig_base}/main/\${mysql_source}"
-	"${orig_base}/main/\${php_fpm_source}"
 	"${orig_base}/main/archive.key"
-	"${orig_base}/main/auto_cert_renewal.sh"
-	"${orig_base}/main/beifen.sh"
-	"${orig_base}/main/CF-Under-Attack.sh"
-	"${orig_base}/main/custom_mysql_config-1.cnf"
-	"${orig_base}/main/fail2ban-nginx-cc.conf"
-	"${orig_base}/main/optimized_php.ini"
 	"${orig_base}/main/TG-check-notify.sh"
 	"${orig_base}/main/TG-SSH-check-notify.sh"
 	"${orig_base}/main/upgrade_openssh9.8p1.sh"
@@ -84,6 +91,14 @@ removed_targets=(
 	"${orig_base}/refs/heads/main/network-optimize.sh"
 	"${orig_base}/main/mc.sh"
 	"${orig_base}/main/palworld.sh"
+	"${orig_base}/main/\${mysql_source}"
+	"${orig_base}/main/\${php_fpm_source}"
+	"${orig_base}/main/auto_cert_renewal.sh"
+	"${orig_base}/main/beifen.sh"
+	"${orig_base}/main/CF-Under-Attack.sh"
+	"${orig_base}/main/custom_mysql_config-1.cnf"
+	"${orig_base}/main/fail2ban-nginx-cc.conf"
+	"${orig_base}/main/optimized_php.ini"
 )
 
 check_one_script() {

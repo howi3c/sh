@@ -9,8 +9,8 @@
 <h1 align="center">KEJILION.SH · 科技lion一键脚本工具</h1>
 
 <p align="center">
-  面向 Linux 服务器的综合脚本工具箱，集成系统管理、网络测试、Docker、LDNMP 建站、
-  备份迁移与安全防护。
+  面向 Linux 服务器的综合脚本工具箱，集成系统管理、网络测试、Docker
+  与安全防护。
 </p>
 
 <p align="center">
@@ -31,12 +31,12 @@
 
 科技Lion 的 Shell 脚本工具是一款全能脚本工具箱，专为 Linux 监控、测试和管理而设计。
 无论您是初学者还是经验丰富的用户，该工具都能提供便捷的解决方案。脚本集成 Docker
-管理、LDNMP 建站、网站优化与防御、备份还原迁移，以及各类系统工具和应用的安装管理，
+管理，以及各类系统工具和应用的安装管理，
 让服务器维护更加简单。
 
 KejiLion's Shell script is an all-in-one toolbox designed for Linux monitoring, testing, and
-server management. It brings together Docker management, LDNMP website deployment, optimization,
-protection, backup, restoration, migration, and common server applications in one interactive tool.
+server management. It brings together Docker management and common server applications in
+one interactive tool.
 
 ## 一键安装
 
@@ -87,12 +87,6 @@ bash <(curl -sL "$KJ_RAW_URL")
   *Network tools: speed tests, route tracing, latency, and packet loss tests.*
 - **Docker 容器管理**：提供容器、镜像、网络、存储卷和日志管理。<br>
   *Docker management for containers, images, networks, volumes, and logs.*
-- **LDNMP 一键部署**：快速搭建 Nginx、MySQL、PHP、Redis 网站环境。<br>
-  *One-click LDNMP stack deployment for Nginx, MySQL, PHP, and Redis.*
-- **网站防御与优化**：提供 CC 防护、防爬虫、防火墙和性能优化。<br>
-  *Website protection and optimization with anti-CC, anti-crawler, firewall, and tuning tools.*
-- **备份与迁移**：支持站点和数据库备份、恢复与远程迁移。<br>
-  *Backup and migration for websites, databases, restoration, and remote transfer.*
 - **BBR 加速优化**：管理内核加速与网络拥塞控制算法。<br>
   *Network acceleration and TCP congestion control optimization.*
 
@@ -134,19 +128,7 @@ bash <(curl -sL "$KJ_RAW_URL")
   对"已经下载过"的机器才有效，要连净化版脚本里的下载地址一起改才彻底（下载地址改指本仓库已列入工单 #23，
   与 `archive.key`、`upgrade_openssh9.8p1.sh` 同一批）。
 
-### 2. 写死地址密码的备份模板
-
-- **是什么**：`beifen.sh` 里硬编码了 `sshpass -p 123456 scp ... root@0.0.0.0:/home/`——密码和地址
-  都是看起来像真值的"死值"，靠净化版脚本下载后用 `sed` 替换成用户输入的内容。
-- **在哪**：仓库根目录 `beifen.sh`。被 `linux_ldnmp()`（主菜单 10「LDNMP建站」→ 站点远程备份）在
-  `kejilion.sh` 第 13493 行从原版仓库下载，随后 `sed` 把 `0.0.0.0` 和 `123456` 换成用户填的 IP 和密码，
-  并写进 `crontab` 定时备份。
-- **为什么这次不动**：同上，规格把它列为 Out of Scope；它不在 `kejilion.sh` 里。
-- **建议怎么处理**：单开工单。最低限度是把仓库里的死值改成一眼看出是占位的字样
-  （例如 `sshpass -p '在此填入密码'`、`root@在此填入IP`），避免被人整份复制走直接用；更好的做法是
-  改成从环境变量或单独配置文件读凭据，并在文件头写一句"别把真密码写进这里"。
-
-### 3. 示例密码文件等 inert 项
+### 2. 示例密码文件等 inert 项
 
 - **是什么**：`archive.key` 是一个 PGP 公钥块（XanMod 内核仓库签名钥），文件名带 `.key`、内容像凭据，
   实际是公开信息，不构成泄露。同类的还有 `cloudflare.conf` 里的 `cftoken = APIKEY00000` 这类占位值。
@@ -162,7 +144,7 @@ bash <(curl -sL "$KJ_RAW_URL")
   取内容终局 5 项之一**保留**，下载地址改指本仓库的活归工单 #23；`cloudflare.conf` 仍在仓库根，
   等"凭据体检"那一票；`kejilion_sh_log.txt` 已在此前的工单里连文件带链接一起删除，不再需要处理。
 
-### 4. `CONTRIBUTING.md` 的「KPanel 轻量节点运行时」一节（已随工单 #22 删除）
+### 3. `CONTRIBUTING.md` 的「KPanel 轻量节点运行时」一节（已随工单 #22 删除）
 
 - **原是什么**：`CONTRIBUTING.md` 开头第 3~10 行整节都在讲"KPanel 轻量节点运行时"的维护规则
   （`KPANEL_NODE_LIFECYCLE` 模板、`KPANEL_NODE_RUNTIME_GENERATION` 版本号、
@@ -173,7 +155,7 @@ bash <(curl -sL "$KJ_RAW_URL")
   唯一一节就是上面那节悬空文档，删掉不损失任何规则。它不是脚本入口，也没有任何测试或构建依赖。
   删除前的内容仍在 git 历史里（`git show 75d4868:CONTRIBUTING.md`），需要时可整份取回。
 
-### 5. `kpanel_backup_center_dispatch()` 调用的 `kejilion-agent`
+### 4. `kpanel_backup_center_dispatch()` 调用的 `kejilion-agent`
 
 - **是什么**：净化版脚本保留了 `kpanel_backup_center_dispatch()`（`k backup-center`，Docker/Web 备份菜单
   也会调它）。它会去执行 `/usr/local/libexec/kejilion-agent backup-center ...`——那是**另一个二进制**，
@@ -190,9 +172,9 @@ bash <(curl -sL "$KJ_RAW_URL")
   `kejilion-agent` 的审计结论写进 `docs/`，明确它是谁提供的、什么许可、本次调用会做什么。
   在那之前，不建议在装了 Agent 的机器上跑 `k backup-center`。
 
-### 6. 一处已经发生的越界删除：`CONTRIBUTING.md` 的「主脚本与中文脚本」同步节
+### 5. 一处已经发生的越界删除：`CONTRIBUTING.md` 的「主脚本与中文脚本」同步节
 
-上面几项都是"明知没清、故意留下"的；这一项不一样——它是一次**已经发生、但没人要求过的改动**。
+上面四项都是"明知没清、故意留下"的；这一项不一样——它是一次**已经发生、但没人要求过的改动**。
 
 - **是什么**：工单 #10 删七个语言副本目录时，把 `CONTRIBUTING.md` 里"主脚本与中文脚本
   必须同步、提交前跑 `bash tests/test_cn_script_sync.sh`"那一整节（12 行）连带删掉了，
@@ -203,11 +185,11 @@ bash <(curl -sL "$KJ_RAW_URL")
   留着它是假话、会误导维护者；撤消它又等于把假话放回去。
 - **怎么办**：**不撤消**，由仓库主人决定是否接受。完整背景、为什么删、以及单点回滚方法
   （删除前的内容在 `git show 7e770e8^:CONTRIBUTING.md` 里）详见验收报告第九节 9.2。
-  注意：工单 #22 已把 `CONTRIBUTING.md` 整个文件删除（见第 4 条），所以"把那一段按原文贴回去"
+  注意：工单 #22 已把 `CONTRIBUTING.md` 整个文件删除（见第 3 条），所以"把那一段按原文贴回去"
   这件事的残响只剩历史记录——真要恢复那一节，现在得连整份文件一起从
   `git show 75d4868:CONTRIBUTING.md` 取回。本条保留为历史披露，不再作为待决事项。
 
-### 7. 游戏开服脚本会把原版 `kejilion.sh` 装回来（重生路径）——已随工单 #22 解决
+### 6. 游戏开服脚本会把原版 `kejilion.sh` 装回来（重生路径）——已随工单 #22 解决
 
 - **原是什么**：净化版主菜单 16「游戏开服脚本合集」会从**原版仓库**下载并运行另外两个脚本
   （`palworld.sh`、`mc.sh`）；这两个脚本自己的菜单里又各有一个入口（都绑在字母 `k` 上），会把
@@ -234,7 +216,7 @@ bash <(curl -sL "$KJ_RAW_URL")
 - **结论**：重生路径已清零，`kejilion.sh` 里 `games_server_tools` / `cluster_python3` /
   `python-for-vps` 三项均为零命中。本条改为历史记录，不再作为待办。
 
-### 8. README 的 3 处图片热链与 1 处官网链接（怎么处理待定）
+### 7. README 的 3 处图片热链与 1 处官网链接（怎么处理待定）
 
 - **是什么**：README 有 4 处把请求发到作者域名 `https://kejilion.sh/`：logo、两张效果图截图
   （都是 `<img src="https://kejilion.sh/...">`）和「科技lion官方网站」链接。任何人在 GitHub 上
@@ -263,7 +245,7 @@ bash <(curl -sL "$KJ_RAW_URL")
   - 内容已被 `kejilion.sh` 内联生成、不经 URL 下发的 2 个仓库副本：
     `Limiting_Shut_down.sh`（脚本本体在 `kpanel_network_operations_build_script()` 的 heredoc 里逐行写死）、
     `sshd.local`（`cat > /etc/fail2ban/jail.d/sshd.local` 的内联 heredoc），功能都完整保留；
-  - 悬空文档 1 个：`CONTRIBUTING.md`（见第 4 条）。
+  - 悬空文档 1 个：`CONTRIBUTING.md`（见第 3 条）。
 - **还欠着、暂时不能删的兄弟文件**（下载点还在 `kejilion.sh` 里，等对应工单先删下载点）
   - LDNMP 建站区，归工单 #20：`auto_cert_renewal.sh`、`beifen.sh`、`CF-Under-Attack.sh`、
     `fail2ban-nginx-cc.conf`、`custom_mysql_config.cnf`、`custom_mysql_config-1.cnf`、
