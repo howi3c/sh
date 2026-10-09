@@ -1499,7 +1499,7 @@ f2b_install_sshd() {
 		cd /etc/fail2ban/jail.d/
 		curl --fail --silent --show-error --location \
 			--output centos-ssh.conf \
-			"https://raw.githubusercontent.com/kejilion/config/main/fail2ban/centos-ssh.conf" || return 1
+			"https://raw.githubusercontent.com/howi3c/sh/main/fail2ban-ssh.conf" || return 1
 		if [ ! -e /var/log/secure ]; then
 			touch /var/log/secure || return 1
 			chmod 0600 /var/log/secure || return 1
@@ -3974,7 +3974,7 @@ bbrv3() {
 				local keyring="/usr/share/keyrings/xanmod-archive-keyring.gpg"
 				local list_file="/etc/apt/sources.list.d/xanmod-release.list"
 				local key_url="https://dl.xanmod.org/archive.key"
-				local fallback_key_url="https://raw.githubusercontent.com/kejilion/sh/main/archive.key"
+				local fallback_key_url="https://raw.githubusercontent.com/howi3c/sh/main/archive.key"
 				local os_codename=""
 
 				if command -v lsb_release >/dev/null 2>&1; then
@@ -13280,7 +13280,7 @@ EOF
 					  chmod +x ~/TG-check-notify.sh
 					  nano ~/TG-check-notify.sh
 				  else
-					  curl -sS -O https://raw.githubusercontent.com/kejilion/sh/main/TG-check-notify.sh
+					  curl -sS -O https://raw.githubusercontent.com/howi3c/sh/main/TG-check-notify.sh
 					  chmod +x ~/TG-check-notify.sh
 					  nano ~/TG-check-notify.sh
 				  fi
@@ -13289,7 +13289,7 @@ EOF
 				  crontab -l | grep -v '~/TG-check-notify.sh' | crontab - > /dev/null 2>&1
 				  (crontab -l ; echo "@reboot tmux new -d -s TG-check-notify '~/TG-check-notify.sh'") | crontab - > /dev/null 2>&1
 
-				  curl -sS -O https://raw.githubusercontent.com/kejilion/sh/main/TG-SSH-check-notify.sh > /dev/null 2>&1
+				  curl -sS -O https://raw.githubusercontent.com/howi3c/sh/main/TG-SSH-check-notify.sh > /dev/null 2>&1
 				  sed -i "3i$(grep '^TELEGRAM_BOT_TOKEN=' ~/TG-check-notify.sh)" TG-SSH-check-notify.sh > /dev/null 2>&1
 				  sed -i "4i$(grep '^CHAT_ID=' ~/TG-check-notify.sh)" TG-SSH-check-notify.sh
 				  chmod +x ~/TG-SSH-check-notify.sh
@@ -13320,7 +13320,7 @@ EOF
 		  26)
 			  root_use
 			  cd ~
-			  curl -sS -O https://raw.githubusercontent.com/kejilion/sh/main/upgrade_openssh9.8p1.sh
+			  curl -sS -O https://raw.githubusercontent.com/howi3c/sh/main/upgrade_openssh9.8p1.sh
 			  chmod +x ~/upgrade_openssh9.8p1.sh
 			  ~/upgrade_openssh9.8p1.sh
 			  rm -f ~/upgrade_openssh9.8p1.sh

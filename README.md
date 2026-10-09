@@ -29,14 +29,14 @@
 
 ## 介绍
 
-科技Lion 的 Shell 脚本工具是一款全能脚本工具箱，专为 Linux 监控、测试和管理而设计。
+科技Lion 的 Shell 脚本工具是一款 Linux 服务器脚本工具箱，专为系统监控、测试和运维管理而设计。
 无论您是初学者还是经验丰富的用户，该工具都能提供便捷的解决方案。脚本集成 Docker
-管理，以及各类系统工具和应用的安装管理，
+管理与各类系统工具，
 让服务器维护更加简单。
 
-KejiLion's Shell script is an all-in-one toolbox designed for Linux monitoring, testing, and
-server management. It brings together Docker management and common server applications in
-one interactive tool.
+KejiLion's Shell script is a toolbox designed for Linux monitoring, testing, and
+server management. It brings together Docker management and system tools
+in one interactive tool.
 
 ## 一键安装
 
@@ -52,8 +52,8 @@ bash <(curl -sL "$KJ_RAW_URL")
 首次运行后可按脚本提示设置 `k` 快捷命令，后续直接输入 `k` 即可打开主菜单。
 
 > [!IMPORTANT]
-> 脚本包含软件安装、网络、防火墙、磁盘和网站环境等系统级操作。
-> 请在执行前阅读终端提示，并提前备份重要网站、数据库、容器和配置。
+> 脚本包含软件安装、网络、防火墙、磁盘和容器等系统级操作。
+> 请在执行前阅读终端提示，并提前备份重要数据、容器和配置。
 
 ## 支持系统
 
@@ -81,14 +81,22 @@ bash <(curl -sL "$KJ_RAW_URL")
 
 ## 核心功能
 
-- **系统信息概览**：快速展示 CPU、内存、磁盘、带宽等运行状态。<br>
+- **系统信息查询**：快速展示 CPU、内存、磁盘、带宽等运行状态。<br>
   *System status overview: CPU, memory, disk, bandwidth, and more.*
-- **网络测试工具**：集成测速、回程、延迟、丢包检测等工具。<br>
-  *Network tools: speed tests, route tracing, latency, and packet loss tests.*
-- **Docker 容器管理**：提供容器、镜像、网络、存储卷和日志管理。<br>
-  *Docker management for containers, images, networks, volumes, and logs.*
-- **BBR 加速优化**：管理内核加速与网络拥塞控制算法。<br>
+- **系统更新**：更新系统与已安装的组件到当前发行版的最新版本。
+- **系统清理**：清理缓存、日志与冗余文件，回收磁盘空间。
+- **基础工具**：一键安装 curl、wget、tmux、btop、vim、nano 等常用工具。
+- **BBR 管理**：管理内核加速与网络拥塞控制算法。<br>
   *Network acceleration and TCP congestion control optimization.*
+- **Docker 管理**：提供容器、镜像、网络、存储卷和日志管理，以及环境备份与还原。<br>
+  *Docker management for containers, images, networks, volumes, and logs.*
+- **WARP 管理**：管理 Cloudflare WARP 客户端，为出站流量加一层通道。
+- **测试脚本合集**：集成测速、回程、延迟、丢包、IP 质量体检等工具。<br>
+  *Network tools: speed tests, route tracing, latency, and packet loss tests.*
+- **甲骨文云脚本合集**：甲骨文云实例相关的闲置保活、DD 重装、密码登录等运维脚本。
+- **后台工作区**：以 tmux 会话承载常驻任务，SSH 掉线后任务继续运行。
+- **系统工具**：SSH 端口、DNS、防火墙、fail2ban 防御、硬盘管理、账号管理与定时任务等本机运维项。
+- **服务器集群控制**：多台机器的集中管理与批量操作。
 
 ## 项目文档
 
@@ -97,7 +105,7 @@ bash <(curl -sL "$KJ_RAW_URL")
 ## 使用与安全
 
 - 只从本仓库获取脚本（用上面「一键安装」的命令，或把仓库整个下载到服务器），执行前可先审阅源码。
-- 重要网站、数据库、Docker 数据和系统配置应定期备份。
+- 重要数据、Docker 数据和系统配置应定期备份。
 - 生产服务器执行升级、卸载、磁盘或网络操作前，应确认终端显示的影响范围。
 - 提交问题时，请隐藏密码、Token、私钥和公网 IP 等敏感信息。
 
@@ -117,31 +125,34 @@ bash <(curl -sL "$KJ_RAW_URL")
   通过 Telegram 机器人发出去；同目录的 `TG-check-notify.sh` 则每 5 分钟把 CPU/内存/硬盘/流量超阈值
   告警连同 IP 归属地发到同一个机器人。
 - **在哪**：仓库根目录 `TG-SSH-check-notify.sh`、`TG-check-notify.sh`。二者都会被净化版脚本在运行时
-  从原版仓库下载下来：主菜单 13「系统工具」→ 25「TG-bot系统监控预警」会把它们拉到 `~/` 并用 `nano` 让你填
+  下载下来：主菜单 13「系统工具」→ 25「TG-bot系统监控预警」会把它们拉到 `~/` 并用 `nano` 让你填
   Bot Token 和 Chat ID，然后挂进 `@reboot` 定时任务和 `~/.profile`。
+  **下载地址已改指本仓库**（工单 #23）：原来指向原作者仓库的 raw 地址，现改指
+  `https://raw.githubusercontent.com/howi3c/sh/main/…`，与 `archive.key`、`upgrade_openssh9.8p1.sh`
+  同一批改完；改完后即便回退也不会从原作者仓库取内容。
 - **为什么这次不动**：规格 Out of Scope 原文"其他脚本的任何改动"；用户故事 29 要求改造范围可控。
-  这两个脚本不在 `kejilion.sh` 里，删它们不会让净化版少一分报信。
+  这两个脚本不在 `kejilion.sh` 里，删它们不会让净化版少一分报信；改下载地址是取内容收敛（ADR-0002）
+  的要求，**不代表脚本内容被审计通过**。
 - **建议怎么处理**：单开工单，两个口径分开定——`TG-check-notify.sh` 的告警本体是有用功能（只报本机资源），
   要做的是把消息体里的 `country`/`isp_info`/`masked_ip` 三行摘掉；`TG-SSH-check-notify.sh` 的存在意义
   就是"登录即报地理位置"，要么整个不启用，要么改成只报时间与登录名、不查任何外部定位服务
-  （现在它查 `ipinfo.io` 和 `opendata.baidu.com`）。注意它俩是从原版仓库下载来的：只改仓库里的副本，
-  对"已经下载过"的机器才有效，要连净化版脚本里的下载地址一起改才彻底（下载地址改指本仓库已列入工单 #23，
-  与 `archive.key`、`upgrade_openssh9.8p1.sh` 同一批）。
+  （现在它查 `ipinfo.io` 和 `opendata.baidu.com`）。这两个脚本自带的外联**仍待治理**，URL 改指本仓库
+  只解决"从哪取"，不解决"取下来的内容会做什么"。
 
 ### 2. 示例密码文件等 inert 项
 
 - **是什么**：`archive.key` 是一个 PGP 公钥块（XanMod 内核仓库签名钥），文件名带 `.key`、内容像凭据，
   实际是公开信息，不构成泄露。同类的还有 `cloudflare.conf` 里的 `cftoken = APIKEY00000` 这类占位值。
-- **在哪**：仓库根目录 `archive.key`；`kejilion.sh` 第 8326~8327 行会优先从 `dl.xanmod.org` 拉它，
-  失败时才退回原版仓库这份副本。
+- **在哪**：仓库根目录 `archive.key`；`kejilion.sh` 第 3976~3977 行会优先从 `dl.xanmod.org` 拉它，
+  失败时才退回本仓库这份副本（工单 #23 已把回退源从原版仓库改指本仓库）。
 - **为什么这次不动**：规格 Out of Scope 原文"示例密码文件等 inert 项；记入后续清单"。它们不参与报信，
-  也不被装到用户机器上，删除反而会让第 8327 行的回退下载失败。
+  也不被装到用户机器上，删除反而会让第 3977 行的回退下载失败。
 - **建议怎么处理**：单开工单做一次"凭据体检"——用 `grep -rnE 'passwo?rd|secret|token|api[_-]?key'`
   把整个仓库扫一遍，逐条判断是真凭据、占位符还是公开钥：真凭据立刻改掉并轮换；占位符统一改成
   明显是占位的字样；`archive.key` 这类公开钥建议在文件头加一行注释说明"这是公开签名钥，不是私钥"，
   免得将来有人心惊。
-- **清点现状（工单 #22 复核）**：这一条涉及的文件清点后是——`archive.key` 仍在仓库根，且它作为
-  取内容终局 5 项之一**保留**，下载地址改指本仓库的活归工单 #23；`cloudflare.conf` 仍在仓库根，
+- **清点现状（工单 #23 复核）**：这一条涉及的文件清点后是——`archive.key` 仍在仓库根，作为取内容终局
+  5 项之一**保留**，且它的下载地址已在工单 #23 改指本仓库；`cloudflare.conf` 仍在仓库根，
   等"凭据体检"那一票；`kejilion_sh_log.txt` 已在此前的工单里连文件带链接一起删除，不再需要处理。
 
 ### 3. `CONTRIBUTING.md` 的「KPanel 轻量节点运行时」一节（已随工单 #22 删除）
@@ -222,16 +233,17 @@ bash <(curl -sL "$KJ_RAW_URL")
   （都是 `<img src="https://kejilion.sh/...">`）和「科技lion官方网站」链接。任何人在 GitHub 上
   打开这份 README，浏览器加载这三张图时会把查看者的 IP 送到作者的服务器——性质和规格反对的
   报信同源，只是量级小得多（只暴露"谁看过这份 README"）。这 4 处本次**只记账、不改**。
-- **在哪**（行号为 2026-10-09 核对）：`README.md` 第 6 行（`/kejilionsh_logo.webp`）、
-  第 81 行（`/img/screenshots/kejilionsh.webp`）、第 82 行（`/img/screenshots/kejilionsh_en.webp`）、
-  第 109 行（「科技lion官方网站」链接）。
+- **在哪**（行号为 2026-10-09 工单 #23 重核，README 能力清单改写后已从 81/82/109 漂移到 78/79/103）：
+  `README.md` 第 6 行（`/kejilionsh_logo.webp`）、
+  第 78 行（`/img/screenshots/kejilionsh.webp`）、第 79 行（`/img/screenshots/kejilionsh_en.webp`）、
+  第 103 行（「科技lion官方网站」链接）。
 - **为什么这次不动**：怎么处理要仓库主人定——把图片搬进仓库 / 删掉 `<img>` 标签 / 接受现状，
-  三种做法代价不同（见下），本工单只被允许记账。
+  三种做法代价不同（见下），本工单只被允许记账；工单 #24（最终验收）已把这一条列为剩余关注点。
 - **建议怎么处理**：单开工单先定方向。推荐"图片搬进仓库 + 删官网链接"：三张图存进 `docs/images/`，
-  `<img>` 的 `src` 改成相对路径，README 打开时对作者域名零请求；第 109 行的官网链接若只是想给读者
+  `<img>` 的 `src` 改成相对路径，README 打开时对作者域名零请求；第 103 行的官网链接若只是想给读者
   一个作者站点参考，可保留文字说明但去掉跳转，或直接删。
 
-### 本轮删除记录（工单 #22）
+### 本轮删除记录（工单 #22，后续由 #19 / #20 / #23 补齐）
 
 工单 #22 清掉的是"入口已断的功能本体 + 仓库孤儿"。逐项列出，便于复核：
 
@@ -246,13 +258,16 @@ bash <(curl -sL "$KJ_RAW_URL")
     `Limiting_Shut_down.sh`（脚本本体在 `kpanel_network_operations_build_script()` 的 heredoc 里逐行写死）、
     `sshd.local`（`cat > /etc/fail2ban/jail.d/sshd.local` 的内联 heredoc），功能都完整保留；
   - 悬空文档 1 个：`CONTRIBUTING.md`（见第 3 条）。
-- **还欠着、暂时不能删的兄弟文件**（下载点还在 `kejilion.sh` 里，等对应工单先删下载点）
-  - LDNMP 建站区，归工单 #20：`auto_cert_renewal.sh`、`beifen.sh`、`CF-Under-Attack.sh`、
+- **工单 #22 当时还欠着、现已清完的兄弟文件**（下载点随所属板块删除，仓库副本随之消失）
+  - LDNMP 建站区，已随工单 #20 删除：`auto_cert_renewal.sh`、`beifen.sh`、`CF-Under-Attack.sh`、
     `fail2ban-nginx-cc.conf`、`custom_mysql_config.cnf`、`custom_mysql_config-1.cnf`、
-    `optimized_php.ini`、`www.conf`、`www-1.conf`、`ldnmp.sh`；
-  - AI 区，归工单 #19：`ai_cli_manager.sh`、`hermes_manager.sh`、`deepseek_harness_manager.sh`；
-  - 取内容终局 5 项，URL 改指本仓库，归工单 #23：`TG-check-notify.sh`、`TG-SSH-check-notify.sh`、
-    `upgrade_openssh9.8p1.sh`、`archive.key`（第 5 项是 fail2ban SSH 防御配置，落库后同为改指）。
+    `optimized_php.ini`、`www.conf`、`www-1.conf`、`ldnmp.sh`。
+    其中 `beifen.sh`（站点远程备份脚本）**事由已消失**——它只服务 LDNMP 建站的站点备份，
+    建站整块删除后它连同下载点一起退场，不需要再单开工单治理；
+  - AI 区，已随工单 #19 删除：`ai_cli_manager.sh`、`hermes_manager.sh`、`deepseek_harness_manager.sh`；
+  - 取内容终局 5 项，已随工单 #23 全部改指本仓库：`TG-check-notify.sh`、`TG-SSH-check-notify.sh`、
+    `upgrade_openssh9.8p1.sh`、`archive.key`，以及从 `kejilion/config` 仓收编进来的
+    fail2ban SSH 防御配置（仓库内文件名 `fail2ban-ssh.conf`，部署到用户机时仍叫 `centos-ssh.conf`）。
 
 ## 开源许可
 
