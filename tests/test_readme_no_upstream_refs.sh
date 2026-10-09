@@ -15,7 +15,7 @@
 #      指向本 fork 自己的 apps/README.md 与官网链接保留；
 #   4. README 末尾「## Star History」整节消失（含 star-history.com 图表）；
 #   5. 整份 README 不再出现 `kejilion/sh` 这个原版仓库路径；
-#   6. 「后续事项」记下 kejilion_sh_log.txt 变成无链接孤儿这一笔。
+#   6. 孤儿文件 kejilion_sh_log.txt 不得再回到仓库里（原版的更新日志，链接与文件都已删）。
 set -uo pipefail
 
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -122,13 +122,12 @@ upstream_hits="$(grep -n -F 'kejilion/sh' "${readme}" || true)"
 	fail "README 仍指向原版仓库 kejilion/sh（本 fork 是 howi3c/sh）: ${upstream_hits}"
 
 # ---------------------------------------------------------------------------
-# 6) 「后续事项」必须记下 kejilion_sh_log.txt 成为无链接孤儿这一笔
-#    文件本身在工单 #14 明确不动，但链接删了就得记账，否则没人知道它还躺在那。
+# 6) kejilion_sh_log.txt 不得再出现在仓库里
+#    工单 #14 只删了 README 里指向它的链接，文件本身留作记账（「后续事项」第 9 条）。
+#    随后仓库主人决定把那个孤儿文件也删掉。这里把删除结果钉住：既防文件被加回来，
+#    也防 README 里再出现指向它的链接（链接判据见上面第 3 节）。
 # ---------------------------------------------------------------------------
-todo_section="$(extract_section "${readme}" "后续事项")"
-[ -n "${todo_section}" ] || fail "README 里找不到「## 后续事项」这一节"
-
-printf '%s\n' "${todo_section}" | grep -Fq 'kejilion_sh_log' ||
-	fail "「后续事项」没有记录 kejilion_sh_log 变成无链接孤儿（工单 #14 要求记账）"
+[ -e "${project_root}/kejilion_sh_log.txt" ] &&
+	fail "孤儿文件 kejilion_sh_log.txt 又回到了仓库（原版更新日志，已删除，不要再放回来）"
 
 printf '%s\n' "readme-no-upstream-refs=pass"
