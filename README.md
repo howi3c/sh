@@ -107,6 +107,10 @@ bash <(curl -sL "$KJ_RAW_URL")
 逐条记在这里，等决定要不要单开工单。父议题规格的 Out of Scope 与用户故事 29/30 要求
 "其他脚本本次完全不动，剩下的记入后续清单"。
 
+> 从工单 #16 起的后续清理里，"其他文件"已经可以动了：凡是事由已消失的条目，就地标注
+> "已随工单 #N 处理"并保留原文作为记录；凡还欠着的，原样留在本节等后面的工单。
+> 编号 1~8 保持原样不重排，本轮（工单 #22）的删除清单见本节末尾。
+
 ### 1. 登录通知类脚本（每次 SSH 登录查询 IP 与定位）
 
 - **是什么**：`TG-SSH-check-notify.sh` 会在每次 SSH 登录时查你的公网 IP、归属地、登录名和登录地区，
@@ -121,7 +125,8 @@ bash <(curl -sL "$KJ_RAW_URL")
   要做的是把消息体里的 `country`/`isp_info`/`masked_ip` 三行摘掉；`TG-SSH-check-notify.sh` 的存在意义
   就是"登录即报地理位置"，要么整个不启用，要么改成只报时间与登录名、不查任何外部定位服务
   （现在它查 `ipinfo.io` 和 `opendata.baidu.com`）。注意它俩是从原版仓库下载来的：只改仓库里的副本，
-  对"已经下载过"的机器才有效，要连净化版脚本里的下载地址一起改才彻底。
+  对"已经下载过"的机器才有效，要连净化版脚本里的下载地址一起改才彻底（下载地址改指本仓库已列入工单 #23，
+  与 `archive.key`、`upgrade_openssh9.8p1.sh` 同一批）。
 
 ### 2. 示例密码文件等 inert 项
 
@@ -135,18 +140,20 @@ bash <(curl -sL "$KJ_RAW_URL")
   把整个仓库扫一遍，逐条判断是真凭据、占位符还是公开钥：真凭据立刻改掉并轮换；占位符统一改成
   明显是占位的字样；`archive.key` 这类公开钥建议在文件头加一行注释说明"这是公开签名钥，不是私钥"，
   免得将来有人心惊。
+- **清点现状（工单 #22 复核）**：这一条涉及的文件清点后是——`archive.key` 仍在仓库根，且它作为
+  取内容终局 5 项之一**保留**，下载地址改指本仓库的活归工单 #23；`cloudflare.conf` 仍在仓库根，
+  等"凭据体检"那一票；`kejilion_sh_log.txt` 已在此前的工单里连文件带链接一起删除，不再需要处理。
 
-### 3. `CONTRIBUTING.md` 的「KPanel 轻量节点运行时」一节
+### 3. `CONTRIBUTING.md` 的「KPanel 轻量节点运行时」一节（已随工单 #22 删除）
 
-- **是什么**：`CONTRIBUTING.md` 开头第 3~10 行整节都在讲"KPanel 轻量节点运行时"的维护规则
+- **原是什么**：`CONTRIBUTING.md` 开头第 3~10 行整节都在讲"KPanel 轻量节点运行时"的维护规则
   （`KPANEL_NODE_LIFECYCLE` 模板、`KPANEL_NODE_RUNTIME_GENERATION` 版本号、
   `/run/kejilion-node-lifecycle.lock` 锁文件）。它描述的那套运行时已在工单 #6 整块删掉，这一节是悬空文档。
-- **在哪**：根目录 `CONTRIBUTING.md`。
-- **为什么这次不动**：工单 #6 按"本次不动其他文件"的约定故意留下，
-  `docs/kpanel-removal-keep-list.md` 末尾已记了这一笔；本工单同样只被允许加"后续事项"这一节。
-- **建议怎么处理**：单开一个文档清理工单，把这一节删掉，或改写成"KPanel 轻量节点运行时已移除，
-  不要再按本节规则维护"；同时补上净化版真正的贡献约定（每条改动一个提交、写清删了什么、
-  改完跑 `bash tests/run_all_checks.sh`）。
+- **为什么拖到工单 #22 才动手**：工单 #6 按"本次不动其他文件"的约定故意留下，
+  `docs/kpanel-removal-keep-list.md` 末尾已记了这一笔；那时的工单同样只被允许加"后续事项"这一节。
+- **怎么处理的**：工单 #22 按验收第 3 条把整个 `CONTRIBUTING.md` 删掉了——全文只有 10 行，
+  唯一一节就是上面那节悬空文档，删掉不损失任何规则。它不是脚本入口，也没有任何测试或构建依赖。
+  删除前的内容仍在 git 历史里（`git show 75d4868:CONTRIBUTING.md`），需要时可整份取回。
 
 ### 4. `kpanel_backup_center_dispatch()` 调用的 `kejilion-agent`
 
@@ -176,20 +183,21 @@ bash <(curl -sL "$KJ_RAW_URL")
   没有任何工单要求改 `CONTRIBUTING.md`。这是范围蔓延。
 - **为什么不撤消**：那一节描述的两份脚本在 `cn/` 目录删除后已经不存在，它指向的测试也没了，
   留着它是假话、会误导维护者；撤消它又等于把假话放回去。
-- **怎么办**：**不撤消、也不再改 `CONTRIBUTING.md`**，由仓库主人决定是否接受。
-  完整背景、为什么删、以及单点回滚方法（删除前的内容在
-  `git show 7e770e8^:CONTRIBUTING.md` 里）详见验收报告第九节 9.2；
-  若判断应当恢复，把那一节按原文贴回 `CONTRIBUTING.md` 即可，仓库里没有任何东西依赖它的缺失。
+- **怎么办**：**不撤消**，由仓库主人决定是否接受。完整背景、为什么删、以及单点回滚方法
+  （删除前的内容在 `git show 7e770e8^:CONTRIBUTING.md` 里）详见验收报告第九节 9.2。
+  注意：工单 #22 已把 `CONTRIBUTING.md` 整个文件删除（见第 3 条），所以"把那一段按原文贴回去"
+  这件事的残响只剩历史记录——真要恢复那一节，现在得连整份文件一起从
+  `git show 75d4868:CONTRIBUTING.md` 取回。本条保留为历史披露，不再作为待决事项。
 
-### 6. 游戏开服脚本会把原版 `kejilion.sh` 装回来（重生路径）
+### 6. 游戏开服脚本会把原版 `kejilion.sh` 装回来（重生路径）——已随工单 #22 解决
 
-- **是什么**：净化版主菜单 16「游戏开服脚本合集」会从**原版仓库**下载并运行另外两个脚本
+- **原是什么**：净化版主菜单 16「游戏开服脚本合集」会从**原版仓库**下载并运行另外两个脚本
   （`palworld.sh`、`mc.sh`）；这两个脚本自己的菜单里又各有一个入口（都绑在字母 `k` 上），会把
   **原版未净化的 `kejilion.sh`** 下载到 `~/` 并直接运行。完整路径：
   净化版菜单 → 16「游戏开服脚本合集」→ 幻兽帕鲁 / 我的世界 → `palworld.sh` / `mc.sh`
   → 按 `k` → 下载并运行原版 `kejilion.sh` → **报信复活**。工单 #13 已把 README 的
   一键安装命令改成本仓库 raw 地址，但这条路是从菜单里走的，改 README 拦不住它。
-- **在哪**（行号为 2026-10-09 逐个核对）：
+- **当初的位置**（行号为 2026-10-09 逐个核对，随工单 #16 / #22 已全部消失）：
 
   | 文件 | 行号 | 那一行在做什么 |
   |---|---|---|
@@ -198,16 +206,15 @@ bash <(curl -sL "$KJ_RAW_URL")
   | `palworld.sh` | 419 | 帕鲁菜单按 `k`：从 `https://kejilion.pro/kejilion.sh` 下载原版脚本并立即运行 |
   | `mc.sh` | 416 | MC 菜单按 `k`：同上，从 `https://kejilion.pro/kejilion.sh` 下载原版脚本并立即运行 |
 
-- **为什么这次不动**：这四个位置全在规格 Out of Scope 的"其他脚本本次完全不动"里
-  （用户故事 29）。菜单 16 是正常功能，规格要求保留；删它不在任何工单范围。
-  `palworld.sh`/`mc.sh` 是独立脚本，本次一律不许改。
-- **建议怎么处理**：单开工单，两个方向可单选也可都做——
-  1. 给 `palworld.sh` 第 419 行、`mc.sh` 第 416 行打补丁，把 `https://kejilion.pro/kejilion.sh`
-     换成本仓库 raw 地址。改动最小，但这两个脚本现在是从原版仓库现拉的，得先把它们收进本仓库，
-     补丁才留得住；
-  2. 改 `kejilion.sh` 第 29674/29678 行的下载地址，让菜单 16 从本仓库拉这两个脚本。这样连它们的
-     热更新后门一并断掉（`palworld.sh` 第 428 行、`mc.sh` 第 425 行的菜单 `00`「更新脚本」还在从
-     `https://kejilion.pro/` 拉自己）。更彻底，代价是这两个脚本从此要自己维护。
+- **怎么解决的**：工单 #16 删掉主菜单 16「游戏开服脚本合集」的渲染行与 `16) games_server_tools`
+  分发行；工单 #22 接着把 `games_server_tools()` 函数体整个删掉（它只有 1/2 两个分支，
+  都是拉 `palworld.sh` / `mc.sh` 到 `~/` 运行），同时把仓库根这 6 个游戏脚本文件一并删除。
+  那两个 `k` 分支干的事只有三样：把 `https://kejilion.pro/kejilion.sh` 拉到 `~/`、加可执行权限、
+  立刻运行。文件不在仓库里了，这条路就彻底没有落脚点。
+  集群菜单里"安装原作者脚本"那条同源的路也一并掐断：`cluster_python3()` 从原作者
+  `python-for-vps` 仓库拉一个安装脚本到用户机器上直接 `python3` 执行，函数体随入口一起退役。
+- **结论**：重生路径已清零，`kejilion.sh` 里 `games_server_tools` / `cluster_python3` /
+  `python-for-vps` 三项均为零命中。本条改为历史记录，不再作为待办。
 
 ### 7. README 的 3 处图片热链与 1 处官网链接（怎么处理待定）
 
@@ -223,6 +230,29 @@ bash <(curl -sL "$KJ_RAW_URL")
 - **建议怎么处理**：单开工单先定方向。推荐"图片搬进仓库 + 删官网链接"：三张图存进 `docs/images/`，
   `<img>` 的 `src` 改成相对路径，README 打开时对作者域名零请求；第 109 行的官网链接若只是想给读者
   一个作者站点参考，可保留文字说明但去掉跳转，或直接删。
+
+### 本轮删除记录（工单 #22）
+
+工单 #22 清掉的是"入口已断的功能本体 + 仓库孤儿"。逐项列出，便于复核：
+
+- **`kejilion.sh` 函数体（2 个）**
+  - `games_server_tools()`（38 行，游戏开服）——入口由工单 #16 删除后成孤儿；
+  - `cluster_python3()`（6 行，集群菜单"安装原作者脚本"）——同上。
+- **仓库根文件（14 个）**
+  - 游戏脚本 6 个：`palworld.sh`、`pal_backup.sh`、`pal_log.sh`、`mc.sh`、`mc_backup.sh`、`mc_log.sh`；
+  - 真孤儿 5 个（全仓库零引用，`kejilion.sh` 连文件名都不出现）：
+    `auto_cert_renewal-1.sh`、`Limiting_Shut_down1.sh`、`check_x86-64_psabi.sh`、`nginx.local`、`valkey.conf`；
+  - 内容已被 `kejilion.sh` 内联生成、不经 URL 下发的 2 个仓库副本：
+    `Limiting_Shut_down.sh`（脚本本体在 `kpanel_network_operations_build_script()` 的 heredoc 里逐行写死）、
+    `sshd.local`（`cat > /etc/fail2ban/jail.d/sshd.local` 的内联 heredoc），功能都完整保留；
+  - 悬空文档 1 个：`CONTRIBUTING.md`（见第 3 条）。
+- **还欠着、暂时不能删的兄弟文件**（下载点还在 `kejilion.sh` 里，等对应工单先删下载点）
+  - LDNMP 建站区，归工单 #20：`auto_cert_renewal.sh`、`beifen.sh`、`CF-Under-Attack.sh`、
+    `fail2ban-nginx-cc.conf`、`custom_mysql_config.cnf`、`custom_mysql_config-1.cnf`、
+    `optimized_php.ini`、`www.conf`、`www-1.conf`、`ldnmp.sh`；
+  - AI 区，归工单 #19：`ai_cli_manager.sh`、`hermes_manager.sh`、`deepseek_harness_manager.sh`；
+  - 取内容终局 5 项，URL 改指本仓库，归工单 #23：`TG-check-notify.sh`、`TG-SSH-check-notify.sh`、
+    `upgrade_openssh9.8p1.sh`、`archive.key`（第 5 项是 fail2ban SSH 防御配置，落库后同为改指）。
 
 ## 开源许可
 
