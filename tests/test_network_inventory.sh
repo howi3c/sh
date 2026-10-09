@@ -293,16 +293,12 @@ assert_clean_impl() {
 			' | sort >&2
 		fi
 		if [ -n "${src_hits}" ]; then
-			if [ "${src_count}" -gt 10 ]; then
-				printf '%s\n' "${src_hits}" | head -10 | awk -F: '
-					{ printf "  [报信·源级] 类别=报信 · 第 %s 行 命中作者上报特征: %s\n", $1, substr($0, index($0, ":") + 1) }
-				' >&2
-				printf '  [报信·源级] …… 另有余下 %s 处同类命中（作者上报主机名或报信函数名残留）\n' "$(( src_count - 10 ))" >&2
-			else
-				printf '%s\n' "${src_hits}" | awk -F: '
-					{ printf "  [报信·源级] 类别=报信 · 第 %s 行 命中作者上报特征: %s\n", $1, substr($0, index($0, ":") + 1) }
-				' >&2
-			fi
+			# 一条 awk 同时干原来两个分支的活：前 10 条逐行点名，第 11 行起只报余量
+			# （判据强度不变，只是不再把同一 awk 逐字抄两遍、只差一个 head -10）。
+			printf '%s\n' "${src_hits}" | awk -F: -v total="${src_count}" '
+				NR <= 10 { printf "  [报信·源级] 类别=报信 · 第 %s 行 命中作者上报特征: %s\n", $1, substr($0, index($0, ":") + 1) }
+				NR == 11 { printf "  [报信·源级] …… 另有余下 %s 处同类命中（作者上报主机名或报信函数名残留）\n", total - 10 }
+			' >&2
 		fi
 		# 顺手把取内容来源的问题一起点名，免得修完报信又才发现 URL 没收敛
 		if [ "${url_rc}" -ne 0 ]; then
@@ -319,6 +315,18 @@ assert_clean_impl() {
 	printf '%s\n' "${url_out}"
 	printf 'PASS: %s 未检出报信端点（报信类 = 0）\n' "${f}"
 	return 0
+}
+
+# ---------------------------------------------------------------------------
+# 按端点汇总行号：stdin 读入按类型筛过的记录（TSV），打印
+# 「      · 端点                        第 N 行、第 M 行」。
+# 报信栏的「上报端点 / 喂给上报的数据源」两类共用这一份汇总，避免同一 awk 写两遍。
+# ---------------------------------------------------------------------------
+summarize_records_by_endpoint() {
+	sort -t$'\t' -k2,2 -k4,4n | awk -F'\t' '
+		{ lines[$2] = lines[$2] (lines[$2] == "" ? "" : "、") "第 " $4 " 行"; if (!seen[$2]++) order[++n] = $2 }
+		END { for (i = 1; i <= n; i++) printf "      · %-28s %s\n", order[i], lines[order[i]] }
+	'
 }
 
 # ---------------------------------------------------------------------------
@@ -347,17 +355,11 @@ print_inventory() {
 		printf '  （无）报信已清零。\n'
 	else
 		printf ' 1) 上报端点（把版本号 / 系统信息 / IP 归属地 POST 给作者）\n'
-		grep -E $'^报信\t[^\t]+\treport-post\t' <<<"${records}" | sort -t$'\t' -k2,2 -k4,4n | awk -F'\t' '
-			{ lines[$2] = lines[$2] (lines[$2] == "" ? "" : "、") "第 " $4 " 行"; if (!seen[$2]++) order[++n] = $2 }
-			END { for (i = 1; i <= n; i++) printf "      · %-28s %s\n", order[i], lines[order[i]] }
-		' || true
+		grep -E $'^报信\t[^\t]+\treport-post\t' <<<"${records}" | summarize_records_by_endpoint || true
 
 		printf ' 2) 喂给上报的数据源（端点本身在别处是合法取内容，但在报信函数里被抓去上报）\n'
 		if grep -Eq $'^报信\t[^\t]+\treport-feed\t' <<<"${records}"; then
-			grep -E $'^报信\t[^\t]+\treport-feed\t' <<<"${records}" | sort -t$'\t' -k2,2 -k4,4n | awk -F'\t' '
-				{ lines[$2] = lines[$2] (lines[$2] == "" ? "" : "、") "第 " $4 " 行"; if (!seen[$2]++) order[++n] = $2 }
-				END { for (i = 1; i <= n; i++) printf "      · %-28s %s\n", order[i], lines[order[i]] }
-			' || true
+			grep -E $'^报信\t[^\t]+\treport-feed\t' <<<"${records}" | summarize_records_by_endpoint || true
 		else
 			printf '      （无）\n'
 		fi
