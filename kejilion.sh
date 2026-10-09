@@ -90,11 +90,6 @@ kpanel_protocol_active() {
 	[ "${KJ_SYSTEM_TUNING_NONINTERACTIVE:-}" = "1" ] ||
 	[ "${KJ_VIRUS_SCAN_NONINTERACTIVE:-}" = "1" ] ||
 	[ "${KJ_BBRV3_NONINTERACTIVE:-}" = "1" ] ||
-	[ "${KJ_APP_NONINTERACTIVE:-}" = "1" ] ||
-	[ "${KJ_APP_INTERACTIVE:-}" = "1" ] ||
-	[ "${KJ_WEB_NONINTERACTIVE:-}" = "1" ] ||
-	[ "${KJ_WEB_INTERACTIVE:-}" = "1" ] ||
-	[ "${KJ_LDNMP_NONINTERACTIVE:-}" = "1" ] ||
 	[ "${KJ_TEST_NONINTERACTIVE:-}" = "1" ]
 }
 
@@ -5036,16 +5031,16 @@ kpanel_system_tuning_menu_item() {
 	local item="$1" index="$2" label="$3"
 	echo "------------------------------------------------"
 	if ! kpanel_system_tuning_run_item "$item"; then
-		echo -e "[${gl_hong}FAIL${gl_bai}] ${index}/12. ${label}，一条龙调优已停止"
+		echo -e "[${gl_hong}FAIL${gl_bai}] ${index}/11. ${label}，一条龙调优已停止"
 		return 1
 	fi
 	case "$item" in system-update|system-cleanup|dns-auto) ;; *)
 		if ! kpanel_system_tuning_item_ready "$item"; then
-			echo -e "[${gl_hong}FAIL${gl_bai}] ${index}/12. ${label}，完成态回读失败，一条龙调优已停止"
+			echo -e "[${gl_hong}FAIL${gl_bai}] ${index}/11. ${label}，完成态回读失败，一条龙调优已停止"
 			return 1
 		fi
 	;; esac
-	echo -e "[${gl_lv}OK${gl_bai}] ${index}/12. ${label}"
+	echo -e "[${gl_lv}OK${gl_bai}] ${index}/11. ${label}"
 }
 
 kpanel_system_tuning_apply_item() {
@@ -29253,7 +29248,6 @@ EOF
 			  echo -e "9. 自动优化DNS地址${gl_huang}海外: 1.1.1.1 8.8.8.8  国内: 223.5.5.5 ${gl_bai}"
 		  	  echo -e "10. 设置网络为${gl_huang}ipv4优先${gl_bai}"
 			  echo -e "11. 安装基础工具${gl_huang}docker wget sudo tar unzip socat btop nano vim${gl_bai}"
-			  echo -e "12. Linux系统内核参数优化${gl_huang}自动根据网络环境调优${gl_bai}"
 			  echo "------------------------------------------------"
 			  read -e -p "确定一键保养吗？(Y/N): " choice
 
@@ -29273,7 +29267,6 @@ EOF
 				  kpanel_system_tuning_menu_item dns-auto 9 "自动优化DNS地址" || break
 				  kpanel_system_tuning_menu_item ipv4-preferred 10 "设置网络为${gl_huang}IPv4优先${gl_bai}" || break
 				  kpanel_system_tuning_menu_item basic-tools 11 "安装基础工具${gl_huang}docker wget sudo tar unzip socat btop nano vim${gl_bai}" || break
-				  kpanel_system_tuning_menu_item kernel-auto 12 "Linux系统内核参数优化" || break
 				  echo -e "${gl_lv}一条龙系统调优已完成${gl_bai}"
 
 				  ;;
@@ -29570,7 +29563,7 @@ while true; do
 	  echo -e "${gl_kjlan}4.  ${gl_bai}备份集群                 ${gl_kjlan}5.  ${gl_bai}还原集群"
 	  echo -e "${gl_kjlan}------------------------${gl_bai}"
 	  echo -e "${gl_kjlan}批量执行任务${gl_bai}"
-	  echo -e "${gl_kjlan}11. ${gl_bai}安装科技lion脚本         ${gl_kjlan}12. ${gl_bai}更新系统              ${gl_kjlan}13. ${gl_bai}清理系统"
+	  echo -e "${gl_kjlan}12. ${gl_bai}更新系统              ${gl_kjlan}13. ${gl_bai}清理系统"
 	  echo -e "${gl_kjlan}14. ${gl_bai}安装docker               ${gl_kjlan}15. ${gl_bai}安装BBR3              ${gl_kjlan}16. ${gl_bai}设置1G虚拟内存"
 	  echo -e "${gl_kjlan}17. ${gl_bai}设置时区到上海           ${gl_kjlan}18. ${gl_bai}开放所有端口	       ${gl_kjlan}51. ${gl_bai}自定义指令"
 	  echo -e "${gl_kjlan}------------------------${gl_bai}"
@@ -29613,10 +29606,6 @@ while true; do
 			  break_end
 			  ;;
 
-		  11)
-			  local py_task="install_kejilion.py"
-			  cluster_python3
-			  ;;
 		  12)
 			  run_commands_on_servers "k update"
 			  ;;
@@ -29733,12 +29722,9 @@ echo -e "${gl_kjlan}6.   ${gl_bai}Docker管理"
 echo -e "${gl_kjlan}7.   ${gl_bai}WARP管理"
 echo -e "${gl_kjlan}8.   ${gl_bai}测试脚本合集"
 echo -e "${gl_kjlan}9.   ${gl_bai}甲骨文云脚本合集"
-echo -e "${gl_huang}10.  ${gl_bai}LDNMP建站"
-echo -e "${gl_kjlan}11.  ${gl_bai}应用市场"
 echo -e "${gl_kjlan}12.  ${gl_bai}后台工作区"
 echo -e "${gl_kjlan}13.  ${gl_bai}系统工具"
 echo -e "${gl_kjlan}14.  ${gl_bai}服务器集群控制"
-echo -e "${gl_kjlan}16.  ${gl_bai}游戏开服脚本合集"
 echo -e "${gl_kjlan}------------------------${gl_bai}"
 echo -e "${gl_kjlan}0.   ${gl_bai}退出脚本"
 echo -e "${gl_kjlan}------------------------${gl_bai}"
@@ -29756,12 +29742,9 @@ case $choice in
 	;;
   8) linux_test ;;
   9) linux_Oracle ;;
-  10) linux_ldnmp ;;
-  11) linux_panel ;;
   12) linux_work ;;
   13) linux_Settings ;;
   14) linux_cluster ;;
-  16) games_server_tools ;;
   0) clear ; exit ;;
   *) echo "无效的输入!" ;;
 esac
@@ -29790,33 +29773,21 @@ echo "系统备份功能        k backup | k bf | k 备份"
 echo "ssh远程连接工具     k ssh | k 远程连接"
 echo "rsync远程同步工具   k rsync | k 远程同步"
 echo "硬盘管理工具        k disk | k 硬盘管理"
-echo "内网穿透（服务端）  k frps"
-echo "内网穿透（客户端）  k frpc"
 echo "软件启动            k start sshd | k 启动 sshd "
 echo "软件停止            k stop sshd | k 停止 sshd "
 echo "软件重启            k restart sshd | k 重启 sshd "
 echo "软件状态查看        k status sshd | k 状态 sshd "
 echo "软件开机启动        k enable docker | k autostart docke | k 开机启动 docker "
-echo "域名证书申请        k ssl"
-echo "域名证书到期查询    k ssl ps"
 echo "docker管理平面      k docker"
 echo "docker环境安装      k docker install |k docker 安装"
 echo "docker容器管理      k docker ps |k docker 容器"
 echo "docker镜像管理      k docker img |k docker 镜像"
-echo "LDNMP站点管理       k web"
-echo "LDNMP缓存清理       k web cache"
-echo "安装WordPress       k wp |k wordpress |k wp xxx.com"
-echo "安装反向代理        k fd |k rp |k 反代 |k fd xxx.com"
-echo "安装负载均衡        k loadbalance |k 负载均衡"
-echo "安装L4负载均衡      k stream |k L4负载均衡"
 echo "防火墙面板          k fhq |k 防火墙"
 echo "开放端口            k dkdk 8080 |k 打开端口 8080"
 echo "关闭端口            k gbdk 7800 |k 关闭端口 7800"
 echo "放行IP              k fxip 127.0.0.0/8 |k 放行IP 127.0.0.0/8"
 echo "阻止IP              k zzip 177.5.25.36 |k 阻止IP 177.5.25.36"
 echo "命令收藏夹          k fav | k 命令收藏夹"
-echo "应用市场管理        k app"
-echo "应用编号快捷管理    k app 26 | k app 1panel | k app npm"
 echo "fail2ban管理        k fail2ban | k f2b [status|enable|disable]"
 echo "显示系统信息        k info"
 echo "ROOT密钥管理        k sshkey"
@@ -29902,98 +29873,6 @@ else
 			disk_manager
 			;;
 
-		http-site)
-			shift
-			kpanel_run_http_site "$@"
-			;;
-		wp|wordpress)
-			shift
-			ldnmp_wp "$@"
-
-			;;
-		discuz)
-			shift
-			kpanel_run_web_recipe_cli 3 "$@"
-			;;
-		kodbox)
-			shift
-			kpanel_run_web_recipe_cli 4 "$@"
-			;;
-		maccms)
-			shift
-			kpanel_run_web_recipe_cli 5 "$@"
-			;;
-		dujiaoka)
-			shift
-			kpanel_run_web_recipe_cli 6 "$@"
-			;;
-		flarum)
-			shift
-			kpanel_run_web_recipe_cli 7 "$@"
-			;;
-		typecho)
-			shift
-			kpanel_run_web_recipe_cli 8 "$@"
-			;;
-		linkstack)
-			shift
-			kpanel_run_web_recipe_cli 9 "$@"
-			;;
-		ai-prompt)
-			shift
-			kpanel_run_web_recipe_cli 27 "$@"
-			;;
-		php-site)
-			shift
-			kpanel_run_web_recipe_cli 20 "$@"
-			;;
-		redirect-site)
-			shift
-			kpanel_run_web_recipe_cli 22 "$@"
-			;;
-		domain-proxy)
-			shift
-			kpanel_run_web_recipe_cli 24 "$@"
-			;;
-		bitwarden-site)
-			shift
-			kpanel_run_web_recipe_cli 25 "$@"
-			;;
-		halo-site)
-			shift
-			kpanel_run_web_recipe_cli 26 "$@"
-			;;
-		loadbalance-site)
-			shift
-			kpanel_run_web_recipe_cli 28 "$@"
-			;;
-		static-site)
-			shift
-			kpanel_run_web_recipe_cli 30 "$@"
-			;;
-		fd|rp|反代)
-			shift
-			ldnmp_Proxy "$@"
-	  		find_container_by_host_port "$port"
-	  		if [ -z "$docker_name" ]; then
-	  		  close_port "$port"
-			  echo "已阻止IP+端口访问该服务"
-	  		else
-			  ip_address
-			  close_port "$port"
-			block_container_port "$docker_name" "$ipv4_address" || return 1
-	  		fi
-			;;
-
-		loadbalance|负载均衡)
-			ldnmp_Proxy_backend
-			;;
-
-
-		stream|L4负载均衡)
-			ldnmp_Proxy_backend_stream
-			;;
-
 		swap)
 			shift
 			add_swap "$@"
@@ -30023,19 +29902,9 @@ else
 			fi
 			;;
 
-
 		iptables_open)
 			iptables_open
 			;;
-
-		frps)
-			frps_panel
-			;;
-
-		frpc)
-			frpc_panel
-			;;
-
 
 		打开端口|dkdk)
 			shift
@@ -30087,19 +29956,6 @@ else
 			enable "$@"
 			;;
 
-		ssl)
-			shift
-			if [ "$1" = "ps" ]; then
-				ssl_ps
-			elif [ -z "$1" ]; then
-				add_ssl
-			elif [ -n "$1" ]; then
-				add_ssl "$1"
-			else
-				k_info
-			fi
-			;;
-
 		docker)
 			shift
 			case $1 in
@@ -30116,31 +29972,6 @@ else
 					linux_docker
 					;;
 			esac
-			;;
-
-		web)
-		   shift
-			if [ "$1" = "env" ] || [ "$1" = "environment" ] || [ "$1" = "环境" ]; then
-				shift
-				kpanel_ldnmp_dispatch "$@"
-			elif [ "$1" = "certificate-replace" ]; then
-				shift
-				kpanel_web_replace_certificate "$@"
-				exit $?
-			elif [ "$1" = "cache" ]; then
-				web_cache
-			elif [ "$1" = "del" ] || [ "$1" = "delete" ] || [ "$1" = "删除" ]; then
-				shift
-				web_del "$@"
-			elif [ "$1" = "sec" ]; then
-				web_security
-			elif [ "$1" = "opt" ]; then
-				web_optimization
-			elif [ -z "$1" ]; then
-				ldnmp_web_status
-			else
-				k_info
-			fi
 			;;
 
 		kpanel)
@@ -30169,16 +30000,6 @@ else
 			fi
 			;;
 
-
-		app)
-			shift
-			linux_panel "$@"
-			;;
-
-		claw|oc|OpenClaw)
-			moltbot_menu
-			;;
-
 		info)
 			linux_info
 			;;
@@ -30191,7 +30012,6 @@ else
 				kpanel_f2b_dispatch "$@"
 			fi
 			;;
-
 
 		sshkey)
 

@@ -21,6 +21,9 @@ set -euo pipefail
 #
 # 菜单编号→目标的映射表是“当前版本”的快照：后续工单若有意增删菜单项，
 # 同步更新 dispatch_cases，尺子会明确指出是哪一项对不上。
+#
+# 工单 #15/#16「净化版瘦身」：建站(10)、应用市场(11)、游戏开服(16) 三块整块退役，
+# 编号按“菜单空号策略”留空不重排，终局渲染集合为 1–9、12、13、14、0。
 
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 script_path="${KEJILION_SCRIPT_PATH:-${project_root}/kejilion.sh}"
@@ -88,12 +91,9 @@ linux_bbr() { record "dispatch linux_bbr${*:+ $*}"; }
 linux_docker() { record "dispatch linux_docker${*:+ $*}"; }
 linux_test() { record "dispatch linux_test${*:+ $*}"; }
 linux_Oracle() { record "dispatch linux_Oracle${*:+ $*}"; }
-linux_ldnmp() { record "dispatch linux_ldnmp${*:+ $*}"; }
-linux_panel() { record "dispatch linux_panel${*:+ $*}"; }
 linux_work() { record "dispatch linux_work${*:+ $*}"; }
 linux_Settings() { record "dispatch linux_Settings${*:+ $*}"; }
 linux_cluster() { record "dispatch linux_cluster${*:+ $*}"; }
-games_server_tools() { record "dispatch games_server_tools${*:+ $*}"; }
 
 # 固定工作目录，避免分支里的裸文件名（如 WARP 的 menu.sh）意外命中真实文件。
 cd "${test_root}"
@@ -128,9 +128,16 @@ if printf '%s\n' "${render_plain}" | awk '/^-{3,}$/{if(prev)exit 1; prev=1; next
 else
 	fail "主菜单出现两条连续的 '-----' 分隔线（本工单附带小修：应收敛为一条）"
 fi
-for option in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 16 0; do
+for option in 1 2 3 4 5 6 7 8 9 12 13 14 0; do
 	printf '%s\n' "${render_plain}" | grep -Eq "^${option}\.[[:space:]]+[^[:space:]]" ||
 		fail "主菜单未渲染编号 ${option} 的菜单项（渲染与分发缝被破坏）"
+done
+# 工单 #15/#16：建站(10)、应用市场(11)、游戏开服(16) 整块退役，编号按“菜单空号策略”
+# 留空不重排。这里反向断言这三个编号**不再被渲染**——只删上面的正向循环不足以拦住复辟。
+for retired in 10 11 16; do
+	if printf '%s\n' "${render_plain}" | grep -Eq "^${retired}\.[[:space:]]+[^[:space:]]"; then
+		fail "主菜单仍渲染已退役的编号 ${retired}（工单 #15/#16：建站/应用市场/游戏开服已删除，编号留空不重排）"
+	fi
 done
 [ ! -s "${dispatch_log}" ] || {
 	cat "${dispatch_log}" >&2
@@ -146,6 +153,18 @@ if grep -Fq 'kejilion_Affiliates' "${script_path}"; then
 	fail "kejilion.sh 仍定义或引用 kejilion_Affiliates（工单 #8 应整块删除广告专栏）"
 fi
 
+# ---- 断言一·补二：已退役三块的主菜单分发行一条不许回来（工单 #15/#16）----
+# 只删掉上面的正向断言拦不住复辟，这里用精确字符串把三条分发行钉死。
+for gone in \
+	'10) linux_ldnmp' \
+	'11) linux_panel' \
+	'16) games_server_tools'
+do
+	if grep -Fq "${gone}" "${script_path}"; then
+		fail "主菜单仍残留已退役板块的分发行[${gone}]（工单 #15/#16：建站/应用市场/游戏开服）"
+	fi
+done
+
 # ---- 断言二：每个编号入口按预期分派，且分发后菜单继续渲染 ----
 # 形式：编号|分发日志里应出现的行|放行的记录正则（完整分组内容，
 # 即“允许出现哪些 stub 记录”；未出现在白名单里的记录一律视为越权）
@@ -159,12 +178,9 @@ dispatch_cases=(
 	'7|install wget|dispatch |send_stats |install |wget '
 	'8|dispatch linux_test|dispatch |send_stats '
 	'9|dispatch linux_Oracle|dispatch |send_stats '
-	'10|dispatch linux_ldnmp|dispatch |send_stats '
-	'11|dispatch linux_panel|dispatch |send_stats '
 	'12|dispatch linux_work|dispatch |send_stats '
 	'13|dispatch linux_Settings|dispatch |send_stats '
 	'14|dispatch linux_cluster|dispatch |send_stats '
-	'16|dispatch games_server_tools|dispatch |send_stats '
 )
 for dispatch_case in "${dispatch_cases[@]}"; do
 	choice="${dispatch_case%%|*}"
