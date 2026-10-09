@@ -42,13 +42,12 @@ in one interactive tool.
 使用 `root` 用户执行以下命令。
 
 ```bash
-KJ_RAW_URL="https://raw.githubusercontent.com/howi3c/sh/main/kejilion.sh"
-bash <(curl -sL "$KJ_RAW_URL")
+bash <(curl -sL https://raw.githubusercontent.com/howi3c/sh/main/kejilion.sh)
 ```
 
 这条命令装的是**个人净化版**（脚本从本仓库的 GitHub 直链拉取）；别改成从原作者域名 `kejilion.sh` 拉，那样装回来的是没净化的原版。
 
-首次运行后可按脚本提示设置 `k` 快捷命令，后续直接输入 `k` 即可打开主菜单。
+首次运行时会自动装好 `k` 快捷命令（屏幕有提示），之后直接输入 `k` 就能打开主菜单。
 
 > [!IMPORTANT]
 > 脚本包含软件安装、网络、防火墙、磁盘和容器等系统级操作。

@@ -32,3 +32,7 @@ _Avoid_: 配套脚本、附属文件、sibling 文件
 兄弟文件下发给用户机器时落盘用的名字，与它在仓库里的文件名可以不同。目前唯一一例：仓库里的 `fail2ban-ssh.conf` 部署到用户机时仍叫 `centos-ssh.conf`（`f2b_install_sshd()` 里的 `--output centos-ssh.conf`），这样改动不牵动用户机上的 jail 文件名与既有配置。
 _Avoid_: 目标文件名、落地名
 
+**k 快捷命令**:
+安装链把正在运行的脚本本体依次落到 `~/kejilion.sh` 与 `/usr/local/bin/k`，并软链 `/usr/bin/k`；用户在任意目录输入 `k` 即打开主菜单。跑的是磁盘上的脚本文件（`./kejilion.sh`、`bash kejilion.sh`、直接跑 `k`）就以那份文件为本体；本体不在磁盘上（`bash <(curl …)` 管道安装）时，先从本仓库 raw 地址取一份落盘再接上安装链。它靠 PATH 里的命令生效，不是 shell 别名——脚本反而会删掉 `~/.bashrc` 里的 `alias k=`。
+_Avoid_: 快捷方式、k 别名、别名 k
+

@@ -87,21 +87,82 @@ quanju_canshu
 
 
 canshu_v6() {
-	if grep -q '^canshu="V6"' /usr/local/bin/k > /dev/null 2>&1; then
-		sed -i 's/^canshu="default"/canshu="V6"/' ~/kejilion.sh
+	local k_file="${1:-/usr/local/bin/k}"
+	if grep -q '^canshu="V6"' "${k_file}" > /dev/null 2>&1; then
+		sed -i 's/^canshu="default"/canshu="V6"/' ~/kejilion.sh > /dev/null 2>&1
 	fi
 }
 
+# k 快捷命令的安装链：脚本本体 → ~/kejilion.sh → /usr/local/bin/k →（软链）/usr/bin/k。
+#
+# 原版只认「当前目录里的 ./kejilion.sh」当第一跳，于是 bash <(curl …) 这类管道
+# 跑法（脚本本体从不在磁盘上）会让整条链断在第一跳，且每跳报错都被吞，k 静默装不上。
+# 净化版删掉更新功能（工单 #7）后没有别的兜底，这里补上自落盘：
+#   · 跑的是磁盘上的脚本文件（./kejilion.sh、bash kejilion.sh、直接跑 k）→ 以它为准；
+#   · 脚本本体不在磁盘上（bash <(curl …) 管道 / curl | bash）→ 从本仓库 raw 地址
+#     取一份落到 ~/kejilion.sh 再接上安装链（取内容只从本仓库，见 GLOSSARY.md
+#     「取内容」与 docs/adr/0002-content-fetching-only-from-this-repo.md）。
+# 另外补三件原版没有的事：落盘后补执行位（curl 下载的文件默认 644，不补则 k 装上
+# 也不能执行）；装不上时把原因说明白并清掉烂尾（见下面的 kj_k_shortcut_failed）；
+# 首次装上屏幕给一句提示，安装结果不再不可见。
+kj_k_shortcut_failed() {
+	local k_link="$1" reason="$2"
+	[ -L "${k_link}" ] && rm -f "${k_link}"
+	echo -e "${gl_huang}提示: ${gl_bai}k 命令没装上（${reason}）。"
+	return 1
+}
 
-if ! kpanel_protocol_active; then
-	canshu_v6
+kj_install_k_shortcut() {
+	local self="$0"
+	local k_bin="${KJ_LOCAL_BIN_DIR:-/usr/local/bin}/k"
+	local k_link="${KJ_SYSTEM_BIN_DIR:-/usr/bin}/k"
+	local home_script="${HOME}/kejilion.sh"
+	local installed_before=0 from_fetch=0
 
 	sed -i '/^alias k=/d' ~/.bashrc > /dev/null 2>&1
 	sed -i '/^alias k=/d' ~/.profile > /dev/null 2>&1
 	sed -i '/^alias k=/d' ~/.bash_profile > /dev/null 2>&1
-	cp -f ./kejilion.sh ~/kejilion.sh > /dev/null 2>&1
-	cp -f ~/kejilion.sh /usr/local/bin/k > /dev/null 2>&1
-	ln -sf /usr/local/bin/k /usr/bin/k > /dev/null 2>&1
+
+	[ -f "${k_bin}" ] && installed_before=1
+
+	if [ -f "${self}" ] && head -1 "${self}" 2>/dev/null | grep -q '^#!/bin/bash'; then
+		cp -f "${self}" "${home_script}" > /dev/null 2>&1
+	else
+		# 脚本本体不在磁盘上（bash <(curl …) / curl | bash）：从本仓库取一份，接上第一跳
+		from_fetch=1
+		curl -fsSL --connect-timeout 15 --max-time 60 -o "${home_script}" "https://raw.githubusercontent.com/howi3c/sh/main/kejilion.sh" > /dev/null 2>&1
+	fi
+
+	# V6 优先偏好从旧的 k 迁到新本体上。必须在上面落盘之后跑：原版在复制之前跑，
+	# 刚打上的补丁紧接着就被 cp 覆盖掉，迁移白做。
+	canshu_v6 "${k_bin}"
+
+	if [ ! -f "${home_script}" ]; then
+		if [ "${from_fetch}" -eq 1 ]; then
+			kj_k_shortcut_failed "${k_link}" "脚本本体没落到磁盘，从仓库取内容也没成功"
+		else
+			kj_k_shortcut_failed "${k_link}" "脚本本体没落到磁盘，复制运行中的脚本失败"
+		fi
+		return 1
+	fi
+
+	chmod +x "${home_script}" > /dev/null 2>&1
+	cp -f "${home_script}" "${k_bin}" > /dev/null 2>&1
+	chmod +x "${k_bin}" > /dev/null 2>&1
+	if [ -f "${k_bin}" ]; then
+		ln -sf "${k_bin}" "${k_link}" > /dev/null 2>&1
+		if [ "${installed_before}" -eq 0 ]; then
+			echo -e "${gl_kjlan}快捷命令 k 已就绪，之后输入 k 就能打开本菜单。${gl_bai}"
+		fi
+	else
+		kj_k_shortcut_failed "${k_link}" "写入 ${k_bin} 失败"
+		return 1
+	fi
+	return 0
+}
+
+if ! kpanel_protocol_active; then
+	kj_install_k_shortcut
 fi
 
 
