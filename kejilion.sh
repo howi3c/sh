@@ -1113,6 +1113,23 @@ manage_country_rules() {
 
 
 
+get_ssh_ports() {
+	local ports="" config
+	if command -v sshd >/dev/null 2>&1; then
+		ports="$(sshd -T 2>/dev/null | awk 'tolower($1) == "port" && $2 ~ /^[0-9]+$/ {print $2}')"
+	fi
+	if [ -z "$ports" ]; then
+		ports="$({
+			for config in /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf; do
+				[ -f "$config" ] || continue
+				awk 'tolower($1) == "port" && $2 ~ /^[0-9]+$/ {print $2}' "$config"
+			done
+		} 2>/dev/null)"
+	fi
+	[ -n "$ports" ] || ports=22
+	printf '%s\n' "$ports" | awk '/^[0-9]+$/ && $1 >= 1 && $1 <= 65535' | sort -nu
+}
+
 iptables_panel() {
   root_use
   install iptables
@@ -1121,7 +1138,7 @@ iptables_panel() {
 		  clear
 		  echo "高级防火墙管理"
 		  echo "------------------------"
-		  iptables -L INPUT
+		  iptables -L INPUT -v
 		  echo ""
 		  echo "防火墙管理"
 		  echo "------------------------"
@@ -1152,7 +1169,9 @@ iptables_panel() {
 				  ;;
 			  3)
 				  # 开放所有端口
-				  current_port=$(grep -E '^ *Port [0-9]+' /etc/ssh/sshd_config | awk '{print $2}')
+				  local ssh_ports=($(get_ssh_ports))
+				  local ssh_port
+				  [ ${#ssh_ports[@]} -gt 0 ] || ssh_ports=(22)
 				  iptables -F
 				  iptables -X
 				  iptables -P INPUT ACCEPT
@@ -1162,7 +1181,9 @@ iptables_panel() {
 				  iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 				  iptables -A INPUT -i lo -j ACCEPT
 				  iptables -A FORWARD -i lo -j ACCEPT
-				  iptables -A INPUT -p tcp --dport $current_port -j ACCEPT
+				  for ssh_port in "${ssh_ports[@]}"; do
+					  iptables -A INPUT -p tcp --dport "$ssh_port" -j ACCEPT
+				  done
 				  iptables-save > /etc/iptables/rules.v4
 				  if ip6tables_available; then
 					  ip6tables -F
@@ -1174,14 +1195,18 @@ iptables_panel() {
 					  ip6tables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 					  ip6tables -A INPUT -i lo -j ACCEPT
 					  ip6tables -A FORWARD -i lo -j ACCEPT
-					  ip6tables -A INPUT -p tcp --dport $current_port -j ACCEPT
+					  for ssh_port in "${ssh_ports[@]}"; do
+						  ip6tables -A INPUT -p tcp --dport "$ssh_port" -j ACCEPT
+					  done
 					  ip6tables-save > /etc/iptables/rules.v6
 				  fi
 				  save_iptables_rules
 				  ;;
 			  4)
 				  # 关闭所有端口
-				  current_port=$(grep -E '^ *Port [0-9]+' /etc/ssh/sshd_config | awk '{print $2}')
+				  local ssh_ports=($(get_ssh_ports))
+				  local ssh_port
+				  [ ${#ssh_ports[@]} -gt 0 ] || ssh_ports=(22)
 				  iptables -F
 				  iptables -X
 				  iptables -P INPUT DROP
@@ -1191,7 +1216,9 @@ iptables_panel() {
 				  iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 				  iptables -A INPUT -i lo -j ACCEPT
 				  iptables -A FORWARD -i lo -j ACCEPT
-				  iptables -A INPUT -p tcp --dport $current_port -j ACCEPT
+				  for ssh_port in "${ssh_ports[@]}"; do
+					  iptables -A INPUT -p tcp --dport "$ssh_port" -j ACCEPT
+				  done
 				  iptables-save > /etc/iptables/rules.v4
 				  if ip6tables_available; then
 					  ip6tables -F
@@ -1203,7 +1230,9 @@ iptables_panel() {
 					  ip6tables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 					  ip6tables -A INPUT -i lo -j ACCEPT
 					  ip6tables -A FORWARD -i lo -j ACCEPT
-					  ip6tables -A INPUT -p tcp --dport $current_port -j ACCEPT
+					  for ssh_port in "${ssh_ports[@]}"; do
+						  ip6tables -A INPUT -p tcp --dport "$ssh_port" -j ACCEPT
+					  done
 					  ip6tables-save > /etc/iptables/rules.v6
 				  fi
 				  save_iptables_rules
@@ -9046,20 +9075,7 @@ kpanel_system_resource_firewall_port() {
 }
 
 kpanel_system_resource_ssh_ports() {
-	local ports="" config
-	if command -v sshd >/dev/null 2>&1; then
-		ports="$(sshd -T 2>/dev/null | awk 'tolower($1) == "port" && $2 ~ /^[0-9]+$/ {print $2}')"
-	fi
-	if [ -z "$ports" ]; then
-		ports="$({
-			for config in /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf; do
-				[ -f "$config" ] || continue
-				awk 'tolower($1) == "port" && $2 ~ /^[0-9]+$/ {print $2}' "$config"
-			done
-		} 2>/dev/null)"
-	fi
-	[ -n "$ports" ] || ports=22
-	printf '%s\n' "$ports" | awk '/^[0-9]+$/ && $1 >= 1 && $1 <= 65535' | sort -nu
+	get_ssh_ports
 }
 
 kpanel_system_resource_firewall_open_port_rules() {

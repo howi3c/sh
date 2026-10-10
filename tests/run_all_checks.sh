@@ -59,6 +59,7 @@ ITEMS=(
 	"守门 · k 快捷命令安装链（管道安装自落盘兜底：本体在磁盘上则装它，不在则从本仓库 raw 取一份；补执行位、清指向空气的软链、首次装上有提示、V6 偏好迁移不被覆盖）	tests/test_k_shortcut_install.sh	"
 	"守门 · README 不残留原版仓库引用（指向 kejilion/sh 的徽章/问题反馈/更新日志/Star History 与原作者钱包地址，工单 #14）	tests/test_readme_no_upstream_refs.sh	"
 	"守门 · 删除守卫（工单 #15：已删功能词汇=0 / 根孤儿文件不存在 / 剩存取内容 URL 指向本仓库 / 与 README 守门交叉确认；工单 #16 点名自查词 cluster_python3、#22 漏网孤儿 update_log.sh 均在守）	tests/test_spec15_slim_down_removed.sh	"
+	"守门 · 防火墙关闭/开放所有端口自动保留 SSH 端口（工单 #26）	tests/test_firewall_close_all_ports_ssh_retain_smoke.sh	"
 )
 TOTAL="${#ITEMS[@]}"
 
