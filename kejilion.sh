@@ -1209,8 +1209,6 @@ iptables_panel() {
 				  [ ${#ssh_ports[@]} -gt 0 ] || ssh_ports=(22)
 				  iptables -F
 				  iptables -X
-				  iptables -P INPUT DROP
-				  iptables -P FORWARD DROP
 				  iptables -P OUTPUT ACCEPT
 				  iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 				  iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
@@ -1219,12 +1217,26 @@ iptables_panel() {
 				  for ssh_port in "${ssh_ports[@]}"; do
 					  iptables -A INPUT -p tcp --dport "$ssh_port" -j ACCEPT
 				  done
+				  # 确认至少一条 SSH 放行规则写入成功后再收紧策略，避免失联
+				  local ssh_verified=false
+				  for ssh_port in "${ssh_ports[@]}"; do
+					  if iptables -C INPUT -p tcp --dport "$ssh_port" -j ACCEPT 2>/dev/null; then
+						  ssh_verified=true
+						  break
+					  fi
+				  done
+				  if [ "$ssh_verified" = true ]; then
+					  iptables -P INPUT DROP
+					  iptables -P FORWARD DROP
+				  else
+					  iptables -P INPUT ACCEPT
+					  iptables -P FORWARD ACCEPT
+					  echo "警告: SSH 端口放行规则验证失败，为防失联已保持入站开放！"
+				  fi
 				  iptables-save > /etc/iptables/rules.v4
 				  if ip6tables_available; then
 					  ip6tables -F
 					  ip6tables -X
-					  ip6tables -P INPUT DROP
-					  ip6tables -P FORWARD DROP
 					  ip6tables -P OUTPUT ACCEPT
 					  ip6tables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 					  ip6tables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
@@ -1233,6 +1245,20 @@ iptables_panel() {
 					  for ssh_port in "${ssh_ports[@]}"; do
 						  ip6tables -A INPUT -p tcp --dport "$ssh_port" -j ACCEPT
 					  done
+					  local ssh6_verified=false
+					  for ssh_port in "${ssh_ports[@]}"; do
+						  if ip6tables -C INPUT -p tcp --dport "$ssh_port" -j ACCEPT 2>/dev/null; then
+							  ssh6_verified=true
+							  break
+						  fi
+					  done
+					  if [ "$ssh6_verified" = true ]; then
+					  ip6tables -P INPUT DROP
+					  ip6tables -P FORWARD DROP
+					  else
+						  ip6tables -P INPUT ACCEPT
+						  ip6tables -P FORWARD ACCEPT
+					  fi
 					  ip6tables-save > /etc/iptables/rules.v6
 				  fi
 				  save_iptables_rules
