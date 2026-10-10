@@ -94,7 +94,8 @@ done
 #   （其中 mc.sh / palworld.sh 含"按 k 把原版未净化的 kejilion.sh 下载回 ~/ 并
 #   直接运行"的后门，仓库副本留着就是报信复活的落脚点）。
 #   保留的兄弟文件（TG-*.sh / upgrade_openssh9.8p1.sh / archive.key /
-#   fail2ban-ssh.conf）与 cloudflare.conf 一个都不进这个清单，见断言 2b。
+#   fail2ban-ssh.conf）不进这个清单，见断言 2b。cloudflare.conf 曾与它们并列，
+#   2026-10-10 安全审计判定为全仓库零引用的孤儿后直接删除，今列在下面防复活。
 # ===========================================================================
 orphan_files=(
 	# —— 游戏开服本体与其附属脚本（工单 #22）——
@@ -117,6 +118,13 @@ orphan_files=(
 	update_log.sh
 	# —— 已退役的协作文档（工单 #22）——
 	CONTRIBUTING.md
+	# —— 安全审计后删除的零引用孤儿（2026-10-10）——
+	# kejilion.sh 从不下载它（服务的是随 LDNMP 建站删除的 CC 防护，同族的
+	# cloudflare-docker.conf / fail2ban-nginx-cc.conf 早随板块退场），
+	# GLOSSARY「兄弟文件」也从未计入它（只列 5 个）；且 [Init] 段的 cfuser
+	# 是原作者邮箱占位、cftoken 是无效占位，留着只会把原作者邮箱散播到每个
+	# 仓库副本。删除后不得复活。
+	cloudflare.conf
 )
 for f in "${orphan_files[@]}"; do
 	[ ! -e "${project_root}/${f}" ] ||
@@ -130,7 +138,9 @@ kept_files=(
 	upgrade_openssh9.8p1.sh       # 系统工具 13-26 修复 OpenSSH 高危漏洞
 	archive.key                   # BBR 管理 XanMod 签名钥的回退源
 	fail2ban-ssh.conf             # 工单 #23 收编的 fail2ban SSH 防御配置
-	cloudflare.conf               # 凭据体检占位说明（待办原记账于 README「后续事项」#2，该节已删）
+	# cloudflare.conf 曾在此列：2026-10-10 安全审计判定为零引用孤儿（主脚本
+	# 从不下载、GLOSSARY「兄弟文件」从未计入），且内含原作者邮箱占位，
+	# 直接删除；改列断言 2 的 orphan_files 防复活，保留清单相应减为 5 个。
 )
 for f in "${kept_files[@]}"; do
 	[ -e "${project_root}/${f}" ] ||

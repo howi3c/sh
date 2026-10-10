@@ -136,8 +136,11 @@ done
 `kejilion.sh.bak`（自更新前的备份回滚）。
 本轮新增两项衍生复核，也都是 0：`restore_defaults` 与「还原默认设置」（内核调优菜单里那一项，
 随工单 #21 的孤儿收敛一起退场，见第七节；能力减少一事当时记于 README「后续事项」第 5 条，
-记账节已删，见 8.3 的现状说明）、`cloudflare.conf`
-里的凭据体检相关字样尚未扫（见第七节，没跑就不写数）。
+记账节已删，见 8.3 的现状说明）。原记账里「`cloudflare.conf` 里的凭据体检相关字样尚未扫」
+一项，已由 **2026-10-10 的安全审计补做**：全文通读 + 引用检索判定该文件是全仓库零引用的孤儿
+（`kejilion.sh` 从不下载它，GLOSSARY「兄弟文件」从未计入它），且 `[Init]` 段的 `cfuser`
+是原作者邮箱占位、`cftoken` 是无效占位——已直接删除文件，扫凭据的动机随文件一并消失，
+见 8.2 与断言 2b 的相应更新。
 
 > 工单 #2~#10 那十项特征串在「本轮前」的 30229 行版本上同样为 0——本轮删掉的板块
 > （游戏、AI 面板、OpenClaw、应用市场、LDNMP、FRP、network-optimize）与报信无关，
@@ -234,7 +237,7 @@ PASS 13/13  守门 · 删除守卫（工单 #15：已删功能词汇=0 / 根孤�
 |---|---|---|
 | 1 | 已删功能词汇为零 | 18 个固定串 + 2 个忽略大小写串（`openclaw`、`moltbot`），只算非注释行，命中任何一个就 FAIL（第三轮补入工单 #16 点名自查词 `cluster_python3`） |
 | 2 | 仓库根孤儿文件不存在 | 34 个随板块退役的文件（游戏脚本、AI 面板本体、LDNMP 配置、真孤儿、内联生成的仓库副本、`CONTRIBUTING.md`、`update_log.sh` 等）一个都不许回来 |
-| 2b | 保留的兄弟文件一个不少 | 6 个保留文件（两个 TG 通知脚本、`upgrade_openssh9.8p1.sh`、`archive.key`、`fail2ban-ssh.conf`、`cloudflare.conf`）缺任何一个就 FAIL——防删过头 |
+| 2b | 保留的兄弟文件一个不少 | 6 个保留文件（两个 TG 通知脚本、`upgrade_openssh9.8p1.sh`、`archive.key`、`fail2ban-ssh.conf`、`cloudflare.conf`）缺任何一个就 FAIL——防删过头。2026-10-10 安全审计删除零引用孤儿 `cloudflare.conf`（判定：主脚本从不下载、GLOSSARY「兄弟文件」从未计入、内含原作者邮箱占位；防复活改由断言 2 的 orphan_files 守）后减为 5 个 |
 | 2c | （已退役）规格点名保留的零调用方函数仍在 + README 记着账 | 第三轮审查修复按规格判定规则（以 grep 结果为准）删除了这三个函数，本断言随之退役，退役理由写在尺子文件里；README 第 8 条改为"已删 + `kpanel_app_with_lock` 两个空 resource 分支的说明" |
 | 3 | URL 判据（调用而非重抄） | 直接调 `tests/test_network_inventory.sh --assert-clean`；顺带守 `--output centos-ssh.conf` 这个部署文件名没被改动 |
 | 4 | 与 README 守门交叉确认 | 直接调两个 README 守门 + 一条轻量重合点（README 指向本仓库 raw 基址） |
@@ -278,9 +281,13 @@ PASS 13/13  守门 · 删除守卫（工单 #15：已删功能词汇=0 / 根孤�
    且后者把完整未打码的登录 IP + 归属地经用户自己的 TG bot 发出。工单 #23 只改了 URL 指向，
    **一个字的内容都没动**（规格 Out of Scope）。审计结论见 ADR-0002；此事当时记账于 README「后续事项」
    第 1 条（该节已删，内容见 git 历史，见 8.3）。
-6. **凭据体检没跑**：原 README「后续事项」第 2 条建议的 `grep -rnE 'passwo?rd|secret|token|api[_-]?key'`
-   全仓扫描本轮**没有执行**，因此这里不给任何"扫出来几条"的数字——要扫请照 git 历史里
-   那一版 README 第 2 条做（记账节已删，见 8.3）。
+6. **凭据体检**：原 README「后续事项」第 2 条建议的 `grep -rnE 'passwo?rd|secret|token|api[_-]?key'`
+   全仓扫描在报告定稿时**没有执行**，因此定稿版这里不给任何"扫出来几条"的数字。
+   **2026-10-10 安全审计已补做**：全仓扫过一遍，命中只有三类——`cloudflare.conf` 的
+   `cftoken = APIKEY00000`（无效占位，随该零引用孤儿的删除一并消失，见第三节与 8.2）、
+   `archive.key` 的 PGP 公钥块（公开签名钥，不是私钥，ADR-0002 有结论）、
+   两个 TG 脚本里的 `TELEGRAM_BOT_TOKEN`/`CHAT_ID`（用户自填占位文本，无预置凭据，
+   ADR-0002 有结论）。未发现真凭据；定稿版的"没跑就不写数"划定自本项起作废。
 7. **本轮能力减少未做人工确认**：内核优化菜单的「还原默认设置」随工单 #21 消失
    （`restore_defaults()` 调用方归零后被收敛掉）。规格把它归入"内核调优剩余项"、判为可接受，
    但这是保留能力的一次实质减少，本报告只做记录，不替仓库主人判断影响；
@@ -328,9 +335,15 @@ PASS 13/13  守门 · 删除守卫（工单 #15：已删功能词汇=0 / 根孤�
 | `update_log.sh` | 1 | 第三轮审查修复补删的漏网孤儿（工单 #22 判据下的漏网，零引用，见 9.4 第 7 项） |
 | **合计** | **67** | 与 `git diff --name-status … --diff-filter=D \| wc -l` 的实测一致 |
 
-仓库根现在剩 **11** 个文件：主脚本 + 4 份文档（README/GLOSSARY/LICENSE/AGENTS.md）
+仓库根在交付时剩 **11** 个文件：主脚本 + 4 份文档（README/GLOSSARY/LICENSE/AGENTS.md）
 + 6 个保留兄弟文件（`TG-check-notify.sh`、`TG-SSH-check-notify.sh`、
 `upgrade_openssh9.8p1.sh`、`archive.key`、`fail2ban-ssh.conf`、`cloudflare.conf`）。
+
+**2026-10-10 安全审计后的现状**：`cloudflare.conf` 经全文通读与引用检索判定为
+全仓库零引用的孤儿（`kejilion.sh` 从不下载它；服务的是随 LDNMP 建站删除的 CC 防护；
+GLOSSARY「兄弟文件」从未计入它），且 `[Init]` 段 `cfuser` 为原作者邮箱占位、
+`cftoken` 为无效占位——已直接删除，仓库根现为 **10** 个文件、保留兄弟文件 **5** 个；
+防复活由 `tests/test_spec15_slim_down_removed.sh` 断言 2 的 `orphan_files` 守。
 
 > 与规格 Further Notes 预估「净减约 40 个、净增 1 个」的差异：实测净减 64、净增 3。
 > 主要原因是**退役的测试与夹具比预估多得多**——规格只估了"约 20 个"，实际随板块一起
@@ -482,7 +495,8 @@ PASS 13/13  守门 · 删除守卫（工单 #15：已删功能词汇=0 / 根孤�
 ### 10.1 根因（隔离实验证实，未改代码前先跑尺子见红）
 
 k 命令的安装链原本只有一跳来源：`cp -f ./kejilion.sh ~/kejilion.sh`——「**当前目录**里的
-kejilion.sh」。而 README 教的一键安装是 `bash <(curl -sL <本仓库 raw 地址>)`：脚本从
+kejilion.sh」。而 README 教的一键安装是 `bash <(curl -sL <本仓库 raw 地址>)`（当时的
+命令形态；现已改为先下载再运行，见 10.5）：脚本从
 管道流过，`$0` 是 `/dev/fd/N`，硬盘上从来没有 kejilion.sh 这个文件，第一跳就断；且每一跳
 的报错都被 `>/dev/null 2>&1` 吞掉——`/usr/local/bin/k` 静默地不存在，用户输入 `k` 只得到
 command not found（或一个指向空气的 `/usr/bin/k` 软链报错）。
@@ -550,3 +564,28 @@ command not found（或一个指向空气的 `/usr/bin/k` 软链报错）。
 > 自身），以此节为准。
 
 本增量由仓库主人决定直接修复、不开工单；上文各表即为它的验收记录。
+
+### 10.5 一键安装命令改为「先下载再运行」（不再用 `bash <(curl …)`）
+
+仓库主人实跑 README 的一行安装命令时报错，本次做兼容性修正。先在本地做了隔离实验
+（不装任何东西、不发请求，把三种跑法的行为摆在一起看）：
+
+| 跑法 | 在 sh 下能否运行 | 脚本内 `read` 交互 |
+|---|---|---|
+| `bash <(curl …)`（原 README 命令） | **不能**：`sh: 1: Syntax error: "(" unexpected`——`<(...)` 是 bash 专有语法 | 正常 |
+| `curl … \| bash` | 能 | **断**：脚本经 stdin 喂入，读完即 EOF，菜单的 `read` 读不到用户输入（实测 `read -p` 得到空值） |
+| `curl -fsSL -o /tmp/kejilion.sh … && bash /tmp/kejilion.sh`（新命令） | 能 | 正常 |
+
+另外，原命令的 `-sL` 会把 curl 自己的错误也吞掉——下载失败时用户看到的只是"没反应"；
+换成 `-fsSL` 后失败有明确报错，`-f` 还能防止把错误页/重定向页当成脚本执行。
+
+| 位置 | 改动 |
+|---|---|
+| `README.md` | 「一键安装」命令改为先下载再运行；补两句说明为何不用管道喂法与 `<(...)`（净化的说明句「这是个人净化版、别从原作者域名拉」原样保留） |
+| `GLOSSARY.md` | 「k 快捷命令」条目里管道安装的举例补上 `curl \| bash`（与 `kejilion.sh` 内安装链注释口径一致） |
+| `docs/vps-smoke.md` | 第三条纪律里 `bash <(curl …)` 的提法改为与新命令形态一致 |
+| `tests/test_k_shortcut_install.sh` | 背景注释里 README 命令形态更新（断言不变——管道跑法仍是合法入口，四个场景继续守） |
+
+影响面：新命令仍只从本仓库 raw 取内容（ADR-0002「取内容只从本仓库」方向不变）；
+k 安装链走「本体在磁盘上」分支，即场景二（本地文件安装）那条已验证路径；管道跑法
+的自落盘兜底不受影响。`bash tests/run_all_checks.sh` 全绿后本表即为验收记录。
