@@ -138,9 +138,8 @@ kept_files=(
 	upgrade_openssh9.8p1.sh       # 系统工具 13-26 修复 OpenSSH 高危漏洞
 	archive.key                   # BBR 管理 XanMod 签名钥的回退源
 	fail2ban-ssh.conf             # 工单 #23 收编的 fail2ban SSH 防御配置
-	# cloudflare.conf 曾在此列：2026-10-10 安全审计判定为零引用孤儿（主脚本
-	# 从不下载、GLOSSARY「兄弟文件」从未计入），且内含原作者邮箱占位，
-	# 直接删除；改列断言 2 的 orphan_files 防复活，保留清单相应减为 5 个。
+	# cloudflare.conf 曾在此列，2026-10-10 安全审计删除（零引用孤儿 + 原作者
+	# 邮箱占位；三项证据与防复活安排见断言 2 的 orphan_files 同名条目）。
 )
 for f in "${kept_files[@]}"; do
 	[ -e "${project_root}/${f}" ] ||

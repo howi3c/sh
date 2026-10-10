@@ -237,7 +237,7 @@ PASS 13/13  守门 · 删除守卫（工单 #15：已删功能词汇=0 / 根孤�
 |---|---|---|
 | 1 | 已删功能词汇为零 | 18 个固定串 + 2 个忽略大小写串（`openclaw`、`moltbot`），只算非注释行，命中任何一个就 FAIL（第三轮补入工单 #16 点名自查词 `cluster_python3`） |
 | 2 | 仓库根孤儿文件不存在 | 34 个随板块退役的文件（游戏脚本、AI 面板本体、LDNMP 配置、真孤儿、内联生成的仓库副本、`CONTRIBUTING.md`、`update_log.sh` 等）一个都不许回来 |
-| 2b | 保留的兄弟文件一个不少 | 6 个保留文件（两个 TG 通知脚本、`upgrade_openssh9.8p1.sh`、`archive.key`、`fail2ban-ssh.conf`、`cloudflare.conf`）缺任何一个就 FAIL——防删过头。2026-10-10 安全审计删除零引用孤儿 `cloudflare.conf`（判定：主脚本从不下载、GLOSSARY「兄弟文件」从未计入、内含原作者邮箱占位；防复活改由断言 2 的 orphan_files 守）后减为 5 个 |
+| 2b | 保留的兄弟文件一个不少 | 原 6 个保留文件（两个 TG 通知脚本、`upgrade_openssh9.8p1.sh`、`archive.key`、`fail2ban-ssh.conf`、`cloudflare.conf`）；2026-10-10 安全审计删除零引用孤儿 `cloudflare.conf`（判定：主脚本从不下载、GLOSSARY「兄弟文件」从未计入、内含原作者邮箱占位；防复活改由断言 2 的 `orphan_files` 守）后为 **5 个**，缺任何一个就 FAIL——防删过头 |
 | 2c | （已退役）规格点名保留的零调用方函数仍在 + README 记着账 | 第三轮审查修复按规格判定规则（以 grep 结果为准）删除了这三个函数，本断言随之退役，退役理由写在尺子文件里；README 第 8 条改为"已删 + `kpanel_app_with_lock` 两个空 resource 分支的说明" |
 | 3 | URL 判据（调用而非重抄） | 直接调 `tests/test_network_inventory.sh --assert-clean`；顺带守 `--output centos-ssh.conf` 这个部署文件名没被改动 |
 | 4 | 与 README 守门交叉确认 | 直接调两个 README 守门 + 一条轻量重合点（README 指向本仓库 raw 基址） |
