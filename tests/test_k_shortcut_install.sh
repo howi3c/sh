@@ -26,7 +26,7 @@
 #      脚本（或从仓库新取的本体）为准，防止 CWD 里的旧文件/原版文件借尸还魂。
 #
 # 手法（沿用 tests/ 下冒烟测试的「截取 + 沙箱」做法，绝不碰真实系统）：
-#   · 从 kejilion.sh 截出安装链那一截（canshu_v6 定义起、ip_address 之前止），
+#   · 从 kejilion.sh 截出安装链那一截（kj_k_shortcut_failed 定义起、ip_address 之前止），
 #     断言起止锚点存在且唯一——锚点漂移说明脚本结构变了，此时宁肯失败也不瞎猜；
 #   · 在沙箱里以两种方式驱动截出来的块：bash <(cat …)（$0 是 /dev/fd/N，模拟管道
 #     安装）与 bash 本地文件（$0 是磁盘文件，模拟下载后运行）；
@@ -50,21 +50,21 @@ test_root="$(mktemp -d "${TMPDIR:-/tmp}/k-shortcut-install.XXXXXX")"
 trap 'rm -rf -- "${test_root}"' EXIT
 
 # ---------------------------------------------------------------------------
-# 截取安装链：从 canshu_v6() 定义到 ip_address() 之前（两者都必须在位且唯一）
+# 截取安装链：从 kj_k_shortcut_failed() 定义到 ip_address() 之前（两者都必须在位且唯一）
 # ---------------------------------------------------------------------------
-anchor_start_count="$(grep -c '^canshu_v6() {$' "${script_path}" || true)"
+anchor_start_count="$(grep -c '^kj_k_shortcut_failed() {$' "${script_path}" || true)"
 [ "${anchor_start_count}" -eq 1 ] ||
-	fail "${script_path} 里安装链起点锚点 canshu_v6() { 不唯一或不存在（共 ${anchor_start_count} 处），脚本结构已变，需同步维护本测试"
+	fail "${script_path} 里安装链起点锚点 kj_k_shortcut_failed() { 不唯一或不存在（共 ${anchor_start_count} 处），脚本结构已变，需同步维护本测试"
 grep -q '^ip_address() {$' "${script_path}" ||
 	fail "${script_path} 里安装链终点锚点 ip_address() { 不存在，脚本结构已变，需同步维护本测试"
 
 awk '
-	/^canshu_v6\(\) \{$/ { capture = 1 }
+	/^kj_k_shortcut_failed\(\) \{$/ { capture = 1 }
 	capture && /^ip_address\(\) \{$/ { exit }
 	capture { print }
 ' "${script_path}" >"${test_root}/block.sh"
 
-[ -s "${test_root}/block.sh" ] || fail "未能从 ${script_path} 截取安装链（canshu_v6 → ip_address 之间为空）"
+[ -s "${test_root}/block.sh" ] || fail "未能从 ${script_path} 截取安装链（kj_k_shortcut_failed → ip_address 之间为空）"
 bash -n "${test_root}/block.sh" || fail "截取出的安装链语法不合法"
 
 # ---------------------------------------------------------------------------
@@ -82,7 +82,7 @@ curl_log="${test_root}/curl.log"
 
 # 取内容桩"下载"下来的脚本本体：与真脚本同首行，带唯一标记
 fetch_fixture="${test_root}/fetched.sh"
-printf '%s\n' '#!/bin/bash' 'sh_v="4.5.10"' '# FETCHED-FIXTURE-MARKER' 'canshu="default"' >"${fetch_fixture}"
+printf '%s\n' '#!/bin/bash' 'sh_v="4.5.10"' '# FETCHED-FIXTURE-MARKER' >"${fetch_fixture}"
 
 # 管道方式驱动的 driver：stub 掉 curl 与协议门，再 source 安装链
 # （桩与本地方式共用一份，避免两个 driver 逐行重复）
@@ -140,7 +140,7 @@ reset_sandbox() {
 work_clean="${test_root}/work_clean"       # 空目录：模拟用户在家目录直接粘命令
 work_stale="${test_root}/work_stale"       # 躺着别的 kejilion.sh：模拟 CWD 有旧文件
 mkdir -p "${work_clean}" "${work_stale}"
-printf '%s\n' '#!/bin/bash' '# STALE-CWD-FILE-MARKER' 'canshu="default"' >"${work_stale}/kejilion.sh"
+printf '%s\n' '#!/bin/bash' '# STALE-CWD-FILE-MARKER' >"${work_stale}/kejilion.sh"
 
 # 统一的驱动入口：run_chain <pipe|local> <运行目录> [curl 模式 ok|fail]
 #   pipe  → bash <(cat driver)：$0 是 /dev/fd/N，模拟 bash <(curl …) 管道安装
@@ -265,41 +265,5 @@ fi
 [ -e "${home_script}" ] && fail "场景四：取内容失败却落盘了 ~/kejilion.sh"
 printf '%s\n' "${chain_output}" | strip_ansi | grep -Fq '没装上' ||
 	fail "场景四：取内容失败时没有明确告诉用户 k 没装上（静默失败正是当年这个坑看不见的原因）"
-
-# 场景四·补：旧 k 带着 V6 偏好、取内容又失败——canshu_v6 的 sed 会指向还不存在的
-#   ~/kejilion.sh，原始 sed 报错不许漏到屏幕（友好提示之外一片干净）
-reset_sandbox
-printf '%s\n' '#!/bin/bash' '# OLD-K-WITH-V6' 'canshu="V6"' >"${k_bin}"
-chmod +x "${k_bin}"
-ln -s "${k_bin}" "${k_link}"
-run_chain pipe "${work_clean}" fail
-if printf '%s\n' "${chain_output}" | strip_ansi | grep -Fq 'sed:'; then
-	printf '%s\n' "${chain_output}" >&2
-	fail "场景四补：V6 迁移的 sed 报错漏到了屏幕（目标文件不存在时报错应被吞掉，只留友好提示）"
-fi
-printf '%s\n' "${chain_output}" | strip_ansi | grep -Fq '没装上' ||
-	fail "场景四补：V6 旧 k + 取内容失败时没有给出友好提示"
-[ -L "${k_link}" ] && fail "场景四补：失败后仍留着 /usr/bin/k 软链"
-grep -Fxq 'canshu="V6"' "${k_bin}" ||
-	fail "场景四补：失败路径不该改动旧 k 的内容"
-
-# ---------------------------------------------------------------------------
-# 场景五：V6 优先偏好迁移——旧 k 里是 V6，换新本体后偏好不能丢
-#   （原版在复制之前打补丁、紧接着被覆盖，迁移白做；修复后补丁打在落盘之后）
-# ---------------------------------------------------------------------------
-reset_sandbox
-printf '%s\n' '#!/bin/bash' '# OLD-K-WITH-V6' 'canshu="V6"' >"${k_bin}"
-chmod +x "${k_bin}"
-run_chain pipe "${work_clean}"
-[ "${chain_rc}" -eq 0 ] || fail "场景五：带 V6 旧 k 时安装链异常退出"
-grep -Fxq 'canshu="V6"' "${home_script}" ||
-	fail "场景五：旧 k 的 V6 优先偏好没迁到新本体上（迁移须发生在落盘之后，否则被覆盖）"
-grep -Fxq 'canshu="V6"' "${k_bin}" ||
-	fail "场景五：装上的 k 丢了 V6 优先偏好"
-# 没有 V6 旧 k 时不得无中生有
-reset_sandbox
-run_chain pipe "${work_clean}"
-grep -Fxq 'canshu="default"' "${k_bin}" ||
-	fail "场景五补：旧 k 没有 V6 偏好时，新本体被无端改成了 V6"
 
 printf '%s\n' "k_shortcut_install=pass"

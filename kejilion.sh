@@ -12,7 +12,8 @@ gl_zi='\033[35m'
 gl_kjlan='\033[96m'
 
 
-canshu="default"
+# 拼 GitHub 展示/取用地址用的 https:// 前缀（原住在 quanju_canshu 里，随地区开关删除提为顶层常量）
+gh_https_url="https://"
 KPANEL_WEB_CERTIFICATE_PROTOCOL_VERSION="1"
 KPANEL_WEB_CERTIFICATE_REPLACE_PROTOCOL_VERSION="1"
 KPANEL_APP_CONCURRENCY_PROTOCOL_VERSION="1"
@@ -69,30 +70,6 @@ kpanel_protocol_active() {
 }
 
 
-quanju_canshu() {
-# 下载一律直连目标站点（GitHub），不再经任何作者代理中转；这里只保留地区开关 zhushi。
-if [ "$canshu" = "CN" ]; then
-	zhushi=0
-elif [ "$canshu" = "V6" ]; then
-	zhushi=1
-else
-	zhushi=1  # 0 表示执行，1 表示不执行
-fi
-
-gh_https_url="https://"
-
-}
-quanju_canshu
-
-
-
-canshu_v6() {
-	local k_file="${1:-/usr/local/bin/k}"
-	if grep -q '^canshu="V6"' "${k_file}" > /dev/null 2>&1; then
-		sed -i 's/^canshu="default"/canshu="V6"/' ~/kejilion.sh > /dev/null 2>&1
-	fi
-}
-
 # k 快捷命令的安装链：脚本本体 → ~/kejilion.sh → /usr/local/bin/k →（软链）/usr/bin/k。
 #
 # 原版只认「当前目录里的 ./kejilion.sh」当第一跳，于是 bash <(curl …) 这类管道
@@ -132,10 +109,6 @@ kj_install_k_shortcut() {
 		from_fetch=1
 		curl -fsSL --connect-timeout 15 --max-time 60 -o "${home_script}" "https://raw.githubusercontent.com/howi3c/sh/main/kejilion.sh" > /dev/null 2>&1
 	fi
-
-	# V6 优先偏好从旧的 k 迁到新本体上。必须在上面落盘之后跑：原版在复制之前跑，
-	# 刚打上的补丁紧接着就被 cp 覆盖掉，迁移白做。
-	canshu_v6 "${k_bin}"
 
 	if [ ! -f "${home_script}" ]; then
 		if [ "${from_fetch}" -eq 1 ]; then

@@ -5,7 +5,8 @@
 #   1. 全脚本里不再出现作者代理域名（gh.kejilion.pro / docker.kejilion.pro）；
 #   2. 作者的代理前缀变量不再参与任何下载拼接，GitHub 类目标一律 https:// 直连，
 #      而取内容的目标主机一个都没换（用 tests/test_network_inventory.sh 的清单做比对面）；
-#   3. 地区开关（quanju_canshu 的 zhushi 三分支）不因拔代理而退化；
+#   3. 拔代理时真正要留的 https:// 前缀常量（gh_https_url）还在；随之死掉的地区开关
+#      （canshu / quanju_canshu / zhushi 三分支）保持删除，不许复活；
 #   4. Docker 镜像加速列表里作者的代理镜像被删掉，其余镜像一条不少；
 #   5. KPanel 轻节点更新器不再回退到作者代理；
 #   6. 更新流程里的硬编码代理同样改成直连。
@@ -50,18 +51,20 @@ bad_downloads="$(grep -nE 'https://gh\.kejilion\.pro|gh\.kejilion\.pro/https' "$
 [ -z "${bad_downloads}" ] || fail "仍有经作者代理的下载目标: ${bad_downloads}"
 
 # ---------------------------------------------------------------------------
-# 3) 地区开关不退化：quanju_canshu 的三分支与 https 前缀变量都还在
+# 3) 前缀常量必须留；地区开关必须凉
+#    拔代理（工单 #5）当时担心"地区开关被连带删坏"，守的是三分支俱在。后来查明这个
+#    开关在净化版里本来就是死的：canshu 没有任何一处写入（永远 default），zhushi 没有
+#    任何一处读取（读它的旧门闸 run_command 早已不在），gh_proxy 分支也随直连消失。
+#    2026-10-10「k 快捷命令」增量按"删除优于兼容"整块删除 canshu / quanju_canshu /
+#    canshu_v6 / zhushi，只把里面唯一还有用的 gh_https_url 提为顶层常量。
+#    本节的尺子随之反转：前缀必须在；死开关不许复活（注释里提历史名字不算复活，
+#    与 test_network_inventory.sh 对报信词的口径一致）。
 # ---------------------------------------------------------------------------
-canshu_body="$(awk '
-	/^quanju_canshu\(\) \{/ { capture = 1 }
-	capture { print }
-	capture && /^\}/ { exit }
-' "$work")"
-[ -n "${canshu_body}" ] || fail "quanju_canshu() 不见了"
-grep -Fq 'if [ "$canshu" = "CN" ]; then' <<<"${canshu_body}" || fail "quanju_canshu 丢了 CN 分支"
-grep -Fq 'elif [ "$canshu" = "V6" ]; then' <<<"${canshu_body}" || fail "quanju_canshu 丢了 V6 分支"
-grep -Fq 'gh_https_url="https://"' <<<"${canshu_body}" || fail "quanju_canshu 丢了 gh_https_url"
-if grep -Eq 'zhushi=' <<<"${canshu_body}"; then :; else fail "quanju_canshu 丢了地区开关 zhushi"; fi
+grep -Fq 'gh_https_url="https://"' "$work" ||
+	fail "gh_https_url 这个 https:// 前缀常量不见了（脚本里拼 GitHub 展示/取用地址要用）"
+region_switch_hits="$(grep -nE 'canshu|zhushi|quanju_canshu' "$work" | grep -vE '^[0-9]+:[[:space:]]*#' || true)"
+[ -z "${region_switch_hits}" ] ||
+	fail "地区开关 canshu / quanju_canshu / zhushi 复活了（净化版里无人写、无人读，2026-10-10 已整块删除；要恢复先说服仓库主人）: ${region_switch_hits}"
 
 # ---------------------------------------------------------------------------
 # 4) Docker 镜像加速列表：作者的代理镜像已删，其余一条不少
@@ -133,9 +136,6 @@ if [ -n "${cron_task}" ]; then
 	grep -Fq 'curl -sS --max-time 60 --fail -o' <<<"${cron_task}" || fail "定时任务的下载命令变了"
 	grep -Fq 'https://raw.githubusercontent.com/kejilion/sh/main/kejilion.sh' <<<"${cron_task}" \
 		|| fail "自动更新定时任务未直连 raw.githubusercontent.com"
-	# 地区差异（canshu 切换命令）必须保留，不能因拔代理一起被删掉
-	grep -Fq 'canshu=\"CN\"' "$work" || fail "定时任务丢了 CN 地区切换命令"
-	grep -Fq 'canshu=\"V6\"' "$work" || fail "定时任务丢了 V6 地区切换命令"
 else
 	printf '%s\n' "note: 自动更新定时任务已不在脚本中（作者代理随之不存在）"
 fi
