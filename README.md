@@ -42,10 +42,12 @@ in one interactive tool.
 使用 `root` 用户执行以下命令。
 
 ```bash
-bash <(curl -sL https://raw.githubusercontent.com/howi3c/sh/main/kejilion.sh)
+tmp=$(mktemp /tmp/kejilion.XXXXXX.sh) && curl -fsSL -o "$tmp" https://raw.githubusercontent.com/howi3c/sh/main/kejilion.sh && bash "$tmp"
 ```
 
 这条命令装的是**个人净化版**（脚本从本仓库的 GitHub 直链拉取）；别改成从原作者域名 `kejilion.sh` 拉，那样装回来的是没净化的原版。
+
+这里特意写成「先下载、再运行」：`curl … | bash` 这种管道喂法会让脚本里的选择菜单读不到你的输入（脚本从管道读完了，你的按键就没人听了）；`bash <(curl …)` 则是 bash 专有写法，换到 sh 下会直接报 `Syntax error: "(" unexpected`（精简系统默认 shell 常常是 sh）。下载失败时 curl 也会明确报错，不会静默地把空文件交给 bash。下载先落在 `mktemp` 生成的随机文件名里，避免往 `/tmp` 的固定路径写文件——那类路径可能被人预置成指向别处的符号链接。系统里没有 `curl` 就先装上它。
 
 首次运行时会自动装好 `k` 快捷命令（屏幕有提示），之后直接输入 `k` 就能打开主菜单。
 

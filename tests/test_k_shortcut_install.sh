@@ -4,8 +4,9 @@
 # 背景（为什么要有本测试）：
 #   脚本把 k 命令装上去的链条原本只有一跳来源——
 #       cp -f ./kejilion.sh ~/kejilion.sh
-#   ——「当前目录里的 kejilion.sh」。而 README 教的一键安装是
-#       bash <(curl -sL https://raw.githubusercontent.com/howi3c/sh/main/kejilion.sh)
+#   ——「当前目录里的 kejilion.sh」。README 的一键安装现为「先下载再运行」（本体
+#   在磁盘上）；但管道跑法——bash <(curl …)（$0 是 /dev/fd/N）与 curl | bash
+#   （$0 不是文件）——仍是常见入口，脚本本体同样从不在磁盘上，第一跳照样断。
 #   脚本从管道流过，硬盘上从来没有 kejilion.sh 这个文件，第一跳就断；且每一跳的
 #   报错都被 >/dev/null 2>&1 吞掉，/usr/local/bin/k 静默地不存在，用户输入 k 只得到
 #   command not found（或一个指向空气的 /usr/bin/k 软链报错）。
