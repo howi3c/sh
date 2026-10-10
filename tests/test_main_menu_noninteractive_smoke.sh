@@ -22,8 +22,8 @@ set -euo pipefail
 # 菜单编号→目标的映射表是“当前版本”的快照：后续工单若有意增删菜单项，
 # 同步更新 dispatch_cases，尺子会明确指出是哪一项对不上。
 #
-# 工单 #15/#16「净化版瘦身」：建站(10)、应用市场(11)、游戏开服(16) 三块整块退役，
-# 编号按“菜单空号策略”留空不重排，终局渲染集合为 1–9、12、13、14、0。
+# 工单 #15/#16「净化版瘦身」与工单 #25：甲骨文云整块退役，主菜单打破空号策略，
+# 紧凑顺排为 1–11、0。旧编号 12–16 统一退役不再渲染。
 
 project_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 script_path="${KEJILION_SCRIPT_PATH:-${project_root}/kejilion.sh}"
@@ -132,8 +132,8 @@ for option in 1 2 3 4 5 6 7 8 9 10 11 0; do
 		fail "主菜单未渲染编号 ${option} 的菜单项（渲染与分发缝被破坏）"
 done
 # 工单 #25：甲骨文云整块退役；主菜单告别空号策略，紧凑顺排为 1-11。
-# 反向断言旧编号 12、13、14、16 及甲骨文云不再被渲染（原 10/11 现已复用为系统工具与集群控制）。
-for retired in 12 13 14 16; do
+# 反向断言旧编号 12、13、14、15、16 及甲骨文云不再被渲染（原 10/11 现已复用为系统工具与集群控制）。
+for retired in 12 13 14 15 16; do
 	if printf '%s\n' "${render_plain}" | grep -Eq "^${retired}\.[[:space:]]+[^[:space:]]"; then
 		fail "主菜单仍渲染已退役的编号 ${retired}（工单 #25：主菜单紧凑顺排为 1-11，超出 11 的旧编号不得渲染）"
 	fi
@@ -227,8 +227,8 @@ render_count="$(printf '%s\n' "${exit_output}" | strip_ansi | grep -Fc '科技li
 [ "${render_count}" -eq 1 ] ||
 	fail "主菜单退出项 0 未直接退出（标题渲染 ${render_count} 次，应为 1）"
 
-# '00' 曾是"脚本更新"入口（工单 #7 整体删除更新功能）；旧编号 12/13/14 现已退役。
-for invalid_input in 'not-a-number' '' '00' '12' '13' '14'; do
+# '00' 曾是"脚本更新"入口（工单 #7 整体删除更新功能）；旧编号 12-16 现已退役。
+for invalid_input in 'not-a-number' '' '00' '12' '13' '14' '15' '16'; do
 	: >"${dispatch_log}"
 	if ! invalid_output="$(drive_menu "${invalid_input}")"; then
 		printf '%s\n' "${invalid_output}" >&2
