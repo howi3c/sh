@@ -67,6 +67,11 @@ absent_literals=(
 	'frpc'                          # 增强功能模块 frpc_panel/configure_frpc（删除前 57 行）
 	# —— 集群菜单「安装原作者脚本」项（工单 #22 删函数体）——
 	'cluster_python3'               # 工单 #16 验收第 2 条点名的自查词；函数体 6 行，删除前唯一调用点是集群菜单 11 号项渲染行（4c5e44e 上 29516 定义 + 29618 调用共 2 行）
+	# —— 甲骨文云脚本合集（工单 #25 删整块并紧凑顺排主菜单至 1-11）——
+	'甲骨文云脚本合集'              # 菜单渲染文案与函数内标题
+	'linux_Oracle'                  # 函数名与旧 9) 分发行
+	'fogforest/lookbusy'            # 闲置保活镜像
+	'oci-helper'                    # R探长开机脚本
 )
 # 大小写不敏感串——OpenClaw 板块三种写法都出现过，用 -i 一次覆盖
 absent_ci_literals=(

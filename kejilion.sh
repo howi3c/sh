@@ -7359,149 +7359,6 @@ linux_test() {
 }
 
 
-linux_Oracle() {
-
-
-	 while true; do
-	  clear
-	  echo -e "甲骨文云脚本合集"
-	  echo -e "${gl_kjlan}------------------------"
-	  echo -e "${gl_kjlan}1.   ${gl_bai}安装闲置机器活跃脚本"
-	  echo -e "${gl_kjlan}2.   ${gl_bai}卸载闲置机器活跃脚本"
-	  echo -e "${gl_kjlan}------------------------"
-	  echo -e "${gl_kjlan}3.   ${gl_bai}DD重装系统脚本"
-	  echo -e "${gl_kjlan}4.   ${gl_bai}R探长开机脚本"
-	  echo -e "${gl_kjlan}5.   ${gl_bai}开启ROOT密码登录模式"
-	  echo -e "${gl_kjlan}6.   ${gl_bai}IPV6恢复工具"
-	  echo -e "${gl_kjlan}------------------------"
-	  echo -e "${gl_kjlan}0.   ${gl_bai}返回主菜单"
-	  echo -e "${gl_kjlan}------------------------${gl_bai}"
-	  read -e -p "请输入你的选择: " sub_choice
-
-	  case $sub_choice in
-		  1)
-			  clear
-			  echo "活跃脚本: CPU占用10-20% 内存占用20% "
-			  read -e -p "确定安装吗？(Y/N): " choice
-			  case "$choice" in
-				[Yy])
-
-				  install_docker
-
-				  # 设置默认值
-				  local DEFAULT_CPU_CORE=1
-				  local DEFAULT_CPU_UTIL="10-20"
-				  local DEFAULT_MEM_UTIL=20
-				  local DEFAULT_SPEEDTEST_INTERVAL=120
-
-				  # 提示用户输入CPU核心数和占用百分比，如果回车则使用默认值
-				  read -e -p "请输入CPU核心数 [默认: $DEFAULT_CPU_CORE]: " cpu_core
-				  local cpu_core=${cpu_core:-$DEFAULT_CPU_CORE}
-
-				  read -e -p "请输入CPU占用百分比范围（例如10-20） [默认: $DEFAULT_CPU_UTIL]: " cpu_util
-				  local cpu_util=${cpu_util:-$DEFAULT_CPU_UTIL}
-
-				  read -e -p "请输入内存占用百分比 [默认: $DEFAULT_MEM_UTIL]: " mem_util
-				  local mem_util=${mem_util:-$DEFAULT_MEM_UTIL}
-
-				  read -e -p "请输入Speedtest间隔时间（秒） [默认: $DEFAULT_SPEEDTEST_INTERVAL]: " speedtest_interval
-				  local speedtest_interval=${speedtest_interval:-$DEFAULT_SPEEDTEST_INTERVAL}
-
-				  # 运行Docker容器
-				  docker run -d --name=lookbusy --restart=always \
-					  -e TZ=Asia/Shanghai \
-					  -e CPU_UTIL="$cpu_util" \
-					  -e CPU_CORE="$cpu_core" \
-					  -e MEM_UTIL="$mem_util" \
-					  -e SPEEDTEST_INTERVAL="$speedtest_interval" \
-					  fogforest/lookbusy
-
-				  ;;
-				[Nn])
-
-				  ;;
-				*)
-				  echo "无效的选择，请输入 Y 或 N。"
-				  ;;
-			  esac
-			  ;;
-		  2)
-			  clear
-			  docker rm -f lookbusy
-			  docker rmi fogforest/lookbusy
-			  ;;
-
-		  3)
-		  clear
-		  echo "重装系统"
-		  echo "--------------------------------"
-		  echo -e "${gl_hong}注意: ${gl_bai}重装有风险失联，不放心者慎用。重装预计花费15分钟，请提前备份数据。"
-		  read -e -p "确定继续吗？(Y/N): " choice
-
-		  case "$choice" in
-			[Yy])
-			  while true; do
-				read -e -p "请选择要重装的系统:  1. Debian12 | 2. Ubuntu20.04 : " sys_choice
-
-				case "$sys_choice" in
-				  1)
-					local xitong="-d 12"
-					break  # 结束循环
-					;;
-				  2)
-					local xitong="-u 20.04"
-					break  # 结束循环
-					;;
-				  *)
-					echo "无效的选择，请重新输入。"
-					;;
-				esac
-			  done
-
-			  read -e -p "请输入你重装后的密码: " vpspasswd
-			  install wget
-			  bash <(wget --no-check-certificate -qO- "https://raw.githubusercontent.com/MoeClub/Note/master/InstallNET.sh") $xitong -v 64 -p $vpspasswd -port 22
-			  ;;
-			[Nn])
-			  echo "已取消"
-			  ;;
-			*)
-			  echo "无效的选择，请输入 Y 或 N。"
-			  ;;
-		  esac
-			  ;;
-
-		  4)
-			  clear
-			  bash <(wget -qO- https://github.com/Yohann0617/oci-helper/releases/latest/download/sh_oci-helper_install.sh)
-			  ;;
-		  5)
-			  clear
-			  add_sshpasswd
-			  ;;
-		  6)
-			  clear
-			  bash <(curl -L -s jhb.ovh/jb/v6.sh)
-			  echo "该功能由jhb大神提供，感谢他！"
-			  ;;
-		  0)
-			  kejilion
-
-			  ;;
-		  *)
-			  echo "无效的输入!"
-			  ;;
-	  esac
-	  break_end
-
-	done
-
-
-
-}
-
-
-
 
 
 docker_tato() {
@@ -13840,10 +13697,9 @@ echo -e "${gl_kjlan}5.   ${gl_bai}BBR管理"
 echo -e "${gl_kjlan}6.   ${gl_bai}Docker管理"
 echo -e "${gl_kjlan}7.   ${gl_bai}WARP管理"
 echo -e "${gl_kjlan}8.   ${gl_bai}测试脚本合集"
-echo -e "${gl_kjlan}9.   ${gl_bai}甲骨文云脚本合集"
-echo -e "${gl_kjlan}12.  ${gl_bai}后台工作区"
-echo -e "${gl_kjlan}13.  ${gl_bai}系统工具"
-echo -e "${gl_kjlan}14.  ${gl_bai}服务器集群控制"
+echo -e "${gl_kjlan}9.   ${gl_bai}后台工作区"
+echo -e "${gl_kjlan}10.  ${gl_bai}系统工具"
+echo -e "${gl_kjlan}11.  ${gl_bai}服务器集群控制"
 echo -e "${gl_kjlan}------------------------${gl_bai}"
 echo -e "${gl_kjlan}0.   ${gl_bai}退出脚本"
 echo -e "${gl_kjlan}------------------------${gl_bai}"
@@ -13860,10 +13716,9 @@ case $choice in
 	wget -N https://gitlab.com/fscarmen/warp/-/raw/main/menu.sh ; bash menu.sh [option] [lisence/url/token]
 	;;
   8) linux_test ;;
-  9) linux_Oracle ;;
-  12) linux_work ;;
-  13) linux_Settings ;;
-  14) linux_cluster ;;
+  9) linux_work ;;
+  10) linux_Settings ;;
+  11) linux_cluster ;;
   0) clear ; exit ;;
   *) echo "无效的输入!" ;;
 esac

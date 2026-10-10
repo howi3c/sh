@@ -90,7 +90,6 @@ linux_tools() { record "dispatch linux_tools${*:+ $*}"; }
 linux_bbr() { record "dispatch linux_bbr${*:+ $*}"; }
 linux_docker() { record "dispatch linux_docker${*:+ $*}"; }
 linux_test() { record "dispatch linux_test${*:+ $*}"; }
-linux_Oracle() { record "dispatch linux_Oracle${*:+ $*}"; }
 linux_work() { record "dispatch linux_work${*:+ $*}"; }
 linux_Settings() { record "dispatch linux_Settings${*:+ $*}"; }
 linux_cluster() { record "dispatch linux_cluster${*:+ $*}"; }
@@ -128,17 +127,20 @@ if printf '%s\n' "${render_plain}" | awk '/^-{3,}$/{if(prev)exit 1; prev=1; next
 else
 	fail "主菜单出现两条连续的 '-----' 分隔线（本工单附带小修：应收敛为一条）"
 fi
-for option in 1 2 3 4 5 6 7 8 9 12 13 14 0; do
+for option in 1 2 3 4 5 6 7 8 9 10 11 0; do
 	printf '%s\n' "${render_plain}" | grep -Eq "^${option}\.[[:space:]]+[^[:space:]]" ||
 		fail "主菜单未渲染编号 ${option} 的菜单项（渲染与分发缝被破坏）"
 done
-# 工单 #15/#16：建站(10)、应用市场(11)、游戏开服(16) 整块退役，编号按“菜单空号策略”
-# 留空不重排。这里反向断言这三个编号**不再被渲染**——只删上面的正向循环不足以拦住复辟。
-for retired in 10 11 16; do
+# 工单 #25：甲骨文云整块退役；主菜单告别空号策略，紧凑顺排为 1-11。
+# 反向断言旧编号 12、13、14、16 及甲骨文云不再被渲染（原 10/11 现已复用为系统工具与集群控制）。
+for retired in 12 13 14 16; do
 	if printf '%s\n' "${render_plain}" | grep -Eq "^${retired}\.[[:space:]]+[^[:space:]]"; then
-		fail "主菜单仍渲染已退役的编号 ${retired}（工单 #15/#16：建站/应用市场/游戏开服已删除，编号留空不重排）"
+		fail "主菜单仍渲染已退役的编号 ${retired}（工单 #25：主菜单紧凑顺排为 1-11，超出 11 的旧编号不得渲染）"
 	fi
 done
+if printf '%s\n' "${render_plain}" | grep -Fq '甲骨文云脚本合集'; then
+	fail "主菜单仍渲染甲骨文云脚本合集（工单 #25 应整块删除）"
+fi
 [ ! -s "${dispatch_log}" ] || {
 	cat "${dispatch_log}" >&2
 	fail "仅看菜单（输入 0）就触发了分发或副作用记录"
@@ -153,15 +155,19 @@ if grep -Fq 'kejilion_Affiliates' "${script_path}"; then
 	fail "kejilion.sh 仍定义或引用 kejilion_Affiliates（工单 #8 应整块删除广告专栏）"
 fi
 
-# ---- 断言一·补二：已退役三块的主菜单分发行一条不许回来（工单 #15/#16）----
-# 只删掉上面的正向断言拦不住复辟，这里用精确字符串把三条分发行钉死。
+# ---- 断言一·补二：已退役板块的主菜单分发行一条不许回来（工单 #15/#16/#25）----
+# 只删掉上面的正向断言拦不住复辟，这里用精确字符串把已退役的分发行钉死。
 for gone in \
+	'9) linux_Oracle' \
 	'10) linux_ldnmp' \
 	'11) linux_panel' \
+	'12) linux_work' \
+	'13) linux_Settings' \
+	'14) linux_cluster' \
 	'16) games_server_tools'
 do
 	if grep -Fq "${gone}" "${script_path}"; then
-		fail "主菜单仍残留已退役板块的分发行[${gone}]（工单 #15/#16：建站/应用市场/游戏开服）"
+		fail "主菜单仍残留已退役板块的分发行[${gone}]"
 	fi
 done
 
@@ -177,10 +183,9 @@ dispatch_cases=(
 	'6|dispatch linux_docker|dispatch |send_stats '
 	'7|install wget|dispatch |send_stats |install |wget '
 	'8|dispatch linux_test|dispatch |send_stats '
-	'9|dispatch linux_Oracle|dispatch |send_stats '
-	'12|dispatch linux_work|dispatch |send_stats '
-	'13|dispatch linux_Settings|dispatch |send_stats '
-	'14|dispatch linux_cluster|dispatch |send_stats '
+	'9|dispatch linux_work|dispatch |send_stats '
+	'10|dispatch linux_Settings|dispatch |send_stats '
+	'11|dispatch linux_cluster|dispatch |send_stats '
 )
 for dispatch_case in "${dispatch_cases[@]}"; do
 	choice="${dispatch_case%%|*}"
@@ -222,8 +227,8 @@ render_count="$(printf '%s\n' "${exit_output}" | strip_ansi | grep -Fc '科技li
 [ "${render_count}" -eq 1 ] ||
 	fail "主菜单退出项 0 未直接退出（标题渲染 ${render_count} 次，应为 1）"
 
-# '00' 曾是"脚本更新"入口（工单 #7 整体删除更新功能），现在必须落到无效输入分支。
-for invalid_input in 'not-a-number' '' '00'; do
+# '00' 曾是"脚本更新"入口（工单 #7 整体删除更新功能）；旧编号 12/13/14 现已退役。
+for invalid_input in 'not-a-number' '' '00' '12' '13' '14'; do
 	: >"${dispatch_log}"
 	if ! invalid_output="$(drive_menu "${invalid_input}")"; then
 		printf '%s\n' "${invalid_output}" >&2

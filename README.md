@@ -91,7 +91,6 @@ bash <(curl -sL https://raw.githubusercontent.com/howi3c/sh/main/kejilion.sh)
 - **WARP 管理**：管理 Cloudflare WARP 客户端，为出站流量加一层通道。
 - **测试脚本合集**：集成测速、回程、延迟、丢包、IP 质量体检等工具。<br>
   *Network tools: speed tests, route tracing, latency, and packet loss tests.*
-- **甲骨文云脚本合集**：甲骨文云实例相关的闲置保活、DD 重装、密码登录等运维脚本。
 - **后台工作区**：以 tmux 会话承载常驻任务，SSH 掉线后任务继续运行。
 - **系统工具**：SSH 端口、DNS、防火墙、fail2ban 防御、硬盘管理、账号管理与定时任务等本机运维项。
 - **服务器集群控制**：多台机器的集中管理与批量操作。
