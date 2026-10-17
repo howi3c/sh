@@ -1,6 +1,6 @@
 > 这是 kejilion 脚本的个人净化版，不是科技Lion原作者的官方发布。
 > 相比原版，本版删除了：偷偷把使用记录和 IP 归属地上传给原作者服务器的“报信”功能、VPS 返利广告与站点引流、自带每小时更新的闭源管理面板、会整体覆盖本地文件的“检查更新”功能；下载改为直连原始站点。
-> Debian/Ubuntu 重装另有可信材料校验、连接预检与失败撤销路径，支持范围及未实测限制见[安全重装说明](docs/reinstall.md)。其余功能保持既有行为，署名与授权以仓库许可文件为准。
+> Debian/Ubuntu 重装另有可信材料校验、连接预检与失败撤销路径，支持范围及未实测限制见[安全重装说明](docs/reinstall.md)。除上述删减及这条重装路径外，其余功能与原版一致，署名与授权以仓库许可文件为准。
 
 <p align="center">
   <img src="https://kejilion.sh/kejilionsh_logo.webp?v=2" alt="KEJILION.SH 科技lion一键脚本工具" width="620">
