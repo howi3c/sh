@@ -151,6 +151,8 @@ dd_xitong
                 self.assertLess(names.index('update-grub'), names.index('grub-reboot'))
                 self.assertLess(names.index('grub-reboot'), names.index('reboot'))
                 self.assertIn('set default=0', data['cfg'])
+                menu_entries = [line for line in data['cfg'].splitlines() if line.startswith('menuentry ')]
+                self.assertIn("--id 'normal'", menu_entries[0], 'installer replaced the persistent default boot entry')
                 self.assertIn('saved_entry=normal', data['env'])
                 self.assertIn('next_entry=kejilion-install-', data['env'])
                 self.assertEqual(data['workspace_modes'], [0o700])
@@ -304,6 +306,10 @@ dd_xitong
         self.assertIn('preseed/file=/preseed.cfg', data['cfg'])
         self.assertIn('ip=192.0.2.10::192.0.2.1:255.255.255.0:', data['cfg'])
         self.assertIn('ipv6.disable=1', data['cfg'])
+        # Native Trixie initramfs has bin -> usr/bin and its shell lives only
+        # under usr/bin. A newc directory named bin would destroy /bin/sh.
+        self.assertNotIn('bin', files, 'overlay replaces the native merged-/usr bin symlink')
+        self.assertNotIn('bin/wget', files)
         self.assertIn('usr/bin/wget.real', files)
         self.assertEqual(files['usr/bin/wget.real']['mode'], 0o755)
         self.assertIn('reinstall-runtime/native-archive.gpg', files)

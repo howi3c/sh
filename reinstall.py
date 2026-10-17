@@ -46,7 +46,9 @@ class HostError(RuntimeError):
 class Host:
     BOOT = Path('/boot')
     WORK_PREFIX = 'kejilion-reinstall.'
-    ENTRY = Path('/etc/grub.d/09_kejilion_reinstall')
+    # Append after the normal Linux/custom entries: GRUB_DEFAULT=0 must keep
+    # selecting the original OS once next_entry has been consumed.
+    ENTRY = Path('/etc/grub.d/99_kejilion_reinstall')
     TRUSTED_BIN_DIRS = ('/usr/sbin', '/usr/bin', '/sbin', '/bin')
 
     def _binary(self, name):
@@ -61,7 +63,10 @@ class Host:
                 continue
             if (stat.S_ISREG(info.st_mode) and info.st_uid == 0
                     and not info.st_mode & 0o022 and os.access(resolved, os.X_OK)):
-                return str(resolved)
+                # Validate the resolved binary, but preserve the invoked name.
+                # Multicall executables (notably reboot -> systemctl) dispatch
+                # by argv[0]; replacing it with the target silently changes work.
+                return str(path)
         raise HostError('Required trusted system executable missing: ' + name)
 
     def run(self, argv, *, timeout=30):
@@ -239,10 +244,11 @@ class Host:
             if not active.is_dir() or stat.S_IMODE(active.stat().st_mode) != 0o700:
                 raise HostError('Current workspace permissions changed')
             stale.remove(active)
-        if os.path.lexists(self.ENTRY) or stale:
+        legacy_entry = self.ENTRY.with_name('09_kejilion_reinstall')
+        if os.path.lexists(self.ENTRY) or os.path.lexists(legacy_entry) or stale:
             raise HostError(
                 'Stale reinstall state exists. Do NOT reboot. Inspect '
-                '/etc/grub.d/09_kejilion_reinstall and /boot/kejilion-reinstall.* '
+                '/etc/grub.d/{09,99}_kejilion_reinstall and /boot/kejilion-reinstall.* '
                 'from the console; restore the private grub.cfg/grubenv backups '
                 'if a previous transaction created them, then remove ONLY that '
                 'transaction\'s entry/work directory. Do not delete unknown state automatically.')
@@ -1510,9 +1516,8 @@ trap - EXIT
 """
 
 
-def _reinstall_ubuntu_autoinstall(plan, key, password_hash):
+def _reinstall_ubuntu_autoinstall(plan, key, password_hash, password):
     n, t = plan['network'], plan['target']
-    password = password_hash is not None
     crypted = _reinstall_password_hash(password_hash)
     ethernet = {'match': {'macaddress': n['mac']}, 'set-name': 'eth0',
                 'dhcp4': n['mode'] == 'dhcp', 'dhcp6': False, 'accept-ra': False,
@@ -1537,7 +1542,7 @@ def _reinstall_ubuntu_autoinstall(plan, key, password_hash):
               'interactive-sections': [], 'snaps': [], 'drivers': {'install': False}, 'oem': {'install': False},
               'network': {'version': 2, 'ethernets': {'reinstall': ethernet}},
               'apt': {'preserve_sources_list': False, 'geoip': False,
-                      'conf': 'Acquire::https::Verify-Peer \"true\"; Acquire::https::Verify-Host \"true\"; Acquire::https::AllowRedirect \"false\"; Acquire::http::AllowRedirect \"false\"; APT::Get::AllowUnauthenticated \"false\"; Acquire::AllowInsecureRepositories \"false\";',
+                      'conf': _APT,
                       'primary': [{'arches': ['amd64'], 'uri': 'https://archive.ubuntu.com/ubuntu'}],
                       'security': [{'arches': ['amd64'], 'uri': 'https://security.ubuntu.com/ubuntu'}],
                       'sources_list': sources},
@@ -1575,7 +1580,7 @@ def _reinstall_ubuntu_autoinstall(plan, key, password_hash):
     return json.dumps(config, ensure_ascii=True, indent=2) + '\n'
 
 
-def _reinstall_render_text_configs(plan, key, password_hash=None):
+def _reinstall_render_text_configs(plan, key, password_hash, password):
     """Return private initrd files; callers must never log the returned mapping."""
     if not isinstance(plan, dict) or plan.get('schema') != 1:
         _reinstall_error('计划不是validate_inventory生成的受支持schema')
@@ -1591,10 +1596,9 @@ def _reinstall_render_text_configs(plan, key, password_hash=None):
         if not isinstance(key, str) or not key.strip() or len(key) > 16384 or any(ord(c) < 32 or ord(c) == 127 for c in key):
             _reinstall_error('公钥必须是外部ssh-keygen已验证的单行文本，不得包含换行/控制字符')
         key = key.strip()
-    if password_hash is None and not key:
+    if not password and not key:
         _reinstall_error('默认密钥方案没有已确认有效公钥；必须停止，不能暗中改成密码登录')
     crypted = _reinstall_password_hash(password_hash)
-    password = password_hash is not None
     p = checked
     files = {
         'reinstall/target.sh': _reinstall_target_script(p, password),
@@ -1602,12 +1606,7 @@ def _reinstall_render_text_configs(plan, key, password_hash=None):
         'reinstall/account-password': p['username'] + ':' + crypted + '\n',
         'reinstall/sudoers': p['username'] + ' ALL=(ALL:ALL) ' + ('' if password else 'NOPASSWD: ') + 'ALL\n',
         'reinstall/sshd_config': _reinstall_sshd_config(p, password),
-        'reinstall/apt-https.conf': '\n'.join([
-            'Acquire::https::Verify-Peer "true";', 'Acquire::https::Verify-Host "true";',
-            'Acquire::https::AllowRedirect "false";', 'Acquire::http::AllowRedirect "false";',
-            'APT::Get::AllowUnauthenticated "false";', 'Acquire::AllowInsecureRepositories "false";',
-            'Acquire::AllowDowngradeToInsecureRepositories "false";', '',
-        ]),
+        'reinstall/apt-https.conf': _APT,
         'reinstall/grub.cfg': 'GRUB_CMDLINE_LINUX="${GRUB_CMDLINE_LINUX:-} net.ifnames=0 biosdevname=0 ipv6.disable=1"\n',
     }
     if p['target']['distro'] == 'debian':
@@ -1626,7 +1625,7 @@ def _reinstall_render_text_configs(plan, key, password_hash=None):
             signed + 'https://security.debian.org/debian-security ' + codename + '-security main', '',
         ])
     else:
-        files['autoinstall.yaml'] = _reinstall_ubuntu_autoinstall(p, key, password_hash)
+        files['autoinstall.yaml'] = _reinstall_ubuntu_autoinstall(p, key, crypted, password)
         files['scripts/casper-bottom/99-reinstall-config'] = _reinstall_ubuntu_hook()
     return files
 
@@ -1651,14 +1650,7 @@ def render_configs(plan, target):
     if account.get('password_hash') is None:
         _reinstall_error('缺少本次生成的唯一密码哈希')
     password = account['mode'] == 'password'
-    files = _reinstall_render_text_configs(checked, key, crypted if password else None)
-    if not password:
-        files['reinstall/account-password'] = checked['username'] + ':' + crypted + '\n'
-        if target['distro'] == 'ubuntu':
-            document = json.loads(files['autoinstall.yaml'])
-            document['identity']['password'] = crypted
-            document['user-data']['users'][0]['passwd'] = crypted
-            files['autoinstall.yaml'] = json.dumps(document, indent=2) + '\n'
+    files = _reinstall_render_text_configs(checked, key, crypted, password)
     executable = {'scripts/casper-bottom/99-reinstall-config', 'usr/lib/base-installer.d/00reinstall-https'}
     return {'/' + name: (content, 0o755 if name in executable else 0o600)
             for name, content in files.items()}
@@ -1883,8 +1875,10 @@ def runtime_hooks(target, plan):
             '#!/bin/sh\nset -eu\n/reinstall-runtime/target-policy /target\n', 0o755)
         files['/reinstall-runtime/run-debootstrap-policy'] = (_DEBOOTSTRAP, 0o755)
         files['/reinstall-runtime/debian-before-partman'] = (_DEBIAN_BEFORE, 0o700)
+        # Both authenticated initrds put GNU wget in usr/bin. Never add a bin
+        # directory: Trixie uses bin -> usr/bin, and replacing that link would
+        # remove /bin/sh from the native startup chain.
         files['/usr/bin/wget'] = (_WGET, 0o755)
-        files['/bin/wget'] = (_WGET, 0o755)
         files['/etc/wgetrc'] = ('check_certificate = on\nmax_redirect = 0\nuse_proxy = off\n', 0o644)
         files['/etc/apt/apt.conf.d/99-reinstall-transport'] = (_APT, 0o644)
         # Runs after base system; never allow the stock HTTP security generator

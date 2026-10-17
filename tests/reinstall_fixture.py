@@ -72,13 +72,15 @@ def fixture_host_type(module):
             self.root = Path(root).resolve()
             self.scenario = scenario
             self.BOOT = self.root / 'boot'
-            self.ENTRY = self.root / 'etc/grub.d/09_kejilion_reinstall'
+            self.ENTRY = self.root / module.Host.ENTRY.relative_to('/')
             self.LOCKDIR = self.root / 'run/kejilion-reinstall'
             self.cfg = self.BOOT / 'grub/grub.cfg'
             self.env = self.BOOT / 'grub/grubenv'
             for path in (self.BOOT, self.ENTRY.parent, self.cfg.parent, self.LOCKDIR.parent):
                 path.mkdir(parents=True, exist_ok=True)
-            self.cfg.write_bytes(b'# original normal system default\nset default=0\n')
+            self.grub_header = '# original normal system default\nset default=0\n'
+            self.normal_entry = "menuentry 'Normal system' --id 'normal' {\n echo 'normal fixture'\n}\n"
+            self.cfg.write_text(self.grub_header + self.normal_entry)
             self.env.write_bytes(b'saved_entry=normal\n')
             self.original_cfg = self.cfg.read_bytes()
             self.original_env = self.env.read_bytes()
@@ -244,7 +246,11 @@ def fixture_host_type(module):
                 marker = "KJ_REINSTALL_ENTRY"
                 assert "exec cat <<'" + marker + "'\n" in text
                 body = text.split("exec cat <<'" + marker + "'\n", 1)[1].rsplit(marker + '\n', 1)[0]
-                self.cfg.write_text(self.original_cfg.decode() + body)
+                # grub-mkconfig runs /etc/grub.d scripts in lexical filename
+                # order. The original adapter's blind append hid a 09_* entry
+                # becoming the persistent GRUB_DEFAULT=0 boot target.
+                entries = [('10_linux', self.normal_entry), (self.ENTRY.name, body)]
+                self.cfg.write_text(self.grub_header + ''.join(item[1] for item in sorted(entries)))
                 if self.scenario == 'rollback-failure':
                     self.cfg.with_name(self.cfg.name + '.kejilion-restore').write_text('pre-existing collision')
                     raise module.HostError('Partial GRUB regeneration failed')
