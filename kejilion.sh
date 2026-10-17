@@ -3618,7 +3618,7 @@ kj_secure_reinstall() (
 	printf '%s  %s\n' 'de6f28848d3df9c4a5439b9631d32b1e0e7be4a70ad90190858867f2d669e61f' "$work/reinstall.py" | sha256sum --check --status || { echo "安全重装代码指纹不符；已停止。"; return 1; }
 	# 复用既有读取能力；模块仍会与成功的 sshd -T、当前连接及监听端口交叉验证，拒绝回退值。
 	ports=$(get_ssh_ports | paste -sd, -)
-	python3 "$work/reinstall.py" --distro "$1" --version "$2" --ssh-ports "$ports"
+	python3 -I "$work/reinstall.py" --distro "$1" --version "$2" --ssh-ports "$ports"
 )
 
 dd_xitong() {

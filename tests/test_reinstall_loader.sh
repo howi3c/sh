@@ -31,6 +31,8 @@ curl() {
 }
 python3() {
     printf '%s\n' "$*" >> "$test_work/events"
+    [ "$1" = -I ] || return 99
+    shift
     [ "$2" = --distro ] && [ "$3" = debian ] && [ "$4" = --version ] && [ "$5" = 13 ] && [ "$6" = --ssh-ports ] && [ "$7" = 2222 ]
 }
 mkdir "$test_work/current"
