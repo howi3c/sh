@@ -1,0 +1,22 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+Origin: Debian
+Label: Debian
+Suite: stable
+Version: 12.15
+Codename: bookworm
+Date: Fri, 16 Oct 2026 00:00:00 UTC
+Valid-Until: Mon, 16 Nov 2026 00:00:00 UTC
+Architectures: amd64
+SHA256:
+ 1ccf8db55424349b23118e67b2a51989a0ca957615570e664d27ec6a03cdf047 386 main/installer-amd64/20230607+deb12u15/images/SHA256SUMS
+
+-----BEGIN PGP SIGNATURE-----
+
+wr0EARYKAG8FgmrRdxAJEJaZx8mBNzdDRxQAAAAAAB4AIHNhbHRAbm90YXRpb25z
+LnNlcXVvaWEtcGdwLm9yZzzF9/hHYF7jH8x19P3C1KTNHA7a/l6hX+4xez1Ad2hX
+FiEEl4qWfe68qHrwwxCNlpnHyYE3N0MAAFUcAQCEkh6s+uDaUWa6TzxFVFWZxlTX
+DSfqleVz2UWyVF4nWwD/UOJxPBZMjbLMDQi0j1GQ0BLqvrl4Ht7aQOGK5cwOUgo=
+=gC0H
+-----END PGP SIGNATURE-----

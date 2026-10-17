@@ -1,0 +1,22 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+Origin: Debian
+Label: Debian
+Suite: stable
+Version: 13.7
+Codename: trixie
+Date: Fri, 16 Oct 2026 00:00:00 UTC
+Valid-Until: Mon, 16 Nov 2026 00:00:00 UTC
+Architectures: amd64
+SHA256:
+ 1ccf8db55424349b23118e67b2a51989a0ca957615570e664d27ec6a03cdf047 386 main/installer-amd64/20250803+deb13u7/images/SHA256SUMS
+
+-----BEGIN PGP SIGNATURE-----
+
+wr0EARYKAG8FgmrRdxAJEJaZx8mBNzdDRxQAAAAAAB4AIHNhbHRAbm90YXRpb25z
+LnNlcXVvaWEtcGdwLm9yZ5dwcl4QlXgljFLUN4wMVFiGpHw2iRveSKwICjGvNgul
+FiEEl4qWfe68qHrwwxCNlpnHyYE3N0MAAJa7AQD6qwlPT/0KUscO4H098gcvOiUU
+yNiv4dvGfrG3hc+WCwEA2n+r1dwHKK4ZuUa8p6XRyubGh9qVxw5mBAakM9DrQQs=
+=Mkiv
+-----END PGP SIGNATURE-----

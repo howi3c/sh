@@ -3600,6 +3600,27 @@ clear
 
 
 
+# 本体固定兄弟文件的版本和 SHA256，不能从同一响应获取可同步替换的校验依据。
+# 两个现有入口（系统工具菜单与 k dd / k 重装）仍统一进入 dd_xitong。
+kj_secure_reinstall() (
+	umask 077
+	local work code ports
+	for dependency in python3 curl sha256sum mktemp; do
+		command -v "$dependency" >/dev/null 2>&1 || { echo "安全重装不可用：缺少 $dependency（未改变启动配置）。"; return 1; }
+	done
+	work=$(mktemp -d /tmp/kejilion-reinstall-loader.XXXXXXXX) || return 1
+	trap 'rm -rf -- "$work"' EXIT
+	trap 'exit 1' HUP INT TERM
+	code=$(curl --disable --proto '=https' --proto-redir '=https' --fail --silent --show-error \
+		--connect-timeout 15 --max-time 60 --write-out '%{http_code}' --output "$work/reinstall.py" \
+		"https://raw.githubusercontent.com/howi3c/sh/1c5d70f73b54f150123bfb6a22222b5d6e8aebfe/reinstall.py") || { echo "安全重装取内容失败；未执行任何安装代码。"; return 1; }
+	[ "$code" = 200 ] && [ -f "$work/reinstall.py" ] && [ ! -L "$work/reinstall.py" ] || { echo "安全重装拒绝重定向或不完整材料。"; return 1; }
+	printf '%s  %s\n' 'de6f28848d3df9c4a5439b9631d32b1e0e7be4a70ad90190858867f2d669e61f' "$work/reinstall.py" | sha256sum --check --status || { echo "安全重装代码指纹不符；已停止。"; return 1; }
+	# 复用既有读取能力；模块仍会与成功的 sshd -T、当前连接及监听端口交叉验证，拒绝回退值。
+	ports=$(get_ssh_ports | paste -sd, -)
+	python3 "$work/reinstall.py" --distro "$1" --version "$2" --ssh-ports "$ports"
+)
+
 dd_xitong() {
 		dd_xitong_MollyLau() {
 			wget --no-check-certificate -qO InstallNET.sh "https://raw.githubusercontent.com/leitbogioro/Tools/master/Linux_reinstall/InstallNET.sh" && chmod a+x InstallNET.sh
@@ -3651,10 +3672,11 @@ dd_xitong() {
 			echo -e "${gl_hui}leitbogioro项目地址: ${gh_https_url}github.com/leitbogioro/Tools${gl_bai}"
 			echo "------------------------"
 			echo "1. Debian 13                  2. Debian 12"
-			echo "3. Debian 11                  4. Debian 10"
+			echo "3. Debian 11 [不可用]         4. Debian 10 [不可用]"
 			echo "------------------------"
 			echo "11. Ubuntu 26.04              12. Ubuntu 24.04"
-			echo "13. Ubuntu 22.04              14. Ubuntu 20.04"
+			echo "13. Ubuntu 22.04 LTS          14. Ubuntu 20.04 [不可用：标准维护结束]"
+			echo "Debian/Ubuntu：仅 amd64 / BIOS / 单盘 ext4 / 单网卡 IPv4；详见预检与维护状态。"
 			echo "------------------------"
 			echo "21. Rocky Linux 10            22. Rocky Linux 9"
 			echo "23. Alma Linux 10             24. Alma Linux 9"
@@ -3673,59 +3695,18 @@ dd_xitong() {
 			echo "------------------------"
 			echo "0. 返回上一级选单"
 			echo "------------------------"
-			read -e -p "请选择要重装的系统: " sys_choice
+			read -e -p "请选择要重装的系统: " sys_choice || return 0
 			case "$sys_choice" in
 
 
-			  1)
-				dd_xitong_3
-				bash reinstall.sh debian 13
-				reboot
-				exit
-				;;
-
-			  2)
-				dd_xitong_3
-				bash reinstall.sh debian 12
-				reboot
-				exit
-				;;
-			  3)
-				dd_xitong_3
-				bash reinstall.sh debian 11
-				reboot
-				exit
-				;;
-			  4)
-				dd_xitong_3
-				bash reinstall.sh debian 10
-				reboot
-				exit
-				;;
-			  11)
-				dd_xitong_3
-				bash reinstall.sh ubuntu 26.04
-				reboot
-				exit
-				;;
-			  12)
-				dd_xitong_3
-				bash reinstall.sh ubuntu 24.04
-				reboot
-				exit
-				;;
-			  13)
-				dd_xitong_3
-				bash reinstall.sh ubuntu 22.04
-				reboot
-				exit
-				;;
-			  14)
-				dd_xitong_3
-				bash reinstall.sh ubuntu 20.04
-				reboot
-				exit
-				;;
+			  1) kj_secure_reinstall debian 13 ;;
+			  2) kj_secure_reinstall debian 12 ;;
+			  3) kj_secure_reinstall debian 11 ;;
+			  4) kj_secure_reinstall debian 10 ;;
+			  11) kj_secure_reinstall ubuntu 26.04 ;;
+			  12) kj_secure_reinstall ubuntu 24.04 ;;
+			  13) kj_secure_reinstall ubuntu 22.04 ;;
+			  14) kj_secure_reinstall ubuntu 20.04 ;;
 
 			  21)
 				dd_xitong_3
