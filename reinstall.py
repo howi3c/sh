@@ -192,13 +192,17 @@ class Host:
                     or not ((device.get('fstype') == 'swap' and all(m == '[SWAP]' for m in mounts))
                             or (bios and not mounts and not device.get('fstype')))):
                 raise HostError('Only root, optional swap and optional BIOS-GRUB partition are supported')
-        if disk.get('pttype') == 'gpt' and not any(
-                str(d.get('parttype', '')).lower() == '21686148-6449-6e6f-744e-656564454649'
-                for d in devices):
-            raise HostError('BIOS/GPT requires an existing BIOS-GRUB embedding partition')
+        bios_embedding = any(
+            str(device.get('parttype', '')).lower() in (
+                '21686148-6449-6e6f-744e-656564454649', '0xef02')
+            for device in devices)
+        # No bootloader decision here: a GPT disk may legitimately lack the
+        # embedding partition (core.img kept in the GPT gap). validate_inventory
+        # refuses that layout unless the running kernel proves disk-GRUB boot.
         return {'disk': disk_path, 'root_disk': disk_path, 'disks': [disk_path],
                 'disk_bytes': int(disk['size']), 'root_partition': root_device,
-                'root_fstype': 'ext4', 'root_uuid': part['uuid'], 'simple_layout': True}
+                'root_fstype': 'ext4', 'root_uuid': part['uuid'], 'simple_layout': True,
+                'pttype': disk.get('pttype'), 'bios_embedding': bios_embedding}
 
     def _grub(self, storage):
         for directory in ('/boot', '/boot/grub', '/etc/grub.d'):
@@ -500,6 +504,7 @@ class Host:
                     'arch': 'amd64', 'firmware': 'bios', **storage, **grub,
                     'memory_bytes': int(match.group(1)) * 1024,
                     'boot_free_bytes': fs.f_bavail * fs.f_frsize,
+                    'boot_cmdline': Path('/proc/cmdline').read_text(errors='replace'),
                     'network': network, 'ssh_ports': ports}
         except HostError:
             raise
@@ -978,6 +983,8 @@ validate_inventory(data,target)->plan. Accepts Host.inventory() JSON shape:
 interfaces [{name,mac,addresses,flags,link_type,kind}], inet/inet6 address families,
 main routes with family and default local/main/default rules. Rejects ambiguous
 or unsupported IPv6/global, multi-NIC, multi-disk, special routes, UEFI/LVM/etc.
+A GPT disk without a BIOS embedding partition is accepted only when
+boot_cmdline carries an absolute BOOT_IMAGE (proof disk GRUB loaded the kernel).
 Account input comes LATER as plan['account']={username,mode,key,password_hash}.
 username is revalidated immediately before rendering; random undisclosed hashes
 for key-only mode are supported without enabling password login.
@@ -1033,6 +1040,14 @@ _REINSTALL_RESERVED_USERS = frozenset((
 
 def _reinstall_error(reason):
     raise ValueError('无法安全生成重装配置：' + reason)
+
+
+def _disk_grub_loaded_kernel(cmdline):
+    """True when the running kernel names an absolute disk path GRUB loaded it from."""
+    if not isinstance(cmdline, str):
+        return False
+    return any(token.startswith('BOOT_IMAGE=/') and len(token) > len('BOOT_IMAGE=/')
+               for token in cmdline.split())
 
 
 def _reinstall_int(value, description, minimum=0, maximum=None):
@@ -1172,6 +1187,10 @@ def validate_inventory(data, target):
     part_pattern = re.escape(disk) + (r'p[1-9][0-9]*' if 'nvme' in disk else r'[1-9][0-9]*')
     if not isinstance(partition, str) or not re.fullmatch(part_pattern, partition) or data.get('simple_layout') is not True:
         _reinstall_error('只支持单盘简单根分区；LVM、RAID、加密、独立/boot或复杂布局不能猜测处理')
+    if (data.get('pttype') == 'gpt' and data.get('bios_embedding') is not True
+            and not _disk_grub_loaded_kernel(data.get('boot_cmdline'))):
+        _reinstall_error('GPT 磁盘没有 BIOS 引导分区，且 /proc/cmdline 无绝对路径 BOOT_IMAGE，'
+                         '无法确认当前内核由磁盘 GRUB 加载；拒绝在未知引导链上安排一次性启动')
     if data.get('root_fstype') not in ('ext2', 'ext3', 'ext4', 'xfs'):
         _reinstall_error('源根文件系统只支持 ext2/3/4、XFS；不支持子卷、加密和未知文件系统')
     gib = 1024 ** 3

@@ -151,6 +151,11 @@ def fixture_host_type(module):
                 value['network']['dns'] = ['127.0.0.53']
             if scenario == 'uefi':
                 value['firmware'] = 'uefi'
+            if scenario in ('gpt-grub-boot', 'gpt-unknown-boot'):
+                value['pttype'] = 'gpt'
+                value['bios_embedding'] = False
+            if scenario == 'gpt-unknown-boot':
+                value['boot_cmdline'] = 'root=UUID=12345678-1234-1234-1234-123456789abc ro quiet'
             if scenario == 'low-memory':
                 value['memory_bytes'] = 128 * 1024**2
             if scenario == 'changed-inventory' and self.inventory_calls > 1:

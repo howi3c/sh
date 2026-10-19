@@ -199,6 +199,20 @@ dd_xitong
                 self.assert_not_armed(data)
                 self.assertEqual(data['downloads'], [])
 
+    def test_gpt_without_bios_embedding_requires_disk_grub_boot_evidence(self):
+        # 合法但非标准的源布局：BIOS 固件 + GPT + 无 bios_grub，但内核由磁盘 GRUB 加载。
+        result, data = self.menu(1, 'gpt-grub-boot')
+        self.assertIsNotNone(data)
+        self.assertEqual(data['result'], 0, result.stdout + result.stderr)
+        self.assertTrue(data['rebooted'])
+        self.assertEqual([cmd[0] for cmd in data['commands']].count('grub-reboot'), 1)
+        # 没有磁盘引导器加载证据时，在下载材料、改动引导状态之前拒绝。
+        with self.subTest(scenario='gpt-unknown-boot'):
+            result, data = self.menu(1, 'gpt-unknown-boot')
+            self.assert_not_armed(data)
+            self.assertEqual(data['downloads'], [])
+            self.assertIn('GPT', result.stdout)
+
     def test_missing_invalid_or_unconfirmed_credentials_do_not_arm_boot(self):
         for scenario in ('bad-key', 'missing-login-key', 'password-mismatch', 'short-password'):
             with self.subTest(scenario=scenario):

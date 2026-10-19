@@ -26,7 +26,7 @@
 
 - 源系统：Debian 12/13 或 Ubuntu 22.04/24.04；root 权限，正在使用的真实 SSH 会话（`SSH_CONNECTION`）。
 - 架构及引导：amd64，BIOS，已有可直接读取根分区的 GRUB i386-pc，支持 `next_entry` 一次性启动。UEFI、Secure Boot、其他引导器不支持。
-- 磁盘：恰好一块非移动磁盘，简单 ext4 根分区，`/boot` 在同一根文件系统；可有 swap 和 BIOS 嵌入分区。拒绝独立 `/boot`、LVM、RAID、加密根、其他数据分区、多盘及 2 TiB 以上磁盘。**新目标会使用 MBR + ext4 并覆盖整盘。**
+- 磁盘：恰好一块非移动磁盘，简单 ext4 根分区，`/boot` 在同一根文件系统；可有 swap，以及（GPT 时）BIOS 嵌入分区。GPT 磁盘没有嵌入分区时，只接受 `/proc/cmdline` 含绝对路径 `BOOT_IMAGE=`（运行内核确由磁盘 GRUB 加载）的源主机；无此证据则拒绝。拒绝独立 `/boot`、LVM、RAID、加密根、其他数据分区、多盘及 2 TiB 以上磁盘。**新目标会使用 MBR + ext4 并覆盖整盘。**
 - 网络：一块直接连接的 Ethernet 网卡，恰好一个 IPv4 地址、同子网网关、一个默认路由及对应直连路由，1–3 个明确的上游 IPv4 DNS。支持 DHCP 或静态 IPv4；拒绝 /31、/32、特殊主机路由、策略路由、多网卡、隧道/桥接/bond/VLAN、IPv6 管理及带全局 IPv6 的双栈配置。仅有 link-local IPv6 不算可用 IPv6 支持；安装及目标显式禁用 IPv6。
 - Debian 至少 1 GiB RAM / 8 GiB 磁盘；Ubuntu 至少 6 GiB RAM / 16 GiB 磁盘，另须满足 **ISO 大小 + 3 GiB** 内存余量；实际材料和启动分区空间也会检查。Ubuntu 的 ISO 必须完全复制到 RAM，解除源盘挂载及 loop 依赖后才可分区。
 - 依赖须事先具备：Python 3.9+、curl、gpgv、OpenSSL、ssh-keygen、iproute2、util-linux、GRUB 工具；Ubuntu 另需 xorriso。预检不会自动安装软件或修复引导器。
