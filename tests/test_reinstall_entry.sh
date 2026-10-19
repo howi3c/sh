@@ -24,6 +24,9 @@ for spec in '1 debian 13' '2 debian 12' '3 debian 11' '4 debian 10' '11 ubuntu 2
     if grep -q '123@@@' "$work/output"; then
         echo 'FAIL: Debian/Ubuntu 入口泄露无关公开固定密码提示' >&2; exit 1
     fi
+    grep -q '按任意键返回重装菜单' "$work/output" || {
+        echo 'FAIL: 失败原因未停留，菜单重绘会把它清掉' >&2; exit 1
+    }
 done
 # 菜单 EOF 不能被当作确认，也不能死循环。
 : > "$work/events"

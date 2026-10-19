@@ -3621,6 +3621,13 @@ kj_secure_reinstall() (
 	python3 -I "$work/reinstall.py" --distro "$1" --version "$2" --ssh-ports "$ports"
 )
 
+# 失败原因先留在屏幕上等用户按键，不让菜单重绘当场清屏（用户看不懂闪一下的报错）。
+kj_reinstall_pause() {
+	echo
+	echo "按任意键返回重装菜单..."
+	read -n 1 -s -r -p ""
+}
+
 dd_xitong() {
 		dd_xitong_MollyLau() {
 			wget --no-check-certificate -qO InstallNET.sh "https://raw.githubusercontent.com/leitbogioro/Tools/master/Linux_reinstall/InstallNET.sh" && chmod a+x InstallNET.sh
@@ -3699,14 +3706,14 @@ dd_xitong() {
 			case "$sys_choice" in
 
 
-			  1) kj_secure_reinstall debian 13 ;;
-			  2) kj_secure_reinstall debian 12 ;;
-			  3) kj_secure_reinstall debian 11 ;;
-			  4) kj_secure_reinstall debian 10 ;;
-			  11) kj_secure_reinstall ubuntu 26.04 ;;
-			  12) kj_secure_reinstall ubuntu 24.04 ;;
-			  13) kj_secure_reinstall ubuntu 22.04 ;;
-			  14) kj_secure_reinstall ubuntu 20.04 ;;
+			  1) kj_secure_reinstall debian 13 || kj_reinstall_pause ;;
+			  2) kj_secure_reinstall debian 12 || kj_reinstall_pause ;;
+			  3) kj_secure_reinstall debian 11 || kj_reinstall_pause ;;
+			  4) kj_secure_reinstall debian 10 || kj_reinstall_pause ;;
+			  11) kj_secure_reinstall ubuntu 26.04 || kj_reinstall_pause ;;
+			  12) kj_secure_reinstall ubuntu 24.04 || kj_reinstall_pause ;;
+			  13) kj_secure_reinstall ubuntu 22.04 || kj_reinstall_pause ;;
+			  14) kj_secure_reinstall ubuntu 20.04 || kj_reinstall_pause ;;
 
 			  21)
 				dd_xitong_3
