@@ -95,6 +95,7 @@
 ### 补充修正记录（2026-10-19，工单 #28）
 
 - 真实源机暴露误拒：BIOS 固件 + 单块 GPT 磁盘（一个 ext4 根分区、无 BIOS 嵌入分区），但 `/proc/cmdline` 含 `BOOT_IMAGE=/boot/vmlinuz-…`，即运行内核确由磁盘引导器加载（本实例为磁盘 GRUB）。原检查仅凭“GPT 无嵌入分区”拒绝。现改为：GPT 无嵌入分区时要求 `/proc/cmdline` 含绝对路径 `BOOT_IMAGE=`，无该证据才拒绝；目标盘仍按 MBR 重建，`grub-reboot` 一次性启动路径不变。
-- 验收：入口级回归用例新增 1 个（GPT + 磁盘引导器证据 → 走到最终确认并 arm；无证据 → 在下载材料/改动引导前拒绝），`tests/reinstall_acceptance.py` 共 13 个测试方法。`bash tests/run_all_checks.sh --no-detail` **18/18 通过**。
-- 模块修正版固定于提交 `613b375f8768d7111619651ba8157647ce558344`，SHA256 为 `1e1325886bc528607d5f6edf01e13e2d7821465affec6bf08d25a7365e7de0f0`。入口提交 `4e8e2a7` 引用该版本，取代 2026-10-17 记录的 `457f8ca`/`01e5f13`。
+- 验收：入口级回归用例新增 1 个（GPT + 磁盘引导器证据 → 走到最终确认并 arm；无证据 → 在下载材料/改动引导前拒绝）；两轴审查跟进再加 2 个生产事实采集测试（`HostFactBoundaryTests`，直接执行 `_storage()`/`inventory()` 钉住新键），`tests/reinstall_acceptance.py` 共 15 个测试方法。`bash tests/run_all_checks.sh --no-detail` **18/18 通过**。
+- 审查跟进还包含：提交前复核 `stable` 元组并入 `pttype`/`bios_embedding`/`boot_cmdline`；证据函数改名 `_disk_bootloader_loaded_kernel`（`BOOT_IMAGE=` 只证明磁盘引导器加载，是否 GRUB 由 `_grub()` 复核），文档与提示同步；夹具默认改为“无 `BOOT_IMAGE`、无嵌入分区”，条件写反会红；补最终确认断言；`GLOSSARY.md` 记入模块固定版本、一次性启动、BIOS 嵌入分区。
+- 模块修正版固定于提交 `eb6908b90c70ad54978ad1e7e7d09d8a0ebe111f`，SHA256 为 `83bdaebb19243efe55cb573868649dfb817453c410e7155365633366868ad8e5`。入口提交 `5283f9d` 引用该版本，取代 2026-10-17 记录的 `457f8ca`/`01e5f13` 与本日早前的 `613b375`/`4e8e2a7`。
 - 真实重装仍未执行；本条修正不改变“重启请求成功 ≠ 安装完成/不会失联”的限定。
