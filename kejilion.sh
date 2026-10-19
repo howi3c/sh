@@ -3613,9 +3613,9 @@ kj_secure_reinstall() (
 	trap 'exit 1' HUP INT TERM
 	code=$(curl --disable --proto '=https' --proto-redir '=https' --fail --silent --show-error \
 		--connect-timeout 15 --max-time 60 --write-out '%{http_code}' --output "$work/reinstall.py" \
-		"https://raw.githubusercontent.com/howi3c/sh/457f8ca743b5cbc2c8e118ac1f50e2b8d0dba0ef/reinstall.py") || { echo "安全重装取内容失败；未执行任何安装代码。"; return 1; }
+		"https://raw.githubusercontent.com/howi3c/sh/613b375f8768d7111619651ba8157647ce558344/reinstall.py") || { echo "安全重装取内容失败；未执行任何安装代码。"; return 1; }
 	[ "$code" = 200 ] && [ -f "$work/reinstall.py" ] && [ ! -L "$work/reinstall.py" ] || { echo "安全重装拒绝重定向或不完整材料。"; return 1; }
-	printf '%s  %s\n' '9565624aff7333fa531b90769a037d638ae8f194c7aa4a8d715591990a177538' "$work/reinstall.py" | sha256sum --check --status || { echo "安全重装代码指纹不符；已停止。"; return 1; }
+	printf '%s  %s\n' '1e1325886bc528607d5f6edf01e13e2d7821465affec6bf08d25a7365e7de0f0' "$work/reinstall.py" | sha256sum --check --status || { echo "安全重装代码指纹不符；已停止。"; return 1; }
 	# 复用既有读取能力；模块仍会与成功的 sshd -T、当前连接及监听端口交叉验证，拒绝回退值。
 	ports=$(get_ssh_ports | paste -sd, -)
 	python3 -I "$work/reinstall.py" --distro "$1" --version "$2" --ssh-ports "$ports"
