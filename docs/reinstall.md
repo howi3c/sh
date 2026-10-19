@@ -26,7 +26,7 @@
 
 - 源系统：Debian 12/13 或 Ubuntu 22.04/24.04；root 权限，正在使用的真实 SSH 会话（`SSH_CONNECTION`）。
 - 架构及引导：amd64，BIOS，已有可直接读取根分区的 GRUB i386-pc，支持 `next_entry` 一次性启动。UEFI、Secure Boot、其他引导器不支持。
-- 磁盘：恰好一块非移动磁盘，简单 ext4 根分区，`/boot` 在同一根文件系统；可有 swap，以及（GPT 时）BIOS 嵌入分区。GPT 磁盘没有嵌入分区时，只接受 `/proc/cmdline` 含绝对路径 `BOOT_IMAGE=`（运行内核确由磁盘 GRUB 加载）的源主机；无此证据则拒绝。拒绝独立 `/boot`、LVM、RAID、加密根、其他数据分区、多盘及 2 TiB 以上磁盘。**新目标会使用 MBR + ext4 并覆盖整盘。**
+- 磁盘：恰好一块非移动磁盘，简单 ext4 根分区，`/boot` 在同一根文件系统；可有 swap，以及（GPT 时）BIOS 嵌入分区。GPT 磁盘没有嵌入分区时，只接受 `/proc/cmdline` 含绝对路径 `BOOT_IMAGE=`（磁盘引导器加载内核的证据；是否 GRUB 由后续引导检查复核）的源主机；无此证据则拒绝。拒绝独立 `/boot`、LVM、RAID、加密根、其他数据分区、多盘及 2 TiB 以上磁盘。**新目标会使用 MBR + ext4 并覆盖整盘。**
 - 网络：一块直接连接的 Ethernet 网卡，恰好一个 IPv4 地址、同子网网关、一个默认路由及对应直连路由，1–3 个明确的上游 IPv4 DNS。支持 DHCP 或静态 IPv4；拒绝 /31、/32、特殊主机路由、策略路由、多网卡、隧道/桥接/bond/VLAN、IPv6 管理及带全局 IPv6 的双栈配置。仅有 link-local IPv6 不算可用 IPv6 支持；安装及目标显式禁用 IPv6。
 - Debian 至少 1 GiB RAM / 8 GiB 磁盘；Ubuntu 至少 6 GiB RAM / 16 GiB 磁盘，另须满足 **ISO 大小 + 3 GiB** 内存余量；实际材料和启动分区空间也会检查。Ubuntu 的 ISO 必须完全复制到 RAM，解除源盘挂载及 loop 依赖后才可分区。
 - 依赖须事先具备：Python 3.9+、curl、gpgv、OpenSSL、ssh-keygen、iproute2、util-linux、GRUB 工具；Ubuntu 另需 xorriso。预检不会自动安装软件或修复引导器。
@@ -94,7 +94,7 @@
 
 ### 补充修正记录（2026-10-19，工单 #28）
 
-- 真实源机暴露误拒：BIOS 固件 + 单块 GPT 磁盘（一个 ext4 根分区、无 BIOS 嵌入分区），但 `/proc/cmdline` 含 `BOOT_IMAGE=/boot/vmlinuz-…`，即运行内核确由磁盘 GRUB 加载。原检查仅凭“GPT 无嵌入分区”拒绝。现改为：GPT 无嵌入分区时要求 `/proc/cmdline` 含绝对路径 `BOOT_IMAGE=`，无该证据才拒绝；目标盘仍按 MBR 重建，`grub-reboot` 一次性启动路径不变。
-- 验收：入口级回归用例新增 1 个（GPT + 磁盘 GRUB 证据 → 走到最终确认并 arm；无证据 → 在下载材料/改动引导前拒绝），`tests/reinstall_acceptance.py` 共 13 个测试方法。`bash tests/run_all_checks.sh --no-detail` **18/18 通过**。
+- 真实源机暴露误拒：BIOS 固件 + 单块 GPT 磁盘（一个 ext4 根分区、无 BIOS 嵌入分区），但 `/proc/cmdline` 含 `BOOT_IMAGE=/boot/vmlinuz-…`，即运行内核确由磁盘引导器加载（本实例为磁盘 GRUB）。原检查仅凭“GPT 无嵌入分区”拒绝。现改为：GPT 无嵌入分区时要求 `/proc/cmdline` 含绝对路径 `BOOT_IMAGE=`，无该证据才拒绝；目标盘仍按 MBR 重建，`grub-reboot` 一次性启动路径不变。
+- 验收：入口级回归用例新增 1 个（GPT + 磁盘引导器证据 → 走到最终确认并 arm；无证据 → 在下载材料/改动引导前拒绝），`tests/reinstall_acceptance.py` 共 13 个测试方法。`bash tests/run_all_checks.sh --no-detail` **18/18 通过**。
 - 模块修正版固定于提交 `613b375f8768d7111619651ba8157647ce558344`，SHA256 为 `1e1325886bc528607d5f6edf01e13e2d7821465affec6bf08d25a7365e7de0f0`。入口提交 `4e8e2a7` 引用该版本，取代 2026-10-17 记录的 `457f8ca`/`01e5f13`。
 - 真实重装仍未执行；本条修正不改变“重启请求成功 ≠ 安装完成/不会失联”的限定。

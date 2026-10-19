@@ -984,7 +984,8 @@ interfaces [{name,mac,addresses,flags,link_type,kind}], inet/inet6 address famil
 main routes with family and default local/main/default rules. Rejects ambiguous
 or unsupported IPv6/global, multi-NIC, multi-disk, special routes, UEFI/LVM/etc.
 A GPT disk without a BIOS embedding partition is accepted only when
-boot_cmdline carries an absolute BOOT_IMAGE (proof disk GRUB loaded the kernel).
+boot_cmdline carries an absolute BOOT_IMAGE (proof an on-disk bootloader
+loaded this kernel; GRUB specifics are confirmed later by _grub()).
 Account input comes LATER as plan['account']={username,mode,key,password_hash}.
 username is revalidated immediately before rendering; random undisclosed hashes
 for key-only mode are supported without enabling password login.
@@ -1042,8 +1043,12 @@ def _reinstall_error(reason):
     raise ValueError('无法安全生成重装配置：' + reason)
 
 
-def _disk_grub_loaded_kernel(cmdline):
-    """True when the running kernel names an absolute disk path GRUB loaded it from."""
+def _disk_bootloader_loaded_kernel(cmdline):
+    """True when BOOT_IMAGE names an absolute path an on-disk bootloader loaded.
+
+    Bootloader-agnostic: GRUB sets BOOT_IMAGE, syslinux does too. This only
+    rules out a host direct-kernel boot; _grub() stays the GRUB authority.
+    """
     if not isinstance(cmdline, str):
         return False
     return any(token.startswith('BOOT_IMAGE=/') and len(token) > len('BOOT_IMAGE=/')
@@ -1188,9 +1193,9 @@ def validate_inventory(data, target):
     if not isinstance(partition, str) or not re.fullmatch(part_pattern, partition) or data.get('simple_layout') is not True:
         _reinstall_error('只支持单盘简单根分区；LVM、RAID、加密、独立/boot或复杂布局不能猜测处理')
     if (data.get('pttype') == 'gpt' and data.get('bios_embedding') is not True
-            and not _disk_grub_loaded_kernel(data.get('boot_cmdline'))):
+            and not _disk_bootloader_loaded_kernel(data.get('boot_cmdline'))):
         _reinstall_error('GPT 磁盘没有 BIOS 引导分区，且 /proc/cmdline 无绝对路径 BOOT_IMAGE，'
-                         '无法确认当前内核由磁盘 GRUB 加载；拒绝在未知引导链上安排一次性启动')
+                         '无法确认当前内核由磁盘引导器加载；拒绝在未知引导链上安排一次性启动')
     if data.get('root_fstype') not in ('ext2', 'ext3', 'ext4', 'xfs'):
         _reinstall_error('源根文件系统只支持 ext2/3/4、XFS；不支持子卷、加密和未知文件系统')
     gib = 1024 ** 3
@@ -2243,7 +2248,8 @@ def run(host, console, distro, version, ssh_ports):
                 # Re-read actual facts immediately before commit; stale plans cannot proceed.
                 current = host.inventory(ssh_ports)
                 stable = ('os_id', 'os_version', 'arch', 'firmware', 'disk', 'disk_bytes',
-                          'root_partition', 'root_uuid', 'root_fstype', 'network', 'ssh_ports', 'grub_cfg', 'grub_env')
+                          'root_partition', 'root_uuid', 'root_fstype', 'network', 'ssh_ports', 'grub_cfg', 'grub_env',
+                          'pttype', 'bios_embedding', 'boot_cmdline')
                 if any(current.get(key) != inventory.get(key) for key in stable):
                     raise HostError('预检后主机配置发生变化，请重新核对')
                 transaction.commit(plan, target, hashes)

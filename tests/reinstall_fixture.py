@@ -154,6 +154,8 @@ def fixture_host_type(module):
             if scenario in ('gpt-grub-boot', 'gpt-unknown-boot'):
                 value['pttype'] = 'gpt'
                 value['bios_embedding'] = False
+            if scenario == 'gpt-grub-boot':
+                value['boot_cmdline'] = 'BOOT_IMAGE=/boot/vmlinuz-fixture root=UUID=12345678-1234-1234-1234-123456789abc ro quiet'
             if scenario == 'gpt-unknown-boot':
                 value['boot_cmdline'] = 'root=UUID=12345678-1234-1234-1234-123456789abc ro quiet'
             if scenario == 'low-memory':

@@ -12,7 +12,9 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
+from unittest import mock
 
 sys.dont_write_bytecode = True
 from reinstall_fixture import FIXTURES, fixture_host_type, install_test_trust, require_tools
@@ -205,6 +207,7 @@ dd_xitong
         self.assertIsNotNone(data)
         self.assertEqual(data['result'], 0, result.stdout + result.stderr)
         self.assertTrue(data['rebooted'])
+        self.assertIn('最终确认：输入 ERASE /dev/vda', result.stdout)
         self.assertEqual([cmd[0] for cmd in data['commands']].count('grub-reboot'), 1)
         # 没有磁盘引导器加载证据时，在下载材料、改动引导状态之前拒绝。
         with self.subTest(scenario='gpt-unknown-boot'):
@@ -327,6 +330,77 @@ dd_xitong
         self.assertIn('usr/bin/wget.real', files)
         self.assertEqual(files['usr/bin/wget.real']['mode'], 0o755)
         self.assertIn('reinstall-runtime/native-archive.gpg', files)
+
+
+class HostFactBoundaryTests(unittest.TestCase):
+    """生产事实采集：菜单夹具整体替换了 Host.inventory()，这里把真实键钉住。"""
+
+    DISK_GUID = '0fc63daf-8483-4772-8e79-3d69d8477de4'
+    BIOS_GUID = '21686148-6449-6e6f-744e-656564454649'
+
+    def test_storage_reports_gpt_embedding_facts_without_deciding(self):
+        module = load_installer()
+        root_part = {'name': 'vda1', 'path': '/dev/vda1', 'type': 'part', 'size': 40 * 1024**3,
+                     'fstype': 'ext4', 'mountpoints': ['/'], 'pkname': 'vda',
+                     'parttype': self.DISK_GUID, 'uuid': '8ef50be9', 'ro': False}
+        disk = {'name': 'vda', 'path': '/dev/vda', 'type': 'disk', 'size': 40 * 1024**3,
+                'pttype': 'gpt', 'ro': False, 'rm': False, 'children': [root_part]}
+
+        class ProbeHost(module.InstallerHost):
+            def _mount(self, target):
+                return {'target': '/', 'source': '/dev/vda1', 'fstype': 'ext4',
+                        'options': 'rw,relatime', 'maj:min': '252:1'}
+
+            def _json(self, argv, kind=list):
+                return {'blockdevices': [disk]}
+
+        storage = ProbeHost()._storage()
+        self.assertEqual(storage['pttype'], 'gpt')
+        self.assertIs(storage['bios_embedding'], False)
+        bios_part = dict(root_part, name='vda2', path='/dev/vda2', fstype=None,
+                         mountpoints=[], parttype=self.BIOS_GUID)
+        disk['children'] = [root_part, bios_part]
+        self.assertIs(ProbeHost()._storage()['bios_embedding'], True)
+
+    def test_inventory_carries_boot_cmdline_and_storage_facts(self):
+        module = load_installer()
+        cmdline = 'BOOT_IMAGE=/boot/vmlinuz-fixture root=UUID=8ef50be9 ro quiet'
+
+        class ProbeHost(module.InstallerHost):
+            def _os_release(self):
+                return {'ID': 'debian', 'VERSION_ID': '13'}
+
+            def _storage(self):
+                return {'disk': '/dev/vda', 'root_disk': '/dev/vda', 'disks': ['/dev/vda'],
+                        'disk_bytes': 40 * 1024**3, 'root_partition': '/dev/vda1',
+                        'root_fstype': 'ext4', 'root_uuid': '8ef50be9', 'simple_layout': True,
+                        'pttype': 'gpt', 'bios_embedding': False}
+
+            def _grub(self, storage):
+                return {'grub': True, 'grub_cfg': '/boot/grub/grub.cfg',
+                        'grub_env': '/boot/grub/grubenv'}
+
+            def _network(self):
+                return {'interfaces': []}
+
+            def _ssh_ports(self, ports, network):
+                return [2222]
+
+        reads = {'/proc/meminfo': 'MemTotal:       2048000 kB\n', '/proc/cmdline': cmdline}
+
+        def fake_read_text(self, *args, **kwargs):
+            return reads[str(self)]
+
+        with mock.patch.object(module.os, 'geteuid', return_value=0), \
+                mock.patch.object(module.platform, 'machine', return_value='x86_64'), \
+                mock.patch.object(module.Path, 'exists', new=lambda self: False), \
+                mock.patch.object(module.Path, 'is_mount', new=lambda self: True), \
+                mock.patch.object(module.Path, 'read_text', new=fake_read_text), \
+                mock.patch.object(module.os, 'statvfs',
+                                  return_value=SimpleNamespace(f_bavail=1024 * 1024, f_frsize=4096)):
+            data = ProbeHost().inventory([2222])
+        self.assertEqual(data['boot_cmdline'], cmdline)
+        self.assertEqual((data['pttype'], data['bios_embedding']), ('gpt', False))
 
 
 if __name__ == '__main__':
