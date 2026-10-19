@@ -1,4 +1,0 @@
-e0eb45838219183e3ece2816aa8e0c77d17e853dd6c59ff921fd170ac9bd404a  ./netboot/debian-installer/amd64/linux
-b312ad34ef70c84646bd377d997a087028d61c948986da3b5b5ed2e7193c2b11  ./netboot/debian-installer/amd64/initrd.gz
-e0eb45838219183e3ece2816aa8e0c77d17e853dd6c59ff921fd170ac9bd404a  ./hd-media/vmlinuz
-b312ad34ef70c84646bd377d997a087028d61c948986da3b5b5ed2e7193c2b11  ./hd-media/initrd.gz

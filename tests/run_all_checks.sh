@@ -13,9 +13,8 @@
 #   bash tests/run_all_checks.sh --help
 #
 # 约定（沿用父议题 #1 的 Testing Decisions，并与工单 #15 的瘦身删除口径并列）：
-#   · 本入口调用静态分析、非交互冒烟和操作系统边界隔离验收；不执行真实安装、
-#     不改宿主机磁盘/网络/引导、不重启、不安装软件、不发出网络请求；
-#     #27 的签名验收另需 Python 3、gpgv、ssh-keygen、OpenSSL，缺少依赖即失败。
+#   · 本入口与它调用的测试全部只做静态分析 / 非交互冒烟，不执行 kejilion.sh 本体、
+#     不安装任何软件、不发出任何网络请求；
 #   · shellcheck 未安装时语法检查的 lint 部分按约定跳过，不算失败；
 #   · tests/test_network_inventory.sh 的报信/取内容分类规则在此只被调用，不被改写；
 #     工单 #23 在其内部新增“原版名下 URL 清零 + 留存取内容 URL 指向本仓库”断言（URL 路径级，
@@ -61,9 +60,6 @@ ITEMS=(
 	"守门 · README 不残留原版仓库引用（指向 kejilion/sh 的徽章/问题反馈/更新日志/Star History 与原作者钱包地址，工单 #14）	tests/test_readme_no_upstream_refs.sh	"
 	"守门 · 删除守卫（工单 #15：已删功能词汇=0 / 根孤儿文件不存在 / 剩存取内容 URL 指向本仓库 / 与 README 守门交叉确认；工单 #16 点名自查词 cluster_python3、#22 漏网孤儿 update_log.sh 均在守）	tests/test_spec15_slim_down_removed.sh	"
 	"守门 · 防火墙关闭/开放所有端口自动保留 SSH 端口（工单 #26）	tests/test_firewall_close_all_ports_ssh_retain_smoke.sh	"
-	"缝 · 重装菜单分发与 EOF（工单 #27）	tests/test_reinstall_entry.sh	"
-	"缝 · Debian/Ubuntu 重装离线签名与失败安全（工单 #27）	tests/test_reinstall_secure.sh	"
-	"守门 · 重装兄弟文件固定版本、认证与清理（工单 #27）	tests/test_reinstall_loader.sh	"
 )
 TOTAL="${#ITEMS[@]}"
 
@@ -138,7 +134,7 @@ run_all() {
 	rule
 	if [ "${failed}" -eq 0 ]; then
 		printf ' 总体结论: 全部通过（%s/%s 项）\n' "${passed}" "${TOTAL}"
-		printf '           隔离验收通过；不代表真实重装或 SSH 登录已验证（见 docs/reinstall.md）。\n'
+		printf '           净化版达到交付状态，剩仓库主人在 VPS 上人工过目（见 docs/vps-smoke.md）。\n'
 	else
 		printf ' 总体结论: 未通过（%s/%s 项 PASS，%s 项 FAIL）\n' "${passed}" "${TOTAL}" "${failed}"
 		printf '           没过的是这几项：\n'
@@ -200,7 +196,7 @@ main() {
 	printf ' 复跑方式: bash tests/run_all_checks.sh\n'
 	printf ' 目标脚本: %s（%s 行）\n' "${target_script#"${project_root}/"}" "$(wc -l <"${target_script}" | tr -d ' ')"
 	printf ' 当前提交: %s\n' "$(git -C "${project_root}" rev-parse --short HEAD 2>/dev/null || printf '（非 git 环境）')"
-	printf ' 声明: 全部检查为静态/隔离验收，不执行真实安装、不改宿主机网络与引导、不重启、不安装软件、不发请求。\n'
+	printf ' 声明: 全部检查只做静态分析与非交互冒烟，不执行目标脚本、不安装软件、不发请求。\n'
 	if command -v shellcheck >/dev/null 2>&1; then
 		printf ' lint 环境: shellcheck 已安装（语法检查顺带跑，按约定只报告不阻断）\n'
 	else
